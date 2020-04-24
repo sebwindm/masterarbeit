@@ -1,22 +1,39 @@
-from src import order_generation, global_settings, class_Machine
+from src import global_settings, class_Machine
 import random
+
 random.seed(global_settings.random_seed)
 # instantiate machine object with name and processing time per order
-machine_A = class_Machine.Machine("Machine A", 1)
-machine_B = class_Machine.Machine("Machine B", 1)
-machine_C = class_Machine.Machine("Machine C", 1)
-machine_D = class_Machine.Machine("Machine D", 1)
-machine_E = class_Machine.Machine("Machine E", 1)
-machine_F = class_Machine.Machine("Machine F", 1)
+machine_A = class_Machine.Machine("Machine A", 30, 130)
+machine_B = class_Machine.Machine("Machine B", 80, 240)
+machine_C = class_Machine.Machine("Machine C", 50, 260)
+machine_D = class_Machine.Machine("Machine D", 50, 370)
+machine_E = class_Machine.Machine("Machine E", 200, 370)
+machine_F = class_Machine.Machine("Machine F", 110, 320)
+list_of_all_machines = [machine_A, machine_B, machine_C, machine_D, machine_E, machine_F]
 
-def set_new_processing_times():
-    machine_A.processing_time = random.randrange(30,130)
-    machine_B.processing_time = random.randrange(80,240)
-    machine_C.processing_time = random.randrange(50,260)
-    machine_D.processing_time = random.randrange(50,370)
-    machine_E.processing_time = random.randrange(200,370)
-    machine_F.processing_time = random.randrange(110,320)
+
+def set_next_order_arrival_time():
+    # Update the time_of_next_order_arrival to a random time within the interval specified in global_settings
+    global_settings.time_of_next_order_arrival = \
+        global_settings.current_time + round(random.uniform(
+            global_settings.next_order_arrival_lower_bound * global_settings.granularity_multiplier,
+            global_settings.next_order_arrival_upper_bound * global_settings.granularity_multiplier))
     return
+
+
+def set_new_random_processing_time(machine_object):
+    """
+    Set processing time for the desired machine to a random value between the lower bound and the upper bound
+    (influenced by the global granularity multiplier)
+    :param machine_object: instance/object of class Machine, e.g. machine_A
+    :return: nothing
+    """
+    machine_object.processing_time = \
+        round(random.uniform(machine_object.processing_time_lower_bound * global_settings.granularity_multiplier,
+                             machine_object.processing_time_upper_bound * global_settings.granularity_multiplier))
+    return
+
+
 
 # This is the inventory where finished goods get placed and wait until their due_date is reached, it is also named FGI.
 # If an order finishes after its due_date, the order gets shipped right away and doesn't wait in the FGI
@@ -39,19 +56,19 @@ wip_C = []
 wip_D = []
 wip_E = []
 wip_F = []
+list_of_all_wip_elements = [wip_A, wip_B, wip_C, wip_D, wip_E, wip_F]
+list_of_inventories = [wip_A, wip_B, wip_C, wip_D, wip_E, wip_F, finished_goods_inventory, shipped_orders, order_pool]
 
-# Here we give an initial set of orders for the simulation.
-# Over time, more orders will arrive in the order pool periodically, but that is done in order_generation.py
-def setup_order_pool(amount_to_generate):
-    # this function generates the initial set of orders that will be placed
-    # in the order pool at the start of the simulation
-    for order in range(amount_to_generate):
-        order_generation.generate_order()
+def reset_machines():
+    for machine in list_of_all_machines:
+        machine.orders_inside_the_machine.clear()
+    set_next_order_arrival_time()
     return
 
 
-
-
+def reset_inventories():
+    for inventory_element in list_of_inventories:
+        inventory_element.clear()
 
 
 

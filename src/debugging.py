@@ -43,7 +43,7 @@ def verify_wips():  # THIS FUNCTION MIGHT BE UNNECESSARY (checking the machines 
 
 def verify_policies():
     # Raise error if order release policy has been entered incorrectly
-    if global_settings.order_release_policy != "immediate_release":
+    if global_settings.order_release_policy != "periodic_release":
         raise ValueError("There was a problem with the selected order release policy. "
                          "Please review order_release_policy at global_settings.py ")
     # Raise error if scheduling policy has been entered incorrectly
@@ -77,3 +77,17 @@ def verify_all():
     # The following checks are only performed in the last step of the simulation
     if global_settings.current_time == global_settings.maximum_simulation_duration - 1:
         verify_fgi()
+
+def verify_reset():
+    print("Settings reset. Current time: " + str(global_settings.current_time) +
+          " | FGI " + str(len(environment.finished_goods_inventory)) +
+          " | WIPs " + str(len(environment.wip_A)+len(environment.wip_B)+len(environment.wip_C)+len(environment.wip_D)+len(environment.wip_E)+len(environment.wip_F)) +
+          " | Machines " + str(len(environment.machine_A.orders_inside_the_machine)+len(environment.machine_B.orders_inside_the_machine)+len(environment.machine_C.orders_inside_the_machine)+len(environment.machine_D.orders_inside_the_machine)+len(environment.machine_E.orders_inside_the_machine)+len(environment.machine_F.orders_inside_the_machine)) +
+          " | total cost " + str(global_settings.total_cost) +
+          " | Order pool: " + str(len(environment.order_pool)) +
+          " | Next order at step: " + str(global_settings.time_of_next_order_arrival)
+          )
+    return
+
+
+

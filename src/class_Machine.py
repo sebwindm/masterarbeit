@@ -4,10 +4,12 @@ class Machine(object):
     A machine has a *name* and a number of *parts_made* thus far.
     """
 
-    def __init__(self, name, processing_time):
+    def __init__(self, name, lower_bound, upper_bound):
         self.name = name
-        self.processing_time = processing_time
+        self.processing_time = 0 # this value is set in environment.py where the Machine objects are created
         self.orders_inside_the_machine = []
-        # Processing time A 0.08 B 0.17 C 0.16 D 0.22 E 0.3 F 0.22
+        self.processing_time_lower_bound = lower_bound
+        self.processing_time_upper_bound = upper_bound
+
 
 
