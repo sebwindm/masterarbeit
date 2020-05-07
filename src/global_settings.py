@@ -14,10 +14,12 @@ processing_time_distribution = "uniform" # must be "exponential" or "uniform"
 shop_type = "flow_shop" # Must be either "flow_shop" or "job_shop"
 
 #################### Variables used during the simulation runtime ####################
-order_release_policy = "periodic_release" # must be "periodic_release" or "LUMS"
+order_release_policy = "periodic" # must be "periodic", "bil" or "lums"
 scheduling_policy = "first_come_first_serve"
 time_of_next_order_arrival = 0 # gets overwritten for every new order
 due_date_multiplier = 9 # how many periods the due date of new orders is in the future. Default: 10 periods
+planned_release_date_multiplier = 4 # used for the BIL order release policy.
+# Planned release date is always planned_release_date_multiplier * duration_of_one_period + current_time
 
     #### ONLY USED FOR UNIFORM DEMAND ###
 next_order_arrival_lower_bound = 78 * granularity_multiplier # lower limit for when the next order can arrive.

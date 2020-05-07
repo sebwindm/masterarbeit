@@ -3,7 +3,7 @@ class Order(object):
     documentation missing
     """
 
-    def __init__(self, orderID,creation_date, due_date, product_type):
+    def __init__(self, orderID,creation_date, due_date, product_type, planned_release_date):
         self.orderID = orderID
         self.due_date = due_date
         self.product_type = product_type # possible values range from 1 to 6
@@ -15,6 +15,7 @@ class Order(object):
         self.lateness = 0
         self.earliness = 0
         self.flow_time = 0
+        self.planned_release_date = planned_release_date
         self.current_production_step = None # production steps refer to the processing progress of the order.
         # Counting starts from 0 (after order has been released). Example: current_production_step = 0 means
         # the order is in the first step of production, so it's either in WIP_A or machine_A. Once it moves

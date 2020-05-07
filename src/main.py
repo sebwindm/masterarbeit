@@ -65,10 +65,7 @@ while iterations_remaining > 0:
             order_generation.generate_order()
 
         ################# Move orders between machines and inventories; ship orders #################
-        if global_settings.shop_type == "flow_shop":
-            order_movement.move_orders_flow_shop()
-        elif global_settings.shop_type == "job_shop":
-            order_movement.move_orders_job_shop()
+        order_movement.move_orders()
 
         ################# Process orders in machines #################
         order_processing.process_orders()

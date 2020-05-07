@@ -386,3 +386,11 @@ def move_orders_job_shop():
 #                     environment.finished_goods_inventory.index(order_element)))
 #
 #     return
+
+
+def move_orders():
+    if global_settings.shop_type == "flow_shop":
+        move_orders_flow_shop()
+    elif global_settings.shop_type == "job_shop":
+        move_orders_job_shop()
+    return

@@ -49,7 +49,7 @@ def verify_machines():
 
 def verify_policies():
     # Raise error if order release policy has been entered incorrectly
-    if global_settings.order_release_policy != "periodic_release":
+    if global_settings.order_release_policy not in ("periodic","bil","lums"):
         raise ValueError("There was a problem with the selected order release policy. "
                          "Please review order_release_policy at global_settings.py ")
     # Raise error if scheduling policy has been entered incorrectly
