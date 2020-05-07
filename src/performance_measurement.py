@@ -52,7 +52,7 @@ def utilization_per_step(): # this appends to the steps.csv file
             amount_of_active_machines += 1
     utilization = amount_of_active_machines / 6
     # Append results to CSV file
-    with open('steps.csv', mode='a') as steps_CSV:
+    with open('../steps.csv', mode='a') as steps_CSV:
         results_writer = csv.writer(steps_CSV, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         results_writer.writerow([global_settings.current_time,
                                  len(environment.wip_A), len(environment.wip_B), len(environment.wip_C),
