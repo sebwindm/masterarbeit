@@ -15,13 +15,32 @@ def sort_order_pool_by_due_date():
 
 # Periodic release policy:
 def release_using_periodic_release():
-    # Each element in the order_pool gets moved to wip_A
-    temporary_list = environment.order_pool.copy()
-    temp_number_of_released_orders = 0
-    for order_element in temporary_list:
-        order_element.order_release_date = global_settings.current_time
-        environment.wip_A.append(environment.order_pool.pop(environment.order_pool.index(order_element)))
-        temp_number_of_released_orders += 1
+
+    # Flow shop logic: each element in the order_pool gets moved to wip_A
+    if global_settings.shop_type == "flow_shop":
+        temporary_list = environment.order_pool.copy()
+        temp_number_of_released_orders = 0
+        for order_element in temporary_list:
+            order_element.order_release_date = global_settings.current_time
+            environment.wip_A.append(environment.order_pool.pop(environment.order_pool.index(order_element)))
+            temp_number_of_released_orders += 1
+
+
+    # Job shop logic: each element in the order_pool gets moved to its respective WIP
+    if global_settings.shop_type == "job_shop":
+        # iterate over order pool and
+        temporary_list = environment.order_pool.copy()
+        temp_number_of_released_orders = 0
+        for order_element in temporary_list:
+            order_element.order_release_date = global_settings.current_time
+            order_element.current_production_step = 0
+            if order_element.product_type in (1,2):
+                environment.wip_A.append(environment.order_pool.pop(environment.order_pool.index(order_element)))
+            elif order_element.product_type in (3,4):
+                environment.wip_B.append(environment.order_pool.pop(environment.order_pool.index(order_element)))
+            elif order_element.product_type in (5,6):
+                environment.wip_C.append(environment.order_pool.pop(environment.order_pool.index(order_element)))
+            temp_number_of_released_orders += 1
 
     # debug info:
     if temp_number_of_released_orders > 0 and global_settings.show_order_release == True:
@@ -30,8 +49,11 @@ def release_using_periodic_release():
     return
 
 
-# Timebucketing policy
-def release_using_timebucketing(order_pool):
+# LUMS policy
+# Hybrid rule based order release model, e.g. LUMS-COR after Thürer et al. 2012:
+# release periodically and pull a job forward from the order pool if work center is (about to) starve
+def release_using_lums():
+    # Periodic release:
 
     return
 

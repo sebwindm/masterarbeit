@@ -2,43 +2,49 @@ from src import global_settings, environment
 
 
 def verify_machines():
-    # Raise error if number of orders in any machine exceeds 1
-    list_of_machines = [environment.machine_A, environment.machine_B, environment.machine_C, environment.machine_D,
-                        environment.machine_E, environment.machine_F]
-    list_of_allowed_product_types = [
-        [1, 2, 3, 4, 5, 6], [1, 2, 3], [4, 5, 6], [1, 4], [2, 5], [3, 6]
-    ]
-    for machine in list_of_machines:
-        if len(machine.orders_inside_the_machine) > 1:
-            raise ValueError("Too many orders inside machine " + str(machine.name))
-        elif len(machine.orders_inside_the_machine) == 1:
-            if machine.orders_inside_the_machine[0].product_type not in (
-                    list_of_allowed_product_types[list_of_machines.index(machine)]):
-                raise ValueError("step " + str(global_settings.current_time) +
-                                 " Wrong product type in machine " + str(machine.name) +
-                                 " || product type " + str(machine.orders_inside_the_machine[0].product_type))
+    if global_settings.shop_type == "flow_shop":
+        # Raise error if number of orders in any machine exceeds 1
+        list_of_machines = environment.list_of_all_machines
+        list_of_allowed_product_types = [
+            [1, 2, 3, 4, 5, 6], [1, 2, 3], [4, 5, 6], [1, 4], [2, 5], [3, 6]
+        ]
+        for machine in list_of_machines:
+            if len(machine.orders_inside_the_machine) > 1:
+                raise ValueError("Too many orders inside machine " + str(machine.name))
+            elif len(machine.orders_inside_the_machine) == 1:
+                if machine.orders_inside_the_machine[0].product_type not in (
+                        list_of_allowed_product_types[list_of_machines.index(machine)]):
+                    raise ValueError("step " + str(global_settings.current_time) +
+                                     " Wrong product type in machine " + str(machine.name) +
+                                     " || product type " + str(machine.orders_inside_the_machine[0].product_type))
 
+                ######## JOB SHOP NOT YET IMPLEMENTED
+    elif global_settings.shop_type == "flow_shop":
+        list_of_machines = environment.list_of_all_machines
+        list_of_allowed_product_types = [
+            [1, 2, 3, 4, 5, 6], [1, 2, 3], [4, 5, 6], [1, 4], [2, 5], [3, 6]
+        ]
     return
 
 
-def verify_wips():  # THIS FUNCTION MIGHT BE UNNECESSARY (checking the machines is enough)
-    # Raise error if a machine contains the wrong product type
-    for order_element in environment.wip_B:
-        if order_element.product_type in (4, 5, 6):
-            raise ValueError("Wrong product type in wip ")
-    for order_element in environment.wip_C:
-        if order_element.product_type in (1, 2, 3):
-            raise ValueError("Wrong product type in wip ")
-    for order_element in environment.wip_D:
-        if order_element.product_type in (2, 3, 5, 6):
-            raise ValueError("Wrong product type in wip ")
-    for order_element in environment.wip_E:
-        if order_element.product_type in (1, 3, 4, 6):
-            raise ValueError("Wrong product type in wip ")
-    for order_element in environment.wip_F:
-        if order_element.product_type in (1, 2, 4, 5):
-            raise ValueError("Wrong product type in wip ")
-    return
+# def verify_wips():  # THIS FUNCTION MIGHT BE UNNECESSARY (checking the machines is enough)
+#     # Raise error if a machine contains the wrong product type
+#     for order_element in environment.wip_B:
+#         if order_element.product_type in (4, 5, 6):
+#             raise ValueError("Wrong product type in wip ")
+#     for order_element in environment.wip_C:
+#         if order_element.product_type in (1, 2, 3):
+#             raise ValueError("Wrong product type in wip ")
+#     for order_element in environment.wip_D:
+#         if order_element.product_type in (2, 3, 5, 6):
+#             raise ValueError("Wrong product type in wip ")
+#     for order_element in environment.wip_E:
+#         if order_element.product_type in (1, 3, 4, 6):
+#             raise ValueError("Wrong product type in wip ")
+#     for order_element in environment.wip_F:
+#         if order_element.product_type in (1, 2, 4, 5):
+#             raise ValueError("Wrong product type in wip ")
+#     return
 
 
 def verify_policies():
@@ -79,14 +85,14 @@ def verify_all():
         verify_fgi()
 
 def verify_reset():
-    print("Settings reset. Current time: " + str(global_settings.current_time) +
-          " | FGI " + str(len(environment.finished_goods_inventory)) +
-          " | WIPs " + str(len(environment.wip_A)+len(environment.wip_B)+len(environment.wip_C)+len(environment.wip_D)+len(environment.wip_E)+len(environment.wip_F)) +
-          " | Machines " + str(len(environment.machine_A.orders_inside_the_machine)+len(environment.machine_B.orders_inside_the_machine)+len(environment.machine_C.orders_inside_the_machine)+len(environment.machine_D.orders_inside_the_machine)+len(environment.machine_E.orders_inside_the_machine)+len(environment.machine_F.orders_inside_the_machine)) +
-          " | total cost " + str(global_settings.total_cost) +
-          " | Order pool: " + str(len(environment.order_pool)) +
-          " | Next order at step: " + str(global_settings.time_of_next_order_arrival)
-          )
+    # print("Settings reset. Current time: " + str(global_settings.current_time) +
+    #       " | FGI " + str(len(environment.finished_goods_inventory)) +
+    #       " | WIPs " + str(len(environment.wip_A)+len(environment.wip_B)+len(environment.wip_C)+len(environment.wip_D)+len(environment.wip_E)+len(environment.wip_F)) +
+    #       " | Machines " + str(len(environment.machine_A.orders_inside_the_machine)+len(environment.machine_B.orders_inside_the_machine)+len(environment.machine_C.orders_inside_the_machine)+len(environment.machine_D.orders_inside_the_machine)+len(environment.machine_E.orders_inside_the_machine)+len(environment.machine_F.orders_inside_the_machine)) +
+    #       " | total cost " + str(global_settings.total_cost) +
+    #       " | Order pool: " + str(len(environment.order_pool)) +
+    #       " | Next order at step: " + str(global_settings.time_of_next_order_arrival)
+    #       )
     return
 
 

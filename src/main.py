@@ -3,9 +3,18 @@ from src import order_generation, global_settings, order_movement, order_release
     order_processing, performance_measurement
 
 # Python native module imports
-import time, random, csv
-# Create CSV file to store results after each iteration if it doesn't exist
-with open('simulation_results.csv', mode='w') as results_CSV:
+import time, random, csv, datetime
+# Generate prefix for CSVs
+if global_settings.processing_time_distribution == "uniform":
+    processing = "UB"
+else: processing = "EB"
+if global_settings.demand_distribution == "uniform":
+    demand = "UD"
+else: demand = "ED"
+csv_prefix = str(datetime.datetime.now().strftime("%d.%m.%Y")) + "_" + "FS" + "_" + processing + "_" + demand
+
+# Create CSV file to store results after each iteration
+with open(str(csv_prefix) + '_simulation_results.csv', mode='w') as results_CSV:
     results_writer = csv.writer(results_CSV, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
     results_writer.writerow(['Iteration','Runtime(steps)', 'Orders shipped', 'WIP cost', 'FGI cost', 'Lateness cost', 'Total cost'])
     results_CSV.close()
@@ -56,7 +65,10 @@ while iterations_remaining > 0:
             order_generation.generate_order()
 
         ################# Move orders between machines and inventories; ship orders #################
-        order_movement.move_orders()
+        if global_settings.shop_type == "flow_shop":
+            order_movement.move_orders_flow_shop()
+        elif global_settings.shop_type == "job_shop":
+            order_movement.move_orders_job_shop()
 
         ################# Process orders in machines #################
         order_processing.process_orders()
@@ -90,7 +102,7 @@ while iterations_remaining > 0:
 
 
     # Append results to CSV file
-    with open('simulation_results.csv', mode='a') as results_CSV:
+    with open(str(csv_prefix) + '_simulation_results.csv', mode='a') as results_CSV:
         results_writer = csv.writer(results_CSV, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         results_writer.writerow([global_settings.random_seed, global_settings.maximum_simulation_duration,
                                  len(environment.shipped_orders), global_settings.sum_shopfloor_cost,

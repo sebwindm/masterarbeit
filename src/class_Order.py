@@ -15,6 +15,11 @@ class Order(object):
         self.lateness = 0
         self.earliness = 0
         self.flow_time = 0
+        self.current_production_step = None # production steps refer to the processing progress of the order.
+        # Counting starts from 0 (after order has been released). Example: current_production_step = 0 means
+        # the order is in the first step of production, so it's either in WIP_A or machine_A. Once it moves
+        # to WIP_B, current_production_step gets increased by 1 (to a value of 2).
+        # ---> current_production_step is currently only used for job_shop simulations
 
         self.arrival_times_m1m2m3 = [] # list of arrival times at wips/machines in order of production routing
 
@@ -26,9 +31,6 @@ class Order(object):
         self.arrival_prodstep_3_m = 0
 
 
-        #self.time_in_current_inventory = 0
-        #self.time_in_all_wips = 0
-        #self.time_in_fgi = 0
 
 
 
