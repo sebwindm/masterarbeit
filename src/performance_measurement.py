@@ -73,7 +73,7 @@ def measure_order_flow_times():
     list_of_earliness_per_order = []
     list_of_flow_time_per_order = []
     # Create CSV file to store results after each iteration
-    with open('orders_' + str(global_settings.random_seed) + '.csv', mode='w') as orders_CSV:
+    with open('../orders_' + str(global_settings.random_seed) + '.csv', mode='w') as orders_CSV:
         results_writer = csv.writer(orders_CSV, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         results_writer.writerow(['OrderID', 'product_type', 'creation_date', 'order_release_date',
                                  'arrival_m1', 'arrival_wip_step2', 'arrival_m_step_2',

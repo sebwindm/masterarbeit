@@ -3,4 +3,4 @@ backup files
 venv
 TODO.py
 .idea
-*.js
+*.csv

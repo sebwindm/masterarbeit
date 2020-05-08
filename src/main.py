@@ -11,7 +11,10 @@ else: processing = "EB"
 if global_settings.demand_distribution == "uniform":
     demand = "UD"
 else: demand = "ED"
-csv_prefix = str(datetime.datetime.now().strftime("%d.%m.%Y")) + "_" + "FS" + "_" + processing + "_" + demand
+if global_settings.shop_type == "flow_shop":
+    shop = "FS"
+else: shop = "JS"
+csv_prefix = str(datetime.datetime.now().strftime("%d.%m.%Y")) + "_" + shop + "_" + processing + "_" + demand
 
 # Create CSV file to store results after each iteration
 with open(str('../' + csv_prefix) + '_simulation_results.csv', mode='w') as results_CSV:

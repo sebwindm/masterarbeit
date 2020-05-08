@@ -150,7 +150,7 @@ def move_orders_flow_shop():
     return
 
 
-# Move orders for shop_type == flow_shop
+# Move orders for shop_type == job_shop
 def move_orders_job_shop():
     """
     Move orders from WIPs to machines, from machines to WIPs and finally to finished/shipped goods inventories.
@@ -168,39 +168,32 @@ def move_orders_job_shop():
     # Third: after production is done, move order to FGI
 
     ##################### Step 1: empty the machines that have finished production in the previous step
+    # The routing here doesn't contain the first production step, since the routing to that step
+    # takes place in the order release process
     list_of_product_types = [1, 2, 3, 4, 5, 6]
     list_of_destinations = [
         [environment.wip_B, environment.wip_C, environment.finished_goods_inventory],
-        [environment.wip_C, environment.wip_B],
-        [environment.wip_A, environment.wip_C],
-        [environment.wip_C, environment.wip_A],
-        [environment.wip_A, environment.wip_B],
-        [environment.wip_B, environment.wip_A]
+        [environment.wip_C, environment.wip_B, environment.finished_goods_inventory],
+        [environment.wip_A, environment.wip_C, environment.finished_goods_inventory],
+        [environment.wip_C, environment.wip_A, environment.finished_goods_inventory],
+        [environment.wip_A, environment.wip_B, environment.finished_goods_inventory],
+        [environment.wip_B, environment.wip_A, environment.finished_goods_inventory]
     ]
-    list_of_process_steps = [0,1,2,3]
     # Move order from machine to the next wip, if processing_time_remaining of order is 0
     for machine_element in environment.list_of_all_machines:
-        orders = machine_element.orders_inside_the_machine
-        if len(orders) == 1:
-            if orders[0].processing_time_remaining == 0:
-
+        if len(machine_element.orders_inside_the_machine) == 1:
+            order = machine_element.orders_inside_the_machine[0]
+            if order.processing_time_remaining == 0:
+                destination = \
+                    list_of_destinations[list_of_product_types.index(order.product_type)][order.current_production_step]
+                #print("destination " + str(len(destination)) + " | machine " + str(len(machine_element.orders_inside_the_machine)))
+                destination.append(machine_element.orders_inside_the_machine.pop(0))
+                #print("destination " + str(len(destination)) + " | machine " + str(len(machine_element.orders_inside_the_machine)))
                 ##### example case product type 1, step 0:
                 # von destinations nehme list item 0 (prodtype)
                 # von list item 0 nehme list item 0 (prodstep)
                 # füge da die order ein
-
-                orders[0].current_production_step += 1
-
-
-
-                for product_Type in list_of_product_types:
-                    if orders[0].product_type == product_Type:
-                        # if global_settings.show_machine_output == True:
-                        #     print("Step " + str(global_settings.current_time) + ": Machine_B: order finished. " +
-                        #           "orderID: " + str(orders[0].orderID) +
-                        #           " || product type: " + str(orders[0].product_type))
-                        list_of_destinations[list_of_product_types.index(product_Type)].append(orders.pop(0))
-                        #
+                order.current_production_step += 1
 
     ##################### Step 2: move orders from WIPs into the machines
     # Each origin belongs to one destination.
