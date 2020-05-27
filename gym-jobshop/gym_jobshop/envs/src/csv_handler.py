@@ -1,5 +1,5 @@
-from src import global_settings, environment
-import time, csv, datetime
+from gym_jobshop.envs.src import environment, global_settings
+import csv, datetime
 
 # Generate prefix for CSVs
 if global_settings.processing_time_distribution == "uniform":

@@ -4,3 +4,4 @@ venv
 TODO.py
 .idea
 *.csv
+gym_jobshop.egg-info

@@ -1,4 +1,4 @@
-from src import global_settings, class_Machine
+from gym_jobshop.envs.src import class_Machine, global_settings
 import random, math
 
 random.seed(global_settings.random_seed)

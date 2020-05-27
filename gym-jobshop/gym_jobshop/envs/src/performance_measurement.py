@@ -1,4 +1,4 @@
-from src import global_settings, environment
+from gym_jobshop.envs.src import environment, global_settings
 import csv
 
 

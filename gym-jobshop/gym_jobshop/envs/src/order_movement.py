@@ -1,4 +1,4 @@
-from src import global_settings, environment
+from gym_jobshop.envs.src import environment, global_settings
 
 
 # Move orders for shop_type == flow_shop
@@ -23,7 +23,7 @@ def move_orders_flow_shop():
 
     # Move order from machine_A to WIP_B or WIP_C, if processing_time_remaining of order is 0
     if len(environment.machine_A.orders_inside_the_machine) == 1:
-        if environment.machine_A.orders_inside_the_machine[0].processing_time_remaining == 0:
+        if environment.machine_A.orders_inside_the_machine[0].processing_time_remaining <= 0:
             environment.machine_A.orders_inside_the_machine[0].arrival_prodstep_2_wip = global_settings.current_time
 
             if environment.machine_A.orders_inside_the_machine[0].product_type in (1, 2, 3):
@@ -47,7 +47,7 @@ def move_orders_flow_shop():
     list_of_wips = [environment.wip_D, environment.wip_E, environment.wip_F]
     orders = environment.machine_B.orders_inside_the_machine
     if len(orders) == 1:
-        if orders[0].processing_time_remaining == 0:
+        if orders[0].processing_time_remaining <= 0:
             orders[0].arrival_prodstep_3_wip = global_settings.current_time
             for product_Type in list_of_product_types:
                 if orders[0].product_type == product_Type:
@@ -63,7 +63,7 @@ def move_orders_flow_shop():
     list_of_wips = [environment.wip_D, environment.wip_E, environment.wip_F]
     orders = environment.machine_C.orders_inside_the_machine
     if len(orders) == 1:
-        if orders[0].processing_time_remaining == 0:
+        if orders[0].processing_time_remaining <= 0:
             orders[0].arrival_prodstep_3_wip = global_settings.current_time
             for product_Type in list_of_product_types:
                 if orders[0].product_type == product_Type:
@@ -78,7 +78,7 @@ def move_orders_flow_shop():
     list_of_machines = [environment.machine_D, environment.machine_E, environment.machine_F]
     for machine in list_of_machines:
         if len(machine.orders_inside_the_machine) == 1:
-            if machine.orders_inside_the_machine[0].processing_time_remaining == 0:
+            if machine.orders_inside_the_machine[0].processing_time_remaining <= 0:
                 if global_settings.show_machine_output == True:
                     print("Step " + str(global_settings.current_time) + ": " + str(
                         machine.name) + ": order finished. " +
@@ -183,7 +183,7 @@ def move_orders_job_shop():
     for machine_element in environment.list_of_all_machines:
         if len(machine_element.orders_inside_the_machine) == 1:
             order = machine_element.orders_inside_the_machine[0]
-            if order.processing_time_remaining == 0:
+            if order.processing_time_remaining <= 0:
                 destination = \
                     list_of_destinations[list_of_product_types.index(order.product_type)][order.current_production_step]
                 #print("destination " + str(len(destination)) + " | machine " + str(len(machine_element.orders_inside_the_machine)))

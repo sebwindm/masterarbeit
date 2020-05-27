@@ -3,30 +3,41 @@ random_seed = 1  # Setting the random seed to a fixed value allows reproducing t
 
 #################### Variables for the initial setup ####################
 current_time = 0  # this variable keeps track of the current time/step/tick in the simulation
-duration_of_one_period = 960 # default value is 960 steps per period
-number_of_periods = 1000 # Default: 8000 periods
-granularity_multiplier = 1 # multiplier for all time calculations, allows to obtain larger/smaller numbers in result
-maximum_simulation_duration = duration_of_one_period * number_of_periods * granularity_multiplier # maximum duration in steps
-warmup_duration = 1000 * granularity_multiplier # costs are reset after warmup phase NOT YET IMPLEMENTED
-repetitions = 1 # how often should the entire simulation be repeated
-demand_distribution = "exponential" # must be "exponential" or "uniform". Used in enviornment.py/set_next_order_arrival_time()
-processing_time_distribution = "exponential" # must be "exponential" or "uniform"
-shop_type = "job_shop" # Must be either "flow_shop" or "job_shop"
+duration_of_one_period = 960  # default value is 960 steps per period
+number_of_periods = 1000  # Default: 8000 periods
+granularity_multiplier = 1  # multiplier for all time calculations, allows to obtain larger/smaller numbers in result
+maximum_simulation_duration = duration_of_one_period * number_of_periods * granularity_multiplier  # maximum duration
+# in steps
+
+warmup_duration = 1000 * granularity_multiplier  # costs are reset after warmup phase NOT YET IMPLEMENTED
+repetitions = 1  # how often should the entire simulation be repeated
+demand_distribution = "exponential"  # must be "exponential" or "uniform". Used in
+# enviornment.py/set_next_order_arrival_time()
+
+processing_time_distribution = "exponential"  # must be "exponential" or "uniform"
+shop_type = "job_shop"  # Must be either "flow_shop" or "job_shop"
 
 #################### Variables used during the simulation runtime ####################
-order_release_policy = "periodic" # must be "periodic", "bil" or "lums"
+order_release_policy = "periodic"  # must be "periodic", "bil" or "lums"
 scheduling_policy = "first_come_first_serve"
-time_of_next_order_arrival = 0 # gets overwritten for every new order
-due_date_multiplier = 9 # how many periods the due date of new orders is in the future. Default: 10 periods
-planned_release_date_multiplier = 4 # used for the BIL order release policy.
+time_of_next_order_arrival = 0  # gets overwritten for every new order
+due_date_multiplier = 9  # how many periods the due date of new orders is in the future. Default: 10 periods
+planned_release_date_multiplier = 4  # used for the BIL order release policy.
 # Planned release date is always planned_release_date_multiplier * duration_of_one_period + current_time
 
-    #### ONLY USED FOR UNIFORM DEMAND ###
-next_order_arrival_lower_bound = 78 * granularity_multiplier # lower limit for when the next order can arrive.
-next_order_arrival_upper_bound = 158 * granularity_multiplier # upper limit for when the next order can arrive
+processing_times_multiplier = 1  # Each step, the machines subtract 1 * processing_times_multiplier from their
+# current order's remaining processing time. Thus a processing_times_multiplier > 1 means that machines subtract MORE
+# than the default amount of remaining processing time from the order, which means that the capacity of the machine
+# is increased. Vice versa, if processing_times_multiplier is below 1, this means that the capacity of the machines are
+# lower than the default value and thus the machines subtract less remaining processing time and take longer to
+# process orders. A processing_times_multiplier of 1 is the default value (subtract 1 each step).
 
-    #### ONLY USED FOR EXPONENTIAL DEMAND ###
-next_order_arrival_exponential_rate_parameter = 118 * granularity_multiplier # this is the λ (lambda) or
+#### ONLY USED FOR UNIFORM DEMAND ###
+next_order_arrival_lower_bound = 78 * granularity_multiplier  # lower limit for when the next order can arrive.
+next_order_arrival_upper_bound = 158 * granularity_multiplier  # upper limit for when the next order can arrive
+
+#### ONLY USED FOR EXPONENTIAL DEMAND ###
+next_order_arrival_exponential_rate_parameter = 118 * granularity_multiplier  # this is the λ (lambda) or
 # rate parameter of the exponential distribution
 
 #################### Variables that are used as result metrics ####################
@@ -44,7 +55,6 @@ sum_lateness_cost = 0
 create_orders_csv = False
 create_steps_csv = False
 
-
 # Variables to turn on certain debugging statements
 show_machine_output = False
 show_movements_from_wip_to_machine = False
@@ -59,7 +69,3 @@ def reset_global_settings():
     current_time = 0
     count_of_generated_orders = 0
     return
-
-
-
-

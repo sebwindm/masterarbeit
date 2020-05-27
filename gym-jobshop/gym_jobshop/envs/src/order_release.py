@@ -1,7 +1,7 @@
 # Orders are released to the production floor/shop floor periodically
 # Every step of the simulation, the order release mechanism attempts to release orders according to certain rules
 # The release mechanism might release any number of orders from the order pool, or none
-from src import global_settings, environment
+from gym_jobshop.envs.src import environment, global_settings
 
 
 # CURRENTLY NOT IN USE

@@ -1,18 +1,15 @@
 # Own module imports
-from src import order_generation, global_settings, order_movement, order_release, debugging, environment, \
-    order_processing, performance_measurement, csv_handler
+from gym_jobshop.envs.src import environment, order_generation, debugging, csv_handler, order_processing, \
+    global_settings, order_release, order_movement, performance_measurement
 
 # Python native module imports
 import time, random
 
-csv_handler.initialize_csv_files()
 
-simulation_start_time = time.time()
-iterations_remaining = global_settings.repetitions
 
-def __init__(self):
+def reset():
     # these are used at the beginning of the production main loop
-    ################################################## SETUP ##################################################
+    ################################################## INITIAL SETUP & RESET ##################################################
     random.seed(global_settings.random_seed)
     global_settings.reset_global_settings()
     performance_measurement.reset_all_costs()
@@ -20,7 +17,32 @@ def __init__(self):
     environment.reset_inventories()
     debugging.verify_reset()
     return
-def step(self,action):
+
+def adjust_processing_times(action):
+    """
+    The input parameter action can have three values as seen in the table below. Depending on the
+    value of action, we either keep or increase/decrease the processing times of all machines in the system
+    by 10%.
+    Note that...
+        -> an increase in processing times means a decrease in capacity, and the other way round
+        -> an increase in capacity means a higher global_settings.processing_times_multiplier
+    :param action:
+        Influence processing times depending on the following table.
+        Num |   Action
+        0   |   Decrease capacity (= increase processing times by 10%)
+        1   |   Keep capacity (= keep processing times)
+        2   |   Increase capacity (= decrease processing times by 10%)
+    :return: nothing gets returned
+    """
+    if action == 0: # decrease capacity
+        global_settings.processing_times_multiplier = global_settings.processing_times_multiplier * 0.9
+    elif action == 1: # keep current capacity
+        global_settings.processing_times_multiplier = global_settings.processing_times_multiplier * 1
+    elif action == 2: # increase capacity
+        global_settings.processing_times_multiplier = global_settings.processing_times_multiplier * 1.1
+    return
+
+def step_one_step_ahead():
     debugging.verify_all()
     # If end of warmup period is reached, reset all costs
     if global_settings.current_time == global_settings.warmup_duration * global_settings.duration_of_one_period * global_settings.granularity_multiplier:
@@ -55,53 +77,55 @@ def step(self,action):
     global_settings.current_time += (1 * global_settings.granularity_multiplier)  # increase simulation step by 1
 
     return
-def reset(self):
-    return
-def render(self, mode='human', close=False):
-    return
 
+def get_results():
+    return [global_settings.total_cost, len(environment.shipped_orders)]
 
-while iterations_remaining > 0:
-    __init__("self")
+if __name__ == '__main__':
+    csv_handler.initialize_csv_files()
 
-    print("Starting simulation. Iteration #" + str(global_settings.random_seed))
-    ################################################## START SIMULATION ##################################################
-    while global_settings.current_time < global_settings.maximum_simulation_duration:
-        """
-        This is the main loop of the simulation. It increases a global timer with every step of the loop, 
-        thus providing a mechanism to track the time of everything that happens inside the simulation. 
-        The sequence of actions in the production system is as follows for every step of the simulation:
-        - Generate orders (only at certain times) and add them to the order pool
-        - Release orders (once every period) from the order pool to the shop floor
-        - Process orders inside the machines
-        - Move orders between inventories and machines; ship orders
-        - Measure the costs (once every period for the current period)
-        """
-        step("self","action")
-    ################################################## END MAIN LOOP ##################################################
+    simulation_start_time = time.time()
+    iterations_remaining = global_settings.repetitions
 
+    while iterations_remaining > 0:
+        reset()
 
+        print("Starting simulation. Iteration #" + str(global_settings.random_seed))
+        ################################################## START SIMULATION MAIN LOOP ##################################################
+        while global_settings.current_time < global_settings.maximum_simulation_duration:
+            """
+            This is the main loop of the simulation. It increases a global timer with every step of the loop, 
+            thus providing a mechanism to track the time of everything that happens inside the simulation. 
+            The sequence of actions in the production system is as follows for every step of the simulation:
+            - Generate orders (only at certain times) and add them to the order pool
+            - Release orders (once every period) from the order pool to the shop floor
+            - Process orders inside the machines
+            - Move orders between inventories and machines; ship orders
+            - Measure the costs (once every period for the current period)
+            """
+            step_one_step_ahead()
+        ################################################## END MAIN LOOP ##################################################
 
-    ################################################## ANALYSIS ##################################################
-    print("Iteration " + str(global_settings.random_seed) + " finished. Orders shipped: " + str(len(environment.shipped_orders)) +
-        " | WIP cost: " + str(global_settings.sum_shopfloor_cost) +
-          " | FGI cost: " + str(global_settings.sum_fgi_cost) +
-          " | lateness cost: " + str(global_settings.sum_lateness_cost) +
-          " | total cost: " + str(global_settings.total_cost))
+        ################################################## ANALYSIS ##################################################
+        print("Iteration " + str(global_settings.random_seed) + " finished. Orders shipped: " + str(len(
+            environment.shipped_orders)) +
+              " | WIP cost: " + str(global_settings.sum_shopfloor_cost) +
+              " | FGI cost: " + str(global_settings.sum_fgi_cost) +
+              " | lateness cost: " + str(global_settings.sum_lateness_cost) +
+              " | total cost: " + str(global_settings.total_cost))
 
+        # Append simulation results to CSV file
+        csv_handler.write_simulation_results()
+        # Measure order flow times. This currently supports only 1 iteration,
+        # file output may behave unexpectedly for more iterations
+        if global_settings.create_orders_csv == True:
+            performance_measurement.measure_order_flow_times()
 
-    # Append simulation results to CSV file
-    csv_handler.write_simulation_results()
-    # Measure order flow times. This currently supports only 1 iteration,
-    # file output may behave unexpectedly for more iterations
-    if global_settings.create_orders_csv == True:
-        performance_measurement.measure_order_flow_times()
+        global_settings.random_seed += 1
+        iterations_remaining -= 1
 
-    global_settings.random_seed += 1
-    iterations_remaining -= 1
+    print(str(global_settings.repetitions) + " iterations done. ")
+    print("Simulation ran for " + str(round(time.time() - simulation_start_time, 4)) + ' seconds and '
+          + str(global_settings.number_of_periods) + " periods per iteration.")
 
-
-print(str(global_settings.repetitions) + " iterations done. ")
-print("Simulation ran for " + str(round(time.time() - simulation_start_time, 4)) + ' seconds and '
-      + str(global_settings.number_of_periods) + " periods per iteration.")
 
