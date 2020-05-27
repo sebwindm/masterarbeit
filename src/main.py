@@ -3,7 +3,7 @@ from src import order_generation, global_settings, order_movement, order_release
     order_processing, performance_measurement, csv_handler
 
 # Python native module imports
-import time, random, csv
+import time, random
 
 csv_handler.initialize_csv_files()
 
@@ -11,7 +11,7 @@ simulation_start_time = time.time()
 iterations_remaining = global_settings.repetitions
 
 def __init__(self):
-    # these are used inside the production main loop
+    # these are used at the beginning of the production main loop
     ################################################## SETUP ##################################################
     random.seed(global_settings.random_seed)
     global_settings.reset_global_settings()
