@@ -7,4 +7,4 @@ system and learn from its interactions with the system.
 See gym-jobshop/readme_gym_jobshop.md for installation 
 instructions for the custom environment. 
 
-2. An example implementation of a reinforcement learning agent
+2. An example implementation of a reinforcement learning agent for this environment
