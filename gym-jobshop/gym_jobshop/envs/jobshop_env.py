@@ -4,7 +4,7 @@ import gym
 from gym import error, spaces, logger, utils
 from gym.utils import seeding
 
-# Own module imports
+# Custom module imports
 from gym_jobshop.envs.src import main
 
 
@@ -18,7 +18,25 @@ class JobShopEnv(gym.Env):
 
     Source:
 
-    Observation:
+    Observations:
+        Type: Box
+
+        - Amount of orders per product type inside the order pool. Example: [18,23,8,25,12,11]
+        - Amount of orders per product type inside the work centers (machines + WIPs), three work centers in total.
+            Example:    [18,23,8,25,12,11]
+                        [18,23,8,25,12,11]
+                        [18,23,8,25,12,11]
+        - Amount of orders per product type inside finished goods inventory [18,23,8,25,12,11]
+        - Amount of orders per product type inside shipped goods inventory [18,23,8,25,12,11]
+
+                        | Order pool | Work center 1 | Work center 2 | Work center 3 | FGI | Shipped goods
+        Product type 1  |   [18,23,8,25,12,11]
+        Product type 2  |   [12,52,44,64,3,33]
+        Product type 3  |   [x,x,x,x,x,x] usw mit den richtigen Zahlen
+        Product type 4  |   [x,x,x,x,x,x]
+        Product type 5  |   [x,x,x,x,x,x]
+        Product type 6  |   [x,x,x,x,x,x]
+
 
     Actions:
         Type: Discrete(3)
@@ -32,7 +50,7 @@ class JobShopEnv(gym.Env):
     Starting state:
 
     Episode Termination:
-
+        Episodes end after 8000 periods, there are no other termination conditions.
     """
     metadata = {'render.modes': ['human']}
 
@@ -42,7 +60,8 @@ class JobShopEnv(gym.Env):
         self.state = None
 
         self.action_space = spaces.Discrete(3)
-        self.observation_space = spaces.Discrete(3)
+        self.observation_space = spaces.Box(3)
+
 
     # def seed(self, seed=None):
     #     self.np_random, seed = gym.utils.seeding.np_random(seed)
@@ -50,12 +69,15 @@ class JobShopEnv(gym.Env):
 
     def step(self, action):
         """
-        Step one period ahead.
-        :param action: action must be either 0, 1 or 2 and is used to adjust the processing times of machines
+        Step one period (= 960 simulation steps) ahead.
+        :param action: Integer number, must be either 0, 1 or 2. Used to adjust the processing times of all machines
         More info at  main.py -> adjust_processing_times()
-        :return: return state, reward, done, {}
+        :return: observation (represents an observed state, indicated by an integer number),
+        reward (floating-point number),
+        done (boolean value, tells whether to terminate the episode),
+        info (diagnostic information for debugging)
         """
-        # Check if action is valid
+        # Verify if action is valid
         assert self.action_space.contains(action), "%r (%s) invalid action" % (action, type(action))
 
         # self.state = ()
@@ -85,10 +107,12 @@ class JobShopEnv(gym.Env):
         for i in range(960):
             main.step_one_step_ahead()
 
-
+        observation = np.array(self.state)
         reward = main.get_results()
-        done = False
-        return np.array(self.state), reward, done, {}
+        done = False # must be True or False. In this project, we do not need this value,
+                    # since episodes always run for the full duration
+        info = None # Not used
+        return observation, reward, done, info
 
 
     def reset(self):
@@ -98,4 +122,4 @@ class JobShopEnv(gym.Env):
         return np.array(self.state)
 
     def render(self, mode='human', close=False):
-        print("Nothing to show")
+        raise Exception("Function render() is not supported in this environment.")

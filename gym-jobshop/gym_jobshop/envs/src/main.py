@@ -21,31 +21,31 @@ def reset():
 def adjust_processing_times(action):
     """
     The input parameter action can have three values as seen in the table below. Depending on the
-    value of action, we either keep or increase/decrease the processing times of all machines in the system
-    by 10%.
+    value of action, we either keep the default or decrease the processing times of all machines in the system.
     Note that...
-        -> an increase in processing times means a decrease in capacity, and the other way round
+        -> a decrease in processing times means an increase in capacity
         -> an increase in capacity means a higher global_settings.processing_times_multiplier
+    For the default value, we assume the production to run for two shifts per day, that is 16 hours (or 960 minutes)
     :param action:
         Influence processing times depending on the following table.
         Num |   Action
-        0   |   Decrease capacity (= increase processing times by 10%)
-        1   |   Keep capacity (= keep processing times)
-        2   |   Increase capacity (= decrease processing times by 10%)
+        0   |   Keep capacity (= keep processing times)
+        1   |   Increase capacity by 25% (= decrease processing times by 25%)
+        2   |   Increase capacity by 50% (= decrease processing times by 50%)
     :return: nothing gets returned
     """
-    if action == 0: # decrease capacity
-        global_settings.processing_times_multiplier = global_settings.processing_times_multiplier * 0.9
-    elif action == 1: # keep current capacity
-        global_settings.processing_times_multiplier = global_settings.processing_times_multiplier * 1
-    elif action == 2: # increase capacity
-        global_settings.processing_times_multiplier = global_settings.processing_times_multiplier * 1.1
+    if action == 0: # run on default capacity (equal to 16 working hours or three shifts)
+        global_settings.processing_times_multiplier = 1.0
+    elif action == 1: # run on higher capacity (TBD)
+        global_settings.processing_times_multiplier = 1.25
+    elif action == 2: # run on maximum capacity (extra working shift, operates 24/7)
+        global_settings.processing_times_multiplier = 1.5
     return
 
 def step_one_step_ahead():
     debugging.verify_all()
     # If end of warmup period is reached, reset all costs
-    if global_settings.current_time == global_settings.warmup_duration * global_settings.duration_of_one_period * global_settings.granularity_multiplier:
+    if global_settings.current_time == global_settings.warmup_duration * global_settings.duration_of_one_period:
         performance_measurement.reset_all_costs()
     ################# Generate orders #################
     # if current time == time at which to generate next order, generate order.
@@ -74,7 +74,7 @@ def step_one_step_ahead():
     # runtime info
     # if global_settings.current_time % 960000 == 0 and global_settings.current_time != 0:
     #     print("Don't worry, still running. 1000 periods have passed since the last message.")
-    global_settings.current_time += (1 * global_settings.granularity_multiplier)  # increase simulation step by 1
+    global_settings.current_time += 1  # increase simulation step by 1
 
     return
 

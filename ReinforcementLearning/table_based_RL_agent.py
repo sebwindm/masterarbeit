@@ -37,7 +37,7 @@ def productionagent(verbose=False):
             #     action = env.action_space.sample()
 
             # Step the game forward
-            action = 1
+            action = 0
             next_state, reward, done, _ = env.step(action)
 
             # Add up the score

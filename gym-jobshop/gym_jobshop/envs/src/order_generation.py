@@ -22,7 +22,7 @@ def generate_order():
     if global_settings.show_order_generation == True:
         print("Step " + str(global_settings.current_time) + " Order generated. Product type: " + str(product_type)
               + " || Due Date: " + str(global_settings.current_time + (
-                global_settings.due_date_multiplier * global_settings.duration_of_one_period * global_settings.granularity_multiplier)
+                global_settings.due_date_multiplier * global_settings.duration_of_one_period)
                                        ) + " || orderID: " + str(global_settings.count_of_generated_orders))
     return
 

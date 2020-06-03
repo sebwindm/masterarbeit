@@ -87,8 +87,8 @@ def set_next_order_arrival_time():
         # Update the time_of_next_order_arrival to a random time within the interval specified in global_settings
         global_settings.time_of_next_order_arrival = \
             global_settings.current_time + round(random.uniform(
-                global_settings.next_order_arrival_lower_bound * global_settings.granularity_multiplier,
-                global_settings.next_order_arrival_upper_bound * global_settings.granularity_multiplier))
+                global_settings.next_order_arrival_lower_bound,
+                global_settings.next_order_arrival_upper_bound))
     elif global_settings.demand_distribution == "exponential":
         # Update the time_of_next_order_arrival to a random time from an exponential distribution
         random_exponential_number = \
@@ -106,19 +106,17 @@ def set_next_order_arrival_time():
 def set_new_random_processing_time(machine_object):
     """
     Set processing time for the desired machine to a random value between the lower bound and the upper bound
-    (influenced by the global granularity multiplier)
     :param machine_object: instance/object of class Machine, e.g. machine_A
     :return: nothing
     """
     if global_settings.processing_time_distribution == "uniform":
         machine_object.processing_time = \
             round(random.uniform(
-                machine_object.uniform_processing_time_lower_bound * global_settings.granularity_multiplier,
-                machine_object.uniform_processing_time_upper_bound * global_settings.granularity_multiplier))
+                machine_object.uniform_processing_time_lower_bound,
+                machine_object.uniform_processing_time_upper_bound))
     elif global_settings.processing_time_distribution == "exponential":
         machine_object.processing_time = \
-            get_random_exponential_number(machine_object.exponential_processing_time) \
-            * global_settings.granularity_multiplier
+            get_random_exponential_number(machine_object.exponential_processing_time)
     else:
         raise ValueError("global_settings.processing_time_distribution invalid value assigned. "
                          "Must be 'exponential' or 'uniform'")

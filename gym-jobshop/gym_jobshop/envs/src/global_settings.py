@@ -5,11 +5,9 @@ random_seed = 1  # Setting the random seed to a fixed value allows reproducing t
 current_time = 0  # this variable keeps track of the current time/step/tick in the simulation
 duration_of_one_period = 960  # default value is 960 steps per period
 number_of_periods = 1000  # Default: 8000 periods
-granularity_multiplier = 1  # multiplier for all time calculations, allows to obtain larger/smaller numbers in result
-maximum_simulation_duration = duration_of_one_period * number_of_periods * granularity_multiplier  # maximum duration
-# in steps
+maximum_simulation_duration = duration_of_one_period * number_of_periods  # maximum duration in steps
 
-warmup_duration = 1000 * granularity_multiplier  # costs are reset after warmup phase NOT YET IMPLEMENTED
+warmup_duration = 1000  # costs are reset after warmup phase NOT YET IMPLEMENTED
 repetitions = 1  # how often should the entire simulation be repeated
 demand_distribution = "exponential"  # must be "exponential" or "uniform". Used in
 # enviornment.py/set_next_order_arrival_time()
@@ -33,11 +31,11 @@ processing_times_multiplier = 1  # Each step, the machines subtract 1 * processi
 # process orders. A processing_times_multiplier of 1 is the default value (subtract 1 each step).
 
 #### ONLY USED FOR UNIFORM DEMAND ###
-next_order_arrival_lower_bound = 78 * granularity_multiplier  # lower limit for when the next order can arrive.
-next_order_arrival_upper_bound = 158 * granularity_multiplier  # upper limit for when the next order can arrive
+next_order_arrival_lower_bound = 78  # lower limit for when the next order can arrive.
+next_order_arrival_upper_bound = 158  # upper limit for when the next order can arrive
 
 #### ONLY USED FOR EXPONENTIAL DEMAND ###
-next_order_arrival_exponential_rate_parameter = 118 * granularity_multiplier  # this is the λ (lambda) or
+next_order_arrival_exponential_rate_parameter = 118  # this is the λ (lambda) or
 # rate parameter of the exponential distribution
 
 #################### Variables that are used as result metrics ####################
@@ -45,6 +43,7 @@ count_of_generated_orders = 0
 cost_per_item_in_shopfloor = 1  # Cost per period for every order which is either inside a machine or wip
 cost_per_item_in_fgi = 4  # Cost per period for storing one order in finished goods inventory
 cost_per_late_item = 16  # Cost per period for exceeding an order's due date
+cost_per_overtime_period = None # Cost per period for running overtime on a machine
 total_cost = 0
 sum_shopfloor_cost = 0
 sum_fgi_cost = 0
