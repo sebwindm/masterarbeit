@@ -34,7 +34,8 @@ if global_settings.shop_type == "flow_shop":
     wip_E = []
     wip_F = []
     list_of_all_wip_elements = [wip_A, wip_B, wip_C, wip_D, wip_E, wip_F]
-    list_of_inventories = [wip_A, wip_B, wip_C, wip_D, wip_E, wip_F, finished_goods_inventory, shipped_orders, order_pool]
+    list_of_inventories = [wip_A, wip_B, wip_C, wip_D, wip_E, wip_F, finished_goods_inventory, shipped_orders,
+                           order_pool]
 
 elif global_settings.shop_type == "job_shop":
     machine_A = class_Machine.Machine("Machine A", 30, 130, 80)
@@ -57,8 +58,8 @@ elif global_settings.shop_type == "job_shop":
     list_of_all_wip_elements = [wip_A, wip_B, wip_C]
     list_of_inventories = [wip_A, wip_B, wip_C, finished_goods_inventory, shipped_orders, order_pool]
 
-else: raise ValueError("Wrong shop_type")
-
+else:
+    raise ValueError("Wrong shop_type")
 
 
 def get_random_exponential_number(rate_parameter_lambda):
@@ -123,7 +124,56 @@ def set_new_random_processing_time(machine_object):
     return
 
 
+def get_order_amounts_by_product_type(product_type):
+    """
+    Retrieve the amounts of orders in each stage of the production process that are of a given product_type.
+    The stages are Order pool | Work center 1 | Work center 2 | Work center 3 | FGI | Shipped goods
+    :param product_type: Integer in range (1,6), this is the product_type from Class_Order.py
+    :return: returns an array with six numbers, which indicate the order amounts
+    """
+    if product_type not in [1,2,3,4,5,6]:
+        raise ValueError("Wrong product type in environment.py -> get_order_amounts_by_product_type")
+    amount_in_order_pool = 0
+    for order_element in order_pool:
+        if order_element.product_type == product_type:
+            amount_in_order_pool += 1
 
+    amount_in_work_center_1 = 0
+    for order_element in wip_A:
+        if order_element.product_type == product_type:
+            amount_in_work_center_1 += 1
+    for order_element in machine_A.orders_inside_the_machine:
+        if order_element.product_type == product_type:
+            amount_in_work_center_1 += 1
+
+    amount_in_work_center_2 = 0
+    for order_element in wip_B:
+        if order_element.product_type == product_type:
+            amount_in_work_center_2 += 1
+    for order_element in machine_B.orders_inside_the_machine:
+        if order_element.product_type == product_type:
+            amount_in_work_center_2 += 1
+
+    amount_in_work_center_3 = 0
+    for order_element in wip_C:
+        if order_element.product_type == product_type:
+            amount_in_work_center_3 += 1
+    for order_element in machine_C.orders_inside_the_machine:
+        if order_element.product_type == product_type:
+            amount_in_work_center_3 += 1
+
+    amount_in_fgi = 0
+    for order_element in finished_goods_inventory:
+        if order_element.product_type == product_type:
+            amount_in_fgi += 1
+
+    amount_in_shipped_goods = 0
+    for order_element in shipped_orders:
+        if order_element.product_type == product_type:
+            amount_in_shipped_goods += 1
+
+    return [amount_in_order_pool, amount_in_work_center_1, amount_in_work_center_2, amount_in_work_center_3,
+            amount_in_fgi, amount_in_shipped_goods]
 
 
 def reset_machines():

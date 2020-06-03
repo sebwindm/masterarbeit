@@ -235,6 +235,7 @@ def move_orders_job_shop():
                 # Calculate lateness/earliness of order:
                 if order_element.shipping_date > order_element.due_date:
                     order_element.lateness = order_element.shipping_date - order_element.due_date
+                    global_settings.temp_sum_of_late_orders_this_period += 1
                 else:
                     order_element.earliness = order_element.shipping_date - order_element.finished_production_date
                 # Calculate flow time of order:

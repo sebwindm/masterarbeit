@@ -41,8 +41,8 @@ class JobShopEnv(gym.Env):
     Actions:
         Type: Discrete(3)
         Num |   Action
-        0   |   Decrease capacity
-        1   |   Keep capacity
+        0   |   Keep capacity
+        1   |   Increase capacity
         2   |   Increase capacity
 
     Reward:
@@ -60,7 +60,7 @@ class JobShopEnv(gym.Env):
         self.state = None
 
         self.action_space = spaces.Discrete(3)
-        self.observation_space = spaces.Box(3)
+        self.observation_space = spaces.Discrete(3)
 
 
     # def seed(self, seed=None):
@@ -107,17 +107,19 @@ class JobShopEnv(gym.Env):
         for i in range(960):
             main.step_one_step_ahead()
 
+        self.state = main.get_current_environment_state()
         observation = np.array(self.state)
-        reward = main.get_results()
-        done = False # must be True or False. In this project, we do not need this value,
-                    # since episodes always run for the full duration
+
+        reward = main.get_results_from_this_period()
+
+        done = False # must be True or False. Not used since episodes always run for the full duration
         info = None # Not used
         return observation, reward, done, info
 
 
     def reset(self):
-        self.state = np.random.uniform(low=-0.05, high=0.05, size=(4,))
         main.reset()
+        self.state = main.get_current_environment_state()
 
         return np.array(self.state)
 
