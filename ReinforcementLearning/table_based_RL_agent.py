@@ -9,9 +9,11 @@ def productionagent(verbose=False):
 
     # Creating the gym environment
     env = gym.make('jobshop-v0')
-
     # Initializing the Q-table of size state-space x action-space with zeros
-    Q = np.zeros((env.observation_space.n, env.action_space.n))
+    #Q = np.zeros((env.observation_space.n, env.action_space.n))
+    # print("Observation state sample mit Gym generiert:")
+    # print("Order pool | Work center 1 | Work center 2 | Work center 3 | FGI | Shipped goods")
+    # print(env.observation_space.sample())
 
     # Set the hyper-parameters
     epsilon = 1.0
@@ -29,7 +31,7 @@ def productionagent(verbose=False):
         score = 0
 
         for period in range(max_periods):
-            # # With the probabilty of (1 - epsilon) take the best action in the Q-table
+            # # With the probability of (1 - epsilon) take the best action in the Q-table
             # if random.uniform(0, 1) > epsilon:
             #     action = np.argmax(Q[state, :])
             # # Else take a random action
@@ -38,11 +40,13 @@ def productionagent(verbose=False):
 
             # Step the game forward
             action = 0
-            next_state, reward, done, _ = env.step(action)
-
+            next_state, reward, done, info = env.step(action)
+            if period == max_periods-1:
+                print("Observation state nach 1000 Perioden:")
+                print("Order pool | Work center 1 | Work center 2 | Work center 3 | FGI | Shipped goods")
+                print(next_state)
             # Add up the score
-            #score += reward
-            score = reward
+            score += reward
 
             # Update the Q-table with the Q-function
             # Q[state, action] = (1 - learning_rate) * Q[state, action] + learning_rate * (
@@ -53,10 +57,9 @@ def productionagent(verbose=False):
 
             if done:
                 break
-
-        # # Reducing the epsilon each episode (Exploration-Exploitation trade-off)
-        # if epsilon >= epsilon_min:
-        #     epsilon *= epsilon_decay
+        # Reducing the epsilon each episode (Exploration-Exploitation trade-off)
+        if epsilon >= epsilon_min:
+            epsilon *= epsilon_decay
 
         scores.append(score)
 
