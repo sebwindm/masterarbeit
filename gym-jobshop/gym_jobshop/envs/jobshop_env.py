@@ -19,24 +19,22 @@ class JobShopEnv(gym.Env):
     Source:
 
     Observations:
-        Type: Box
-
-        - Amount of orders per product type inside the order pool. Example: [18,23,8,25,12,11]
-        - Amount of orders per product type inside the work centers (machines + WIPs), three work centers in total.
-            Example:    [18,23,8,25,12,11]
-                        [18,23,8,25,12,11]
-                        [18,23,8,25,12,11]
-        - Amount of orders per product type inside finished goods inventory [18,23,8,25,12,11]
-        - Amount of orders per product type inside shipped goods inventory [18,23,8,25,12,11]
-
-                        | Order pool | Work center 1 | Work center 2 | Work center 3 | FGI | Shipped goods
-        Product type 1  |   [18,23,8,25,12,11]
-        Product type 2  |   [12,52,44,64,3,33]
-        Product type 3  |   [x,x,x,x,x,x] usw mit den richtigen Zahlen
-        Product type 4  |   [x,x,x,x,x,x]
-        Product type 5  |   [x,x,x,x,x,x]
-        Product type 6  |   [x,x,x,x,x,x]
-
+        Type: Box(low=0, high=np.inf, shape=(6, 6), dtype=np.int_)
+        The observation space contains information on the current state of some production metrics.
+        It features the amount of orders in each stage of production, filtered by the product type of orders.
+        The state is always one array of arrays, containing six arrays, one per product type (1-6). Each array has six
+        elements, which contain the amount of orders for the six production steps
+        (Order pool | Work center 1 | Work center 2 | Work center 3 | FGI | Shipped goods).
+        Example:
+        [[   0    0    0    0   11 1381]
+         [   0    0    0    0    8 1392]
+         [   1    0    0    0   11 1346]
+         [   1    0    0    0   14 1306]
+         [   1    0    0    0   11 1395]
+         [   1    0    0    0   15 1279]]
+         The example state above indicates that there are 11 orders of product type 1 inside the finished goods inventory
+         and 1381 orders of product type 1 are shipped.
+         Product type 3 has one order in Work Center 1 and 1279 orders of product type 6 are shipped.
 
     Actions:
         Type: Discrete(3)
@@ -46,8 +44,11 @@ class JobShopEnv(gym.Env):
         2   |   Increase capacity
 
     Reward:
-        Reward is the final cost after each episode
+        Reward is the final cost after each episode. It is always a negative number, e.g. -246601
+
     Starting state:
+        All stages of production start with zero orders inside them, thus the starting state is an
+        array with six arrays, each consisting of six elements that all have the value 0.
 
     Episode Termination:
         Episodes end after 8000 periods, there are no other termination conditions.
@@ -57,11 +58,10 @@ class JobShopEnv(gym.Env):
     def __init__(self):
         # self.seed()
         self.viewer = None
-        self.state = None
+        self.state = self.reset()
 
         self.action_space = spaces.Discrete(3)
-        self.observation_space = spaces.Discrete(3)
-
+        self.observation_space = spaces.Box(low=0, high=np.inf, shape=(6, 6), dtype=np.int_)
 
     # def seed(self, seed=None):
     #     self.np_random, seed = gym.utils.seeding.np_random(seed)
@@ -70,52 +70,30 @@ class JobShopEnv(gym.Env):
     def step(self, action):
         """
         Step one period (= 960 simulation steps) ahead.
-        :param action: Integer number, must be either 0, 1 or 2. Used to adjust the processing times of all machines
-        More info at  main.py -> adjust_processing_times()
-        :return: observation (represents an observed state, indicated by an integer number),
-        reward (floating-point number),
+        :param action: Integer number, must be either 0, 1 or 2. Used to adjust the processing times of
+        bottleneck machines. More info at main.py -> adjust_processing_times()
+        :return: observation (array of arrays, contains production metrics),
+        reward (floating-point number, indicates the cost that accumulated during the period),
         done (boolean value, tells whether to terminate the episode),
         info (diagnostic information for debugging)
         """
         # Verify if action is valid
         assert self.action_space.contains(action), "%r (%s) invalid action" % (action, type(action))
-
-        # self.state = ()
-        #
-        # done = False
-        #
-        # if not done:
-        #     reward = 1.0
-        # elif self.steps_beyond_done is None:
-        #     # Pole just fell!
-        #     self.steps_beyond_done = 0
-        #     reward = 1.0
-        # else:
-        #     if self.steps_beyond_done == 0:
-        #         logger.warn(
-        #             "You are calling 'step()' even though this "
-        #             "environment has already returned done = True. You "
-        #             "should always call 'reset()' once you receive 'done = "
-        #             "True' -- any further steps are undefined behavior."
-        #         )
-        #     self.steps_beyond_done += 1
-        #     reward = 0.0
-
-        # Adjust processing times (or capacity) depending on action
+        # Adjust processing times of bottleneck machines (capacity) depending on action
         main.adjust_processing_times(action)
         # Step one period ( = 960 steps) ahead
         for i in range(960):
             main.step_one_step_ahead()
-
+        # Retrieve new state from the environment
         self.state = main.get_current_environment_state()
         observation = np.array(self.state)
-
+        # Obtain cost that accumulated during this period
         reward = main.get_results_from_this_period()
 
-        done = False # must be True or False. Not used since episodes always run for the full duration
-        info = None # Not used
-        return observation, reward, done, info
+        done = False  # must be True or False. Not used since episodes always run for the full duration
+        info = None  # Not used
 
+        return observation, reward, done, info
 
     def reset(self):
         main.reset()
@@ -124,4 +102,10 @@ class JobShopEnv(gym.Env):
         return np.array(self.state)
 
     def render(self, mode='human', close=False):
-        raise Exception("Function render() is not supported in this environment.")
+        """
+        Render is not supported in this environment.
+        :param mode: NOT SUPPORTED
+        :param close: NOT SUPPORTED
+        :return:
+        """
+        raise Exception("render() is not supported in this environment.")
