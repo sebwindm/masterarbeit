@@ -28,8 +28,10 @@ def get_current_environment_state():
     :return: state, an array with six elements
     """
     state = []
-    for i in [1, 2, 3, 4, 5, 6]:
-        state.append(environment.get_order_amounts_by_product_type(i))
+    for product_type_element in [1, 2, 3, 4, 5, 6]:
+        # for production_stage_element in environment.get_order_amounts_by_product_type(product_type_element):
+        #     state.append(production_stage_element)
+        state.append(environment.get_order_amounts_by_product_type(product_type_element))
     return state
 
 

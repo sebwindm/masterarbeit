@@ -9,12 +9,16 @@ def productionagent(verbose=False):
 
     # Creating the gym environment
     env = gym.make('jobshop-v0')
-    # Initializing the Q-table of size state-space x action-space with zeros
-    #Q = np.zeros((env.observation_space.n, env.action_space.n))
-    # print("Observation state sample mit Gym generiert:")
-    # print("Order pool | Work center 1 | Work center 2 | Work center 3 | FGI | Shipped goods")
-    # print(env.observation_space.sample())
-    print(env.random_seed)
+
+    print("Observation state sample mit Gym generiert:")
+    #print("Order pool | Work center 1 | Work center 2 | Work center 3 | FGI | Shipped goods")
+    example = env.observation_space.sample()
+    print(str(example)  + " Dimensions: " + str(example.ndim))
+
+    print("Env state am Anfang: "  + str(env.reset()) + " Dimensions: " + str(env.state.ndim))
+
+    print("Dimensions vom flattened observation space: " + str(gym.spaces.flatdim(env.observation_space)))
+    print("Dimensions vom aktuellen observation space: " + str(np.array(env.observation_space).ndim))
 
     # Set the hyper-parameters
     epsilon = 1.0
@@ -32,26 +36,20 @@ def productionagent(verbose=False):
         score = 0
 
         for period in range(max_periods):
-            # # With the probability of (1 - epsilon) take the best action in the Q-table
-            # if random.uniform(0, 1) > epsilon:
-            #     action = np.argmax(Q[state, :])
-            # # Else take a random action
-            # else:
+
             #     action = env.action_space.sample()
 
             # Step the game forward
             action = 0
             next_state, reward, done, info = env.step(action)
+
             if period == max_periods-1:
                 print("Observation state nach 1000 Perioden:")
-                print("Order pool | Work center 1 | Work center 2 | Work center 3 | FGI | Shipped goods")
-                print(next_state)
+                #print("Order pool | Work center 1 | Work center 2 | Work center 3 | FGI | Shipped goods")
+                print(str(next_state) + " Dimensions: " + str(env.state.ndim))
+
             # Add up the score
             score += reward
-
-            # Update the Q-table with the Q-function
-            # Q[state, action] = (1 - learning_rate) * Q[state, action] + learning_rate * (
-            #             reward + gamma * np.max(Q[next_state, :]))
 
             # Set the next state as the current state
             state = next_state
@@ -67,6 +65,7 @@ def productionagent(verbose=False):
         if verbose:
             print("Episode: {}/{}, score: {}".format(episode + 1, episodes, score))
 
+    print("Env state am Ende: "  + str(env.reset()) + " Dimensions: " + str(env.state.ndim))
     return scores
 
 

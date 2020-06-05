@@ -1,7 +1,7 @@
 # External module imports
 import numpy as np
 import gym
-from gym import error, spaces, logger, utils
+from gym import spaces, utils
 from gym.utils import seeding
 
 # Custom module imports
@@ -61,9 +61,10 @@ class JobShopEnv(gym.Env):
         self.state = self.reset()
 
         self.action_space = spaces.Discrete(3)
-        self.observation_space = spaces.Box(low=0, high=np.inf, shape=(6, 6), dtype=np.int_)
-
+        #self.observation_space = spaces.Box(low=0, high=100000, shape=(1, 36), dtype=np.int_)
+        self.observation_space = gym.spaces.flatten_space(spaces.Box(low=0, high=10000, shape=(1, 36), dtype=np.float32))
         self.random_seed = 1
+
     def seed(self, seed=None):
         self.np_random, seed = gym.utils.seeding.np_random(seed)
         return [seed]
@@ -86,27 +87,23 @@ class JobShopEnv(gym.Env):
         for i in range(960):
             main.step_one_step_ahead()
         # Retrieve new state from the environment
-        self.state = main.get_current_environment_state()
-        observation = np.array(self.state)
+        self.state = np.array(main.get_current_environment_state()).flatten()
+        observation = self.state
         # Obtain cost that accumulated during this period
         reward = main.get_results_from_this_period()
 
         done = False  # must be True or False. Not used since episodes always run for the full duration
-        info = None  # Not used
+        info = {}  # Not used
 
         return observation, reward, done, info
 
     def reset(self):
         main.reset()
-        self.state = main.get_current_environment_state()
-
-        return np.array(self.state)
+        self.state = np.array(main.get_current_environment_state()).flatten()
+        return self.state
 
     def render(self, mode='human', close=False):
         """
         Render is not supported in this environment.
-        :param mode: NOT SUPPORTED
-        :param close: NOT SUPPORTED
-        :return:
         """
         raise Exception("render() is not supported in this environment.")

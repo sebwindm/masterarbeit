@@ -129,7 +129,7 @@ def get_order_amounts_by_product_type(product_type):
     Retrieve the amounts of orders in each stage of the production process that are of a given product_type.
     The stages are Order pool | Work center 1 | Work center 2 | Work center 3 | FGI | Shipped goods
     :param product_type: Integer in range (1,6), this is the product_type from Class_Order.py
-    :return: returns an array with six numbers, which indicate the order amounts
+    :return: returns an array with six elements, each indicating the order amounts at the production steps
     """
     if product_type not in [1,2,3,4,5,6]:
         raise ValueError("Wrong product type in environment.py -> get_order_amounts_by_product_type")
