@@ -63,9 +63,10 @@ class JobShopEnv(gym.Env):
         self.action_space = spaces.Discrete(3)
         self.observation_space = spaces.Box(low=0, high=np.inf, shape=(6, 6), dtype=np.int_)
 
-    # def seed(self, seed=None):
-    #     self.np_random, seed = gym.utils.seeding.np_random(seed)
-    #     return [seed]
+        self.random_seed = 1
+    def seed(self, seed=None):
+        self.np_random, seed = gym.utils.seeding.np_random(seed)
+        return [seed]
 
     def step(self, action):
         """

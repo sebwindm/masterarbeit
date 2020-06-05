@@ -14,6 +14,7 @@ def productionagent(verbose=False):
     # print("Observation state sample mit Gym generiert:")
     # print("Order pool | Work center 1 | Work center 2 | Work center 3 | FGI | Shipped goods")
     # print(env.observation_space.sample())
+    print(env.random_seed)
 
     # Set the hyper-parameters
     epsilon = 1.0
