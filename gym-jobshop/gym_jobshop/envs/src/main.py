@@ -2,21 +2,27 @@
 from gym_jobshop.envs.src import environment, order_generation, debugging, csv_handler, order_processing, \
     global_settings, order_release, order_movement, performance_measurement
 
-# Python native module imports
+# Python native module (stdlib) imports
 import time, random
+
+
+def initialize_random_numbers():
+    global_settings.random_seed = -1
+    return
 
 
 def reset():
     # these are used at the beginning of the production main loop
     # this function is not to be confused with reset() of the actual Gym environment in jobshop_env.py
     ################################################## INITIAL SETUP & RESET ##################################################
+    global_settings.random_seed += 1
     random.seed(global_settings.random_seed)
     global_settings.reset_global_settings()
     performance_measurement.reset_all_costs()
     environment.reset_machines()
     environment.reset_inventories()
     debugging.verify_reset()
-    return
+    return get_current_environment_state()
 
 
 def get_current_environment_state():
@@ -131,7 +137,6 @@ if __name__ == '__main__':
             for i in range(global_settings.duration_of_one_period):
                 step_one_step_ahead()
 
-
         ################################################## END MAIN LOOP ##################################################
 
         ################################################## ANALYSIS ##################################################
@@ -156,5 +161,3 @@ if __name__ == '__main__':
     print(str(global_settings.repetitions) + " iterations done. ")
     print("Simulation ran for " + str(round(time.time() - simulation_start_time, 4)) + ' seconds and '
           + str(global_settings.number_of_periods) + " periods per iteration.")
-
-
