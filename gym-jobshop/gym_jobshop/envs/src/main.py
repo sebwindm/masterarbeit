@@ -111,6 +111,17 @@ def get_results_from_this_period():
     cost = global_settings.temp_cost_this_period
     return cost * -1
 
+def is_episode_done():
+    """
+    Check if current episode is done (default: episodes are done after 8000 periods)
+    :return: boolean
+    """
+    if global_settings.current_time >= (global_settings.number_of_periods * global_settings.duration_of_one_period):
+        done = True
+    else:
+        done = False
+    return done
+
 
 if __name__ == '__main__':
     csv_handler.initialize_csv_files()

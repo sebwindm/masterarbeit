@@ -4,13 +4,13 @@ random_seed = 1  # Setting the random seed to a fixed value allows reproducing t
 #################### Variables for the initial setup ####################
 current_time = 0  # this variable keeps track of the current time/step/tick in the simulation
 duration_of_one_period = 960  # default value is 960 steps per period
-number_of_periods = 1000  # Default: 8000 periods
+number_of_periods = 8000  # Default: 8000 periods
 maximum_simulation_duration = duration_of_one_period * number_of_periods  # maximum duration in steps
 
 warmup_duration = 1000  # costs are reset after warmup phase
 repetitions = 1  # how often should the entire simulation be repeated
 demand_distribution = "exponential"  # must be "exponential" or "uniform". Used in
-# enviornment.py/set_next_order_arrival_time()
+# environment.py/set_next_order_arrival_time()
 
 processing_time_distribution = "exponential"  # must be "exponential" or "uniform"
 shop_type = "job_shop"  # Must be either "flow_shop" or "job_shop"

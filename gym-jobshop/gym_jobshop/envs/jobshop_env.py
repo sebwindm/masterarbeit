@@ -89,7 +89,7 @@ class JobShopEnv(gym.Env):
         # Obtain cost that accumulated during this period
         reward = main.get_results_from_this_period()
 
-        done = False  # must be True or False. Not used since episodes always run for the full duration
+        done = main.is_episode_done()  # must be True or False
         info = {}  # Not used
 
         return observation, reward, done, info
