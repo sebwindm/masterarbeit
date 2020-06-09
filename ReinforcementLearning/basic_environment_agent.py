@@ -5,7 +5,10 @@ from statistics import mean
 
 
 def productionagent(verbose=False):
-
+    """
+    This agent runs the environment with the default settings. His actions are fixed, he doesn't use states.
+    The results are identical to just running src/main.py.
+    """
     # Creating the gym environment
     env = gym.make('jobshop-v0')
 
@@ -21,15 +24,15 @@ def productionagent(verbose=False):
 
 
     scores = [] # list of final scores after each episode
-    episodes = 5 # 30
-    max_periods = 1000 # 8000
+    episodes = 30 # 30
 
     for episode in range(episodes):
         # Reset the game-state, done and score before every episode
         env.reset()
         score = 0
+        done = False
 
-        for period in range(max_periods):
+        while not done:
             action = 0 # keep default capacity of bottleneck machines
             next_state, reward, done, info = env.step(action)
 
