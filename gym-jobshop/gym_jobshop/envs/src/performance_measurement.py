@@ -39,6 +39,7 @@ def get_cost_from_current_period():
 
     return [total_cost_this_period, temp_wip_cost, temp_overtime_cost, temp_fgi_cost, temp_late_cost]
 
+
 def update_total_cost():
     """
     Logic for measuring costs:
@@ -81,7 +82,12 @@ def reset_all_costs():
     return
 
 
-def utilization_per_step(): # this appends to the steps.csv file
+def measure_bottleneck_utilization():
+    global_settings.bottleneck_utilization_per_step.append(len(environment.bottleneck_machine.orders_inside_the_machine))
+    return
+
+
+def utilization_per_step():  # this appends to the steps.csv file
     amount_of_active_machines = 0
     for machine in environment.list_of_all_machines:
         if len(machine.orders_inside_the_machine) > 0:
@@ -121,12 +127,12 @@ def measure_order_flow_times():
             order_element.arrival_prodstep_3_m = order_element.arrival_times_m1m2m3[2]
             results_writer.writerow([
                 order_element.orderID, order_element.product_type,
-                order_element.creation_date,order_element.order_release_date,
+                order_element.creation_date, order_element.order_release_date,
                 order_element.arrvival_m1, order_element.arrival_prodstep_2_wip,
                 order_element.arrival_prodstep_2_m, order_element.arrival_prodstep_3_wip,
                 order_element.arrival_prodstep_3_m,
                 order_element.finished_production_date, order_element.due_date,
-                order_element.shipping_date,order_element.lateness,
+                order_element.shipping_date, order_element.lateness,
                 order_element.earliness, order_element.flow_time
             ])
             list_of_earliness_per_order.append(order_element.earliness)
@@ -139,7 +145,3 @@ def measure_order_flow_times():
         # results_writer.writerow([global_settings.average_earliness_of_all_orders,'avg_lateness', global_settings.average_flow_time_of_all_orders])
         orders_CSV.close()
     return
-
-
-
-

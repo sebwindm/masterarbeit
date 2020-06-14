@@ -25,7 +25,7 @@ def predict_with_DQN():
 
     scores = []  # list of final scores after each episode
     episodes = 30  # 30
-    max_periods = 8000  # 8000
+    max_periods = 1000  # 8000
 
     for episode in range(episodes):
         # Reset the game-state, done and score before every episode
@@ -36,6 +36,8 @@ def predict_with_DQN():
             action, _states = model.predict(next_state)
             next_state, reward, done, info = env.step(action)
             score += reward
+            #if action != 0:
+                #print("Action: " + str(action) + " Period: " + str(period))
         scores.append(score)
 
         print("Episode: {}/{}, score: {}".format(episode + 1, episodes, score))

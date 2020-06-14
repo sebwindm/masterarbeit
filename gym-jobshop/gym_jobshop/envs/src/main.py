@@ -3,7 +3,7 @@ from gym_jobshop.envs.src import environment, order_generation, debugging, csv_h
     global_settings, order_release, order_movement, performance_measurement
 
 # Python native module (stdlib) imports
-import time, random
+import time, random, statistics
 
 
 def initialize_random_numbers():
@@ -111,6 +111,7 @@ def get_results_from_this_period():
     cost = global_settings.temp_cost_this_period
     return cost * -1
 
+
 def is_episode_done():
     """
     Check if current episode is done (default: episodes are done after 8000 periods)
@@ -147,6 +148,7 @@ if __name__ == '__main__':
             """
             for i in range(global_settings.duration_of_one_period):
                 step_one_step_ahead()
+                #performance_measurement.measure_bottleneck_utilization()
 
         ################################################## END MAIN LOOP ##################################################
 
@@ -158,7 +160,8 @@ if __name__ == '__main__':
               " | lateness cost: " + str(global_settings.sum_lateness_cost) +
               " | overtime cost: " + str(global_settings.sum_overtime_cost) +
               " | total cost: " + str(global_settings.total_cost))
-
+        print("Bottleneck utilization: " + str(statistics.mean(global_settings.bottleneck_utilization_per_step)))
+        print(len(global_settings.bottleneck_utilization_per_step))
         # Append simulation results to CSV file
         csv_handler.write_simulation_results()
         # Measure order flow times. This currently supports only 1 iteration,
@@ -172,3 +175,12 @@ if __name__ == '__main__':
     print(str(global_settings.repetitions) + " iterations done. ")
     print("Simulation ran for " + str(round(time.time() - simulation_start_time, 4)) + ' seconds and '
           + str(global_settings.number_of_periods) + " periods per iteration.")
+
+
+def get_info():
+    return ("Iteration " + str(global_settings.random_seed) + " finished. Orders shipped: " + str(len(
+        environment.shipped_orders)) + " | WIP cost: " + str(
+        global_settings.sum_shopfloor_cost) + " | FGI cost: " + str(
+        global_settings.sum_fgi_cost) + " | lateness cost: " + str(global_settings.sum_lateness_cost) +
+    " | overtime cost: " + str(global_settings.sum_overtime_cost) +
+    " | total cost: " + str(global_settings.total_cost))

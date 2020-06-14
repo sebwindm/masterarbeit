@@ -36,6 +36,7 @@ if global_settings.shop_type == "flow_shop":
     list_of_all_wip_elements = [wip_A, wip_B, wip_C, wip_D, wip_E, wip_F]
     list_of_inventories = [wip_A, wip_B, wip_C, wip_D, wip_E, wip_F, finished_goods_inventory, shipped_orders,
                            order_pool]
+    bottleneck_machine = machine_E
 
 elif global_settings.shop_type == "job_shop":
     machine_A = class_Machine.Machine("Machine A", 30, 130, 80)
@@ -57,6 +58,7 @@ elif global_settings.shop_type == "job_shop":
     wip_F = None
     list_of_all_wip_elements = [wip_A, wip_B, wip_C]
     list_of_inventories = [wip_A, wip_B, wip_C, finished_goods_inventory, shipped_orders, order_pool]
+    bottleneck_machine = machine_C
 
 else:
     raise ValueError("Wrong shop_type")

@@ -61,6 +61,8 @@ class JobShopEnv(gym.Env):
         self.viewer = None
         main.initialize_random_numbers()
         self.state = self.reset()
+        self.periodcounter = 0 # count the amount of times env.step() has been called, since we have to reset costs
+        # after 1000 periods or 1000 calls of step()
 
         self.action_space = gym.spaces.Discrete(3)
         self.observation_space = gym.spaces.flatten_space(
@@ -83,14 +85,17 @@ class JobShopEnv(gym.Env):
         # Step one period ( = 960 steps) ahead
         for i in range(960):
             main.step_one_step_ahead()
+        self.periodcounter += 1
+
         # Retrieve new state from the environment
         self.state = get_environment_state()
         observation = self.state
         # Obtain cost that accumulated during this period
         reward = main.get_results_from_this_period()
-
+        if self.periodcounter < 1000:
+            reward = 0
         done = main.is_episode_done()  # must be True or False
-        info = {}  # Not used
+        info = {main.get_info()}  # Not used
 
         return observation, reward, done, info
 
