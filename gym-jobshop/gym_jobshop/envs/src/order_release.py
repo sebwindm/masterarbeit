@@ -25,7 +25,7 @@ def release_using_periodic_release():
             temp_number_of_released_orders += 1
     # Job shop logic: each element in the order_pool gets moved to its respective WIP
     if global_settings.shop_type == "job_shop":
-        # iterate over order pool and
+        # iterate over order pool and release to respective inventory depending on product type
         temporary_list = environment.order_pool.copy()
         temp_number_of_released_orders = 0
         for order_element in temporary_list:
@@ -37,6 +37,16 @@ def release_using_periodic_release():
                 environment.wip_B.append(environment.order_pool.pop(environment.order_pool.index(order_element)))
             elif order_element.product_type in (5,6):
                 environment.wip_C.append(environment.order_pool.pop(environment.order_pool.index(order_element)))
+            temp_number_of_released_orders += 1
+    # Same as job shop logic, but for 1 machine only
+    if global_settings.shop_type == "job_shop_1_machine":
+        # iterate over order pool and release to respective inventory depending on product type
+        temporary_list = environment.order_pool.copy()
+        temp_number_of_released_orders = 0
+        for order_element in temporary_list:
+            order_element.order_release_date = global_settings.current_time
+            order_element.current_production_step = 0
+            environment.wip_A.append(environment.order_pool.pop(environment.order_pool.index(order_element)))
             temp_number_of_released_orders += 1
 
     # debug info:
@@ -50,8 +60,7 @@ def release_using_periodic_release():
 # Hybrid rule based order release model, e.g. LUMS-COR after Thürer et al. 2012:
 # release periodically and pull a job forward from the order pool if work center is (about to) starve
 def release_using_lums():
-    # Periodic release:
-
+    raise ValueError("LUMS not implemented")
     return
 
 def release_using_bil():
@@ -67,7 +76,7 @@ def release_using_bil():
                 temp_number_of_released_orders += 1
     # Job shop logic: each element in the order_pool gets moved to its respective WIP
     if global_settings.shop_type == "job_shop":
-        # iterate over order pool and
+        # iterate over order pool and release to respective inventory depending on product type
         temporary_list = environment.order_pool.copy()
         temp_number_of_released_orders = 0
         for order_element in temporary_list:
@@ -81,6 +90,18 @@ def release_using_bil():
                 elif order_element.product_type in (5,6):
                     environment.wip_C.append(environment.order_pool.pop(environment.order_pool.index(order_element)))
                 temp_number_of_released_orders += 1
+    # Same as job shop logic, but for 1 machine only
+    if global_settings.shop_type == "job_shop_1_machine":
+        # iterate over order pool and release to respective inventory depending on product type
+        temporary_list = environment.order_pool.copy()
+        temp_number_of_released_orders = 0
+        for order_element in temporary_list:
+            if order_element.planned_release_date <= global_settings.current_time:
+                order_element.order_release_date = global_settings.current_time
+                order_element.current_production_step = 0
+                environment.wip_A.append(environment.order_pool.pop(environment.order_pool.index(order_element)))
+                temp_number_of_released_orders += 1
+
 
     # debug info:
     if temp_number_of_released_orders > 0 and global_settings.show_order_release == True:

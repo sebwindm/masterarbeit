@@ -19,11 +19,9 @@ def get_cost_from_current_period():
         if len(machine.orders_inside_the_machine) > 0:
             temp_wip_cost += len(machine.orders_inside_the_machine) * \
                              global_settings.cost_per_item_in_shopfloor
-            # Measure overtime cost on bottleneck machines E (flow shop) or C (job shop)
+            # Measure overtime cost on bottleneck machine
             if global_settings.processing_times_multiplier > 1:  # only if overtime is active in this period
-                if global_settings.shop_type == "flow_shop" and machine.name == "Machine E":  # bottleneck machine
-                    temp_overtime_cost += global_settings.cost_per_overtime_period
-                elif global_settings.shop_type == "job_shop" and machine.name == "Machine C":  # bottleneck machine
+                if machine.name == environment.bottleneck_machine.name:
                     temp_overtime_cost += global_settings.cost_per_overtime_period
 
     ################### Measure cost for finished goods inventory:
@@ -88,6 +86,7 @@ def measure_bottleneck_utilization():
 
 
 def utilization_per_step():  # this appends to the steps.csv file
+    raise NotImplementedError("Function utilization_per_step() is not properly implemented")
     amount_of_active_machines = 0
     for machine in environment.list_of_all_machines:
         if len(machine.orders_inside_the_machine) > 0:
@@ -112,6 +111,7 @@ def utilization_per_step():  # this appends to the steps.csv file
 
 
 def measure_order_flow_times():
+    raise NotImplementedError("Function measure_order_flow_times() is not properly implemented")
     list_of_earliness_per_order = []
     list_of_flow_time_per_order = []
     # Create CSV file to store results after each iteration

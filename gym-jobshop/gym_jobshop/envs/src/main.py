@@ -22,10 +22,14 @@ def reset():
     environment.reset_machines()
     environment.reset_inventories()
     debugging.verify_reset()
-    return get_current_environment_state()
+    if global_settings.shop_type != "flow_shop":
+        return get_current_environment_state()
+    else:
+        print("States have not been implemented for global_settings.shop_type == flow_shop")
 
 
 def get_current_environment_state():
+
     """
     Get environment's state as an array, with each array element representing one of the possible product_types of orders.
     Each array element containins the amounts of orders in each stage of production for the associated product_type.

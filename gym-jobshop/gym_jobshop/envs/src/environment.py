@@ -42,9 +42,6 @@ elif global_settings.shop_type == "job_shop":
     machine_A = class_Machine.Machine("Machine A", 30, 130, 80)
     machine_B = class_Machine.Machine("Machine B", 30, 130, 77.5)
     machine_C = class_Machine.Machine("Machine C", 65, 125, 95)
-    machine_D = None
-    machine_E = None
-    machine_F = None
     list_of_all_machines = [machine_A, machine_B, machine_C]
     # Generate WIP (work in process) inventories
     # each WIP inventory is associated with one machine (and each machine with one inventory)
@@ -53,13 +50,21 @@ elif global_settings.shop_type == "job_shop":
     wip_A = []
     wip_B = []
     wip_C = []
-    wip_D = None
-    wip_E = None
-    wip_F = None
     list_of_all_wip_elements = [wip_A, wip_B, wip_C]
     list_of_inventories = [wip_A, wip_B, wip_C, finished_goods_inventory, shipped_orders, order_pool]
     bottleneck_machine = machine_C
 
+elif global_settings.shop_type == "job_shop_1_machine":
+    machine_A = class_Machine.Machine("Machine A", 30, 130, 80)
+    list_of_all_machines = [machine_A]
+    # Generate WIP (work in process) inventories
+    # each WIP inventory is associated with one machine (and each machine with one inventory)
+    # when an order arrives at a machine, the order first gets placed inside the WIP inventory
+    # if the machine is not processing an order, it pulls one order from the WIP according to certain rules
+    wip_A = []
+    list_of_all_wip_elements = [wip_A]
+    list_of_inventories = [wip_A, finished_goods_inventory, shipped_orders, order_pool]
+    bottleneck_machine = machine_A
 else:
     raise ValueError("Wrong shop_type")
 
@@ -147,22 +152,28 @@ def get_order_amounts_by_product_type(product_type):
     for order_element in machine_A.orders_inside_the_machine:
         if order_element.product_type == product_type:
             amount_in_work_center_1 += 1
+    # the code hereafter only gets executed if there is more than 1 machine,
+    # that is in all shop types except for "job_shop_1_machine"
+    if global_settings.shop_type == "job_shop":
+        amount_in_work_center_2 = 0
+        for order_element in wip_B:
+            if order_element.product_type == product_type:
+                amount_in_work_center_2 += 1
+        for order_element in machine_B.orders_inside_the_machine:
+            if order_element.product_type == product_type:
+                amount_in_work_center_2 += 1
 
-    amount_in_work_center_2 = 0
-    for order_element in wip_B:
-        if order_element.product_type == product_type:
-            amount_in_work_center_2 += 1
-    for order_element in machine_B.orders_inside_the_machine:
-        if order_element.product_type == product_type:
-            amount_in_work_center_2 += 1
-
-    amount_in_work_center_3 = 0
-    for order_element in wip_C:
-        if order_element.product_type == product_type:
-            amount_in_work_center_3 += 1
-    for order_element in machine_C.orders_inside_the_machine:
-        if order_element.product_type == product_type:
-            amount_in_work_center_3 += 1
+        amount_in_work_center_3 = 0
+        for order_element in wip_C:
+            if order_element.product_type == product_type:
+                amount_in_work_center_3 += 1
+        for order_element in machine_C.orders_inside_the_machine:
+            if order_element.product_type == product_type:
+                amount_in_work_center_3 += 1
+    # As a workaround, we return 0 for the states of the nonexistent machines
+    if global_settings.shop_type == "job_shop_1_machine":
+        amount_in_work_center_2 = 0
+        amount_in_work_center_3 = 0
 
     amount_in_fgi = 0
     for order_element in finished_goods_inventory:

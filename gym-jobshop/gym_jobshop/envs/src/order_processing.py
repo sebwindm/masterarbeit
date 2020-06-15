@@ -17,9 +17,7 @@ def process_orders():
     # which are taken into account in performance_measurement.py
     for machine in environment.list_of_all_machines:
         if len(machine.orders_inside_the_machine) == 1:
-            if global_settings.shop_type == "flow_shop" and machine.name == "Machine E": # bottleneck machine
-                machine.orders_inside_the_machine[0].processing_time_remaining -= global_settings.processing_times_multiplier
-            elif global_settings.shop_type == "job_shop" and machine.name == "Machine C": # bottleneck machine
+            if machine.name == environment.bottleneck_machine.name:
                 machine.orders_inside_the_machine[0].processing_time_remaining -= global_settings.processing_times_multiplier
             else:
                 machine.orders_inside_the_machine[0].processing_time_remaining -= 1
