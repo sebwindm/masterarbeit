@@ -33,7 +33,7 @@ def productionagent(verbose=False):
         scoredebugger = []
         while not done:
             action = 0  # keep default capacity of bottleneck machines
-            next_state, reward, done, info = env.step(action)
+            next_state, reward, done, info = env.step(action,debug=True)
             # Add up the score
             score += reward
             scoredebugger.append(score)

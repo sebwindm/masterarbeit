@@ -1,6 +1,6 @@
 # External module imports
 import numpy as np
-import gym
+import gym, csv, datetime
 
 # Custom module imports
 from gym_jobshop.envs.src import main
@@ -8,6 +8,8 @@ from gym_jobshop.envs.src import main
 
 def get_environment_state():
     return np.array(main.get_current_environment_state()).flatten()
+
+
 
 
 class JobShopEnv(gym.Env):
@@ -42,8 +44,8 @@ class JobShopEnv(gym.Env):
         Type: Discrete(3)
         Num |   Action
         0   |   Keep capacity
-        1   |   Increase capacity
-        2   |   Increase capacity
+        1   |   Increase capacity by 25%
+        2   |   Increase capacity by 50%
 
     Reward:
         Reward is the final cost after each episode. It is always a negative number, e.g. -246601
@@ -60,15 +62,22 @@ class JobShopEnv(gym.Env):
     def __init__(self):
         self.viewer = None
         main.initialize_random_numbers()
+        self.episode_counter = -1
+        self.period_counter = 0
         self.state = self.reset()
-        self.periodcounter = 0 # count the amount of times env.step() has been called, since we have to reset costs
-        # after 1000 periods or 1000 calls of step()
 
         self.action_space = gym.spaces.Discrete(3)
         self.observation_space = gym.spaces.flatten_space(
             gym.spaces.Box(low=0, high=10000, shape=(1, 36), dtype=np.float32))
 
-    def step(self, action):
+        # Create CSV file to store reward after each period
+        self.csv_prefix = str(datetime.datetime.now().strftime("%d.%m.%Y"))
+        with open(str('../' + self.csv_prefix) + '_rewards_per_period.csv', mode='w') as rewards_per_period_CSV:
+            results_writer = csv.writer(rewards_per_period_CSV, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            results_writer.writerow(['Episode', 'Period', 'Reward'])
+            rewards_per_period_CSV.close()
+
+    def step(self, action, debug=True):
         """
         Step one period (= 960 simulation steps) ahead.
         :param action: Integer number, must be either 0, 1 or 2. Used to adjust the processing times of
@@ -85,23 +94,29 @@ class JobShopEnv(gym.Env):
         # Step one period ( = 960 steps) ahead
         for i in range(960):
             main.step_one_step_ahead()
-        self.periodcounter += 1
-
+        self.period_counter += 1
         # Retrieve new state from the environment
         self.state = get_environment_state()
         observation = self.state
         # Obtain cost that accumulated during this period
         reward = main.get_results_from_this_period()
-        if self.periodcounter < 1000:
-            reward = 0
-        done = main.is_episode_done()  # must be True or False
+
+        done = main.is_episode_done()  # Episode ends when 8000 periods are reached
         info = {main.get_info()}  # Not used
+
+        if debug == True:
+            with open(str('../' + self.csv_prefix) + '_rewards_per_period.csv', mode='a') as rewards_per_period_CSV:
+                results_writer = csv.writer(rewards_per_period_CSV, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                results_writer.writerow([self.episode_counter, self.period_counter, reward])
+                rewards_per_period_CSV.close()
+
 
         return observation, reward, done, info
 
     def reset(self):
         main.reset()
         self.state = get_environment_state()
+        self.episode_counter += 1
         return self.state
 
     def render(self, mode='human', close=False):

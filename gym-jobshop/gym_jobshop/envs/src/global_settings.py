@@ -1,4 +1,4 @@
-random_seed = 1  # Setting the random seed to a fixed value allows reproducing the results
+random_seed = 0  # Setting the random seed to a fixed value allows reproducing the results
 # (meaning that all random numbers are the same every time the simulation runs)
 
 #################### Variables for the initial setup ####################
@@ -16,7 +16,7 @@ processing_time_distribution = "exponential"  # must be "exponential" or "unifor
 shop_type = "job_shop"  # Must be either "flow_shop" or "job_shop"
 
 #################### Variables used during the simulation runtime ####################
-order_release_policy = "periodic"  # must be "periodic", "bil" or "lums"
+order_release_policy = "bil"  # must be "periodic", "bil" or "lums"
 scheduling_policy = "first_come_first_serve"
 time_of_next_order_arrival = 0  # gets overwritten for every new order
 due_date_multiplier = 9  # how many periods the due date of new orders is in the future. Default: 10 periods

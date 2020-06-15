@@ -160,8 +160,8 @@ if __name__ == '__main__':
               " | lateness cost: " + str(global_settings.sum_lateness_cost) +
               " | overtime cost: " + str(global_settings.sum_overtime_cost) +
               " | total cost: " + str(global_settings.total_cost))
-        print("Bottleneck utilization: " + str(statistics.mean(global_settings.bottleneck_utilization_per_step)))
-        print(len(global_settings.bottleneck_utilization_per_step))
+        #print("Bottleneck utilization: " + str(statistics.mean(global_settings.bottleneck_utilization_per_step)))
+        #print(len(global_settings.bottleneck_utilization_per_step))
         # Append simulation results to CSV file
         csv_handler.write_simulation_results()
         # Measure order flow times. This currently supports only 1 iteration,
