@@ -9,9 +9,6 @@ from gym_jobshop.envs.src import main
 def get_environment_state():
     return np.array(main.get_current_environment_state()).flatten()
 
-
-
-
 class JobShopEnv(gym.Env):
     """
     Description:
@@ -74,7 +71,7 @@ class JobShopEnv(gym.Env):
         self.csv_prefix = str(datetime.datetime.now().strftime("%d.%m.%Y"))
         with open(str('../' + self.csv_prefix) + '_rewards_per_period.csv', mode='w') as rewards_per_period_CSV:
             results_writer = csv.writer(rewards_per_period_CSV, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            results_writer.writerow(['Episode', 'Period', 'Reward'])
+            results_writer.writerow(['Period', 'Reward'])
             rewards_per_period_CSV.close()
 
     def step(self, action, debug=True):
@@ -107,9 +104,8 @@ class JobShopEnv(gym.Env):
         if debug == True:
             with open(str('../' + self.csv_prefix) + '_rewards_per_period.csv', mode='a') as rewards_per_period_CSV:
                 results_writer = csv.writer(rewards_per_period_CSV, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                results_writer.writerow([self.episode_counter, self.period_counter, reward])
+                results_writer.writerow([self.period_counter, reward])
                 rewards_per_period_CSV.close()
-
 
         return observation, reward, done, info
 
