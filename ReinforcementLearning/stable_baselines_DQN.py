@@ -13,7 +13,7 @@ env = gym.make('jobshop-v0')
 def train_DQN():
     simulation_start_time = time.time()
     model = DQN(MlpPolicy, env, verbose=1)
-    model.learn(total_timesteps=25000)
+    model.learn(total_timesteps=50000)
     model.save("deepq_jobshop")
     print("Training finished after " + str(round(time.time() - simulation_start_time, 4)) + " seconds")
     return
@@ -36,8 +36,6 @@ def predict_with_DQN():
             action, _states = model.predict(next_state)
             next_state, reward, done, info = env.step(action)
             score += reward
-            #if action != 0:
-                #print("Action: " + str(action) + " Period: " + str(period))
         scores.append(score)
 
         print("Episode: {}/{}, score: {}".format(episode + 1, episodes, score))
@@ -66,6 +64,6 @@ def evaluate_policy():
 
 if __name__ == "__main__":
     # check_environment()
-    #train_DQN()
+    train_DQN()
     #evaluate_policy()
-    predict_with_DQN()
+    #predict_with_DQN()

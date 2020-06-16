@@ -32,11 +32,13 @@ def productionagent(verbose=False):
         done = False
         scoredebugger = []
         while not done:
-            action = 0  # keep default capacity of bottleneck machines
+            action = 2  # keep default capacity of bottleneck machines
             next_state, reward, done, info = env.step(action,debug=True)
             # Add up the score
             score += reward
             scoredebugger.append(score)
+            if env.period_counter % 2000 == 0:
+                print("Period " + str(env.period_counter) + " done")
         scores.append(score)
 
         if verbose:
