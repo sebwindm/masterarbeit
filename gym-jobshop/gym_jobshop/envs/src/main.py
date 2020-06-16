@@ -29,7 +29,6 @@ def reset():
 
 
 def get_current_environment_state():
-
     """
     Get environment's state as an array, with each array element representing one of the possible product_types of orders.
     Each array element containins the amounts of orders in each stage of production for the associated product_type.
@@ -65,9 +64,9 @@ def adjust_processing_times(action):
     if action == 0:  # run on default capacity (equal to 16 working hours or three shifts)
         global_settings.processing_times_multiplier = 1.0
     elif action == 1:  # run on higher capacity (TBD)
-        global_settings.processing_times_multiplier = 1.25
+        global_settings.processing_times_multiplier = 1.125
     elif action == 2:  # run on maximum capacity (extra working shift, operates 24/7)
-        global_settings.processing_times_multiplier = 1.5
+        global_settings.processing_times_multiplier = 1.25
     return
 
 
@@ -96,6 +95,8 @@ def step_one_step_ahead():
     if global_settings.current_time % global_settings.duration_of_one_period == 0:
         performance_measurement.update_total_cost()
 
+    # Measure bottleneck utilization
+    performance_measurement.measure_bottleneck_utilization()
     ################# Release orders to WIP once every period #################
     if global_settings.current_time % global_settings.duration_of_one_period == 0:
         order_release.release_orders()
@@ -152,7 +153,7 @@ if __name__ == '__main__':
             """
             for i in range(global_settings.duration_of_one_period):
                 step_one_step_ahead()
-                #performance_measurement.measure_bottleneck_utilization()
+
 
         ################################################## END MAIN LOOP ##################################################
 
@@ -164,8 +165,9 @@ if __name__ == '__main__':
               " | lateness cost: " + str(global_settings.sum_lateness_cost) +
               " | overtime cost: " + str(global_settings.sum_overtime_cost) +
               " | total cost: " + str(global_settings.total_cost))
-        #print("Bottleneck utilization: " + str(statistics.mean(global_settings.bottleneck_utilization_per_step)))
-        #print(len(global_settings.bottleneck_utilization_per_step))
+        print("Bottleneck utilization: " +
+              str(global_settings.bottleneck_utilization_per_step /
+                  (global_settings.duration_of_one_period * global_settings.number_of_periods)))
         # Append simulation results to CSV file
         csv_handler.write_simulation_results()
         # Measure order flow times. This currently supports only 1 iteration,
@@ -182,9 +184,16 @@ if __name__ == '__main__':
 
 
 def get_info():
-    return ("Iteration " + str(global_settings.random_seed) + " finished. Orders shipped: " + str(len(
+    return (
+        "Iteration " + str(global_settings.random_seed) + " finished. Orders shipped: " + str(len(
         environment.shipped_orders)) + " | WIP cost: " + str(
         global_settings.sum_shopfloor_cost) + " | FGI cost: " + str(
         global_settings.sum_fgi_cost) + " | lateness cost: " + str(global_settings.sum_lateness_cost) +
-    " | overtime cost: " + str(global_settings.sum_overtime_cost) +
-    " | total cost: " + str(global_settings.total_cost))
+        " | overtime cost: " + str(global_settings.sum_overtime_cost) +
+        " | total cost: " + str(global_settings.total_cost) +
+        " | Bottleneck utilization: " + str(global_settings.bottleneck_utilization_per_step /
+                  (global_settings.duration_of_one_period * global_settings.number_of_periods))
+            )
+
+
+

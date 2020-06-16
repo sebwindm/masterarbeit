@@ -55,7 +55,7 @@ elif global_settings.shop_type == "job_shop":
     bottleneck_machine = machine_C
 
 elif global_settings.shop_type == "job_shop_1_machine":
-    machine_A = class_Machine.Machine("Machine A", 30, 130, 80)
+    machine_A = class_Machine.Machine("Machine A", 30, 130, 106.1999115)
     list_of_all_machines = [machine_A]
     # Generate WIP (work in process) inventories
     # each WIP inventory is associated with one machine (and each machine with one inventory)

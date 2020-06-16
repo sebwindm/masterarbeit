@@ -256,6 +256,7 @@ def move_orders_job_shop_1_machine():
     if len(environment.machine_A.orders_inside_the_machine) == 0 and len(environment.wip_A) > 0:
         environment.machine_A.orders_inside_the_machine.append(environment.wip_A.pop(0))
         environment.set_new_random_processing_time(environment.machine_A)  # set a new random processing time for the next order
+        environment.machine_A.orders_inside_the_machine[0].processing_time_remaining = environment.machine_A.processing_time
         environment.machine_A.orders_inside_the_machine[0].arrival_times_m1m2m3.append(global_settings.current_time)
     ##################### Step 3: move orders from FGI to shipped when order due date is reached
     # Move orders from FGI to shipped_orders once they have reached their due_date

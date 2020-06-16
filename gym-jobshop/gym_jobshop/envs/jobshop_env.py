@@ -70,9 +70,9 @@ class JobShopEnv(gym.Env):
         # Create CSV file to store reward after each period
         self.csv_prefix = str(datetime.datetime.now().strftime("%d.%m.%Y"))
         with open(str('../' + self.csv_prefix) + '_rewards_per_period.csv', mode='w') as rewards_per_period_CSV:
-            results_writer = csv.writer(rewards_per_period_CSV, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            results_writer.writerow(['Period', 'Reward'])
-            rewards_per_period_CSV.close()
+            self.results_writer = csv.writer(rewards_per_period_CSV, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            self.results_writer.writerow(['Period', 'Reward'])
+        #rewards_per_period_CSV.close()
 
     def step(self, action, debug=True):
         """
@@ -103,8 +103,8 @@ class JobShopEnv(gym.Env):
 
         if debug == True:
             with open(str('../' + self.csv_prefix) + '_rewards_per_period.csv', mode='a') as rewards_per_period_CSV:
-                results_writer = csv.writer(rewards_per_period_CSV, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                results_writer.writerow([self.period_counter, reward])
+                self.results_writer = csv.writer(rewards_per_period_CSV, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                self.results_writer.writerow([self.period_counter, str(reward) + "\n"])
                 rewards_per_period_CSV.close()
 
         return observation, reward, done, info

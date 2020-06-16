@@ -13,14 +13,14 @@ demand_distribution = "exponential"  # must be "exponential" or "uniform". Used 
 # environment.py/set_next_order_arrival_time()
 
 processing_time_distribution = "exponential"  # must be "exponential" or "uniform"
-shop_type = "job_shop"  # Must be either "flow_shop", "job_shop" or "job_shop_1_machine"
+shop_type = "job_shop_1_machine"  # Must be either "flow_shop", "job_shop" or "job_shop_1_machine"
 
 #################### Variables used during the simulation runtime ####################
 order_release_policy = "bil"  # must be "periodic", "bil" or "lums"
 scheduling_policy = "first_come_first_serve"
 time_of_next_order_arrival = 0  # gets overwritten for every new order
 due_date_multiplier = 9  # how many periods the due date of new orders is in the future. Default: 10 periods
-planned_release_date_multiplier = 4  # used for the BIL order release policy.
+planned_release_date_multiplier = 2  # used for the BIL order release policy.
 # Planned release date is always planned_release_date_multiplier * duration_of_one_period + current_time
 
 processing_times_multiplier = 1  # Each step, the affected machines (bottleneck machines) subtract
@@ -45,7 +45,7 @@ count_of_generated_orders = 0
 cost_per_item_in_shopfloor = 1  # Cost per period for every order which is either inside a machine or wip
 cost_per_item_in_fgi = 4  # Cost per period for storing one order in finished goods inventory
 cost_per_late_item = 16  # Cost per period for exceeding an order's due date
-cost_per_overtime_period = 10  # Cost per period for running overtime on a bottleneck machine
+cost_per_overtime_period = 32  # Cost per period for running overtime on a bottleneck machine
 total_cost = 0
 sum_shopfloor_cost = 0
 sum_fgi_cost = 0
@@ -53,7 +53,7 @@ sum_lateness_cost = 0
 sum_overtime_cost = 0
 temp_sum_of_late_orders_this_period = 0
 temp_cost_this_period = 0
-bottleneck_utilization_per_step = []
+bottleneck_utilization_per_step = 0
 
 create_orders_csv = False
 create_steps_csv = False
