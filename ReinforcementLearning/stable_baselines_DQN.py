@@ -1,3 +1,17 @@
+##### Filter tensorflow version warnings #####
+import os
+
+# https://stackoverflow.com/questions/40426502/is-there-a-way-to-suppress-the-messages-tensorflow-prints/40426709
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
+import tensorflow as tf
+
+tf.get_logger().setLevel('INFO')
+tf.autograph.set_verbosity(0)
+import logging
+
+tf.get_logger().setLevel(logging.ERROR)
+##### ##### ##### ##### ##### ##### #####
+
 import gym_jobshop
 import gym, time
 from statistics import mean
@@ -11,9 +25,21 @@ env = gym.make('jobshop-v0')
 
 
 def train_DQN():
+    custom_callback = CustomCallback()
     simulation_start_time = time.time()
-    model = DQN(MlpPolicy, env, verbose=1)
-    model.learn(total_timesteps=50000)
+    model = DQN(MlpPolicy, env, verbose=1, tensorboard_log="./gym_jobshop_tensorboard_logs/")
+    # model = MlpPolicy
+    # Call Tensorboard logs from a terminal in folder "masterarbeit" (root folder of the project)
+    # tensorboard --logdir ReinforcementLearning/gym_jobshop_tensorboard_logs/DQN_1
+
+    # keyboard input: was will der user machen
+    # a) trainiere für x steps
+    # 10000
+    # b) gebe aktuelle werte aus
+    # dqn proba_step(aktuellster state vom environment als observation + 2 fixe observations
+    # dqn step(s.o.
+    model.learn(total_timesteps=10000, callback=custom_callback)
+
     model.save("deepq_jobshop")
     print("Training finished after " + str(round(time.time() - simulation_start_time, 4)) + " seconds")
     return
@@ -24,8 +50,8 @@ def predict_with_DQN():
     model = DQN.load("deepq_jobshop")
 
     scores = []  # list of final scores after each episode
-    episodes = 30  # 30
-    max_periods = 1000  # 8000
+    episodes = 1  # 30
+    max_periods = 8000  # 8000
 
     for episode in range(episodes):
         # Reset the game-state, done and score before every episode
@@ -62,8 +88,118 @@ def evaluate_policy():
     return
 
 
+# def _get_pretrain_placeholders(self):
+#     import tensorflow as tf
+#     policy = self.step_model
+#     return policy.obs_ph, tf.placeholder(tf.int32, [None]), policy.q_values
+
+from stable_baselines.common.callbacks import BaseCallback
+
+
+class CustomCallback(BaseCallback):
+    """
+    A custom callback that derives from ``BaseCallback``.
+
+    :param verbose: (int) Verbosity level 0: not output 1: info 2: debug
+    """
+
+    def __init__(self, verbose=0):
+        super(CustomCallback, self).__init__(verbose)
+        # Those variables will be accessible in the callback
+        # (they are defined in the base class)
+        # The RL model
+        # self.model = None  # type: BaseRLModel
+        # An alias for self.model.get_env(), the environment used for training
+        # self.training_env = None  # type: Union[gym.Env, VecEnv, None]
+        # Number of time the callback was called
+        # self.n_calls = 0  # type: int
+        # self.num_timesteps = 0  # type: int
+        # local and global variables
+        # self.locals = None  # type: Dict[str, Any]
+        # self.globals = None  # type: Dict[str, Any]
+        # The logger object, used to report things in the terminal
+        # self.logger = None  # type: logger.Logger
+        # # Sometimes, for event callback, it is useful
+        # # to have access to the parent object
+        # self.parent = None  # type: Optional[BaseCallback]
+
+    def _on_training_start(self) -> None:
+        """
+        This method is called before the first rollout starts.
+        """
+        print("TRAINING START")
+        pass
+
+    def _on_rollout_start(self) -> None:
+        """
+        A rollout is the collection of environment interaction
+        using the current policy.
+        This event is triggered before collecting new samples.
+        """
+        pass
+
+    def _on_step(self) -> bool:
+        """
+        This method will be called by the model after each call to `env.step()`.
+
+        For child callback (of an `EventCallback`), this will be called
+        when the event is triggered.
+
+        :return: (bool) If the callback returns False, training is aborted early.
+        """
+        ###### GET Q-VALUES
+        #print(model.policy().step(obs=env.get_observation(), state=None, mask=None, deterministic=False))
+        #####
+        if self.model.num_timesteps % 5000 == 0:
+            answer = input('Continue training? y or n \n')
+            if answer == "y":
+                return True
+            elif answer == "n":
+                model.save("deepq_jobshop")
+                return False
+        #print(str(self.model.policy.sess))
+        return True
+
+    def _on_rollout_end(self) -> None:
+        """
+        This event is triggered before updating the policy.
+        """
+        pass
+
+    def _on_training_end(self) -> None:
+        """
+        This event is triggered before exiting the `learn()` method.
+        """
+        pass
+
+
 if __name__ == "__main__":
-    # check_environment()
-    train_DQN()
-    #evaluate_policy()
-    #predict_with_DQN()
+    answer = input('Type...to.. \n'
+                   '"a" train the model (creates model file)\n'
+                   '"b" delete Tensorboard logs\n'
+                   '"c" predict using the model file\n'
+                   '"d" get Q-Values (BROKEN)\n'
+                   '"e" test\n')
+    if answer == "a":
+        train_DQN()
+    if answer == "b":
+        import shutil
+
+        shutil.rmtree('./gym_jobshop_tensorboard_logs')
+        print("Deleted all Tensorboard logs")
+    if answer == "c":
+        predict_with_DQN()
+    if answer == "d":
+        model = DQN.load("deepq_jobshop")
+        print(model.policy().step(obs=env.get_observation(), state=None, mask=None, deterministic=False))
+    if answer == "e":
+        # load the model, and when loading set verbose to 1
+        loaded_model = DQN.load("deepq_jobshop", verbose=1)
+        # show the save hyperparameters
+        print("loaded:", "gamma =", loaded_model.gamma,
+              "learning_rate =", loaded_model.learning_rate,
+              "seed =", loaded_model.seed)
+        print("Probability of the three possible actions for current state: ",str(loaded_model.action_probability(env.get_observation())))
+        print(loaded_model.get_parameter_list())
+        print(loaded_model.get_parameters())
+    # evaluate_policy()

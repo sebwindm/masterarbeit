@@ -116,6 +116,28 @@ def get_results_from_this_period():
     cost = global_settings.temp_cost_this_period
     return cost * -1
 
+def get_exponentially_smoothed_reward():
+    #
+    latest_reward = get_results_from_this_period()
+    if len(global_settings.past_rewards == 5):
+        global_settings.past_rewards.pop([0])
+    global_settings.past_rewards.append(latest_reward)
+
+    new_smoothed_reward = 0
+
+
+    a = 5
+    test = [1, 10, 100, 1000, 10000]
+    weights = [0.1* a, 0.2, 0.3, 0.4, 0.5]
+
+    new_result = []
+
+    for i in test:
+     new_result.append(i* weights[test.index(i)])
+
+    print(new_result)
+    return
+
 
 def is_episode_done():
     """
@@ -184,7 +206,7 @@ if __name__ == '__main__':
 
 
 def get_info():
-    return (
+    return(
         "Iteration " + str(global_settings.random_seed) + " finished. Orders shipped: " + str(len(
         environment.shipped_orders)) + " | WIP cost: " + str(
         global_settings.sum_shopfloor_cost) + " | FGI cost: " + str(

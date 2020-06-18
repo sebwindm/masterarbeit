@@ -7,3 +7,4 @@ TODO.py
 gym_jobshop.egg-info
 *.zip
 *.sh
+gym_jobshop_tensorboard_logs
