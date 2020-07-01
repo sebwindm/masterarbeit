@@ -64,11 +64,11 @@ def verify_policies():
 
 def verify_fgi():
     # Raise error if there are orders in the FGI (finished goods inventory) even though they shouldn't be there
-    if len(environment.finished_goods_inventory) > 0:
-        for order_element in environment.finished_goods_inventory:
-            if order_element.due_date < global_settings.current_time:
-                raise ValueError("Programming error in finished goods inventory: "
-                                 "overdue order is still inside the inventory. ")
+    # if len(environment.finished_goods_inventory) > 0:
+    #     for order_element in environment.finished_goods_inventory:
+    #         if order_element.due_date < global_settings.current_time:
+    #             raise ValueError("Programming error in finished goods inventory: "
+    #                              "overdue order is still inside the inventory. ")
     return
 
 

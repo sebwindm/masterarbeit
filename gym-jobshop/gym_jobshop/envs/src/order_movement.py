@@ -2,11 +2,14 @@ from gym_jobshop.envs.src import environment, global_settings
 
 
 def ship_orders():
+    global_settings.product_type_shipped_in_this_period = [0,0,0,0,0,0]
     # Move orders from FGI to shipped_orders once they have reached their due_date
     # Calculate lateness for each order
     if len(environment.finished_goods_inventory) > 0:
         for order_element in environment.finished_goods_inventory:
             if order_element.due_date <= global_settings.current_time:
+                global_settings.product_type_shipped_in_this_period[
+                    int(order_element.product_type)-1] += 1
                 order_element.shipping_date = global_settings.current_time
                 order_element.current_production_step = None
                 # Calculate lateness/earliness of order:
@@ -152,7 +155,8 @@ def move_orders_flow_shop():
             machine.orders_inside_the_machine[0].arrival_times_m1m2m3.append(global_settings.current_time)
 
     ##################### Step 3: move orders from FGI to shipped when order due date is reached
-    ship_orders()
+    if global_settings.current_time % global_settings.duration_of_one_period == 0:
+        ship_orders()
 
     return
 
@@ -233,7 +237,8 @@ def move_orders_job_shop():
 
     ##################### Step 3: move orders from FGI to shipped when order due date is reached
     # Move orders from FGI to shipped_orders once they have reached their due_date
-    ship_orders()
+    if global_settings.current_time % global_settings.duration_of_one_period == 0:
+        ship_orders()
     return
 
 
@@ -260,7 +265,8 @@ def move_orders_job_shop_1_machine():
         environment.machine_A.orders_inside_the_machine[0].arrival_times_m1m2m3.append(global_settings.current_time)
     ##################### Step 3: move orders from FGI to shipped when order due date is reached
     # Move orders from FGI to shipped_orders once they have reached their due_date
-    ship_orders()
+    if global_settings.current_time % global_settings.duration_of_one_period == 0:
+        ship_orders()
     return
 
 

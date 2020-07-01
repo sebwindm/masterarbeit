@@ -181,9 +181,9 @@ def get_order_amounts_by_product_type(product_type):
             amount_in_fgi += 1
 
     amount_in_shipped_goods = 0
-    for order_element in shipped_orders:
-        if order_element.product_type == product_type:
-            amount_in_shipped_goods += 1
+    # Count only orders that were shipped in this period
+    amount_in_shipped_goods = global_settings.product_type_shipped_in_this_period[product_type-1]
+    #print(amount_in_shipped_goods)
 
     return [amount_in_order_pool, amount_in_work_center_1, amount_in_work_center_2, amount_in_work_center_3,
             amount_in_fgi, amount_in_shipped_goods]

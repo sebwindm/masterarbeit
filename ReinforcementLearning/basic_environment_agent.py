@@ -1,4 +1,4 @@
-import gym, time, tqdm
+import gym, time
 import gym_jobshop
 import numpy as np
 from statistics import mean
@@ -14,7 +14,7 @@ def productionagent(verbose=False):
     scores = []  # list of final scores after each episode
     episodes = 1  # 30
 
-    for episode in tqdm.tqdm(range(episodes)):
+    for episode in range(episodes):
         # Reset the game-state, done and score before every episode
         env.reset()
         score = 0
@@ -42,3 +42,4 @@ def productionagent(verbose=False):
 if __name__ == "__main__":
     simulation_start_time = time.time()
     scores = productionagent(verbose=True)
+

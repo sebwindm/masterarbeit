@@ -135,7 +135,7 @@ class CustomCallback(BaseCallback):
         This method is called before the first rollout starts.
         """
         print("TRAINING START")
-        print("model.sess: ", self.model.sess)
+        #print("model.sess: ", self.model.sess)
         pass
 
     def _on_rollout_start(self) -> None:
@@ -161,26 +161,23 @@ class CustomCallback(BaseCallback):
         #####
 
 
-        print("self.model.policy = ", self.model.policy.q_values)
+        #print("self.model.policy = ", self.model.policy.q_values)
 
-        print("action_space",self.model.action_space)
-        print("q values: ", self.model.policy.step(self.model, env.state))
+        #print("action_space",self.model.action_space)
+        #print("q values: ", self.model.policy.get_q_values(self.model.policy))
 
-
-        #print("step: ",self.model.policy.proba_step(self, env.state))
+        #print("proba_step: ",self.model.policy.proba_step(self, env.state))
         # sess = self.model.sess
         # result: self.model =  <stable_baselines.deepq.dqn.DQN object at 0x7fc110406080>
-
 
         if self.model.num_timesteps % 1000 == 0:
             answer = input('Continue training? y or n \n')
             if answer == "y":
                 return True
             elif answer == "n":
-                model.save("deepq_jobshop")
+                self.model.save("deepq_jobshop")
+                print("Model saved")
                 return False
-        # print(str(self.model.policy.sess))
-        return True
 
     def _on_rollout_end(self) -> None:
         """
