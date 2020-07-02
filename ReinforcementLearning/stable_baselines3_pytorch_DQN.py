@@ -66,7 +66,7 @@ class CustomCallback(BaseCallback):
 
         :return: (bool) If the callback returns False, training is aborted early.
         """
-        print(self.model.policy)
+        #print(self.model.policy)
         return True
 
     def _on_rollout_end(self) -> None:

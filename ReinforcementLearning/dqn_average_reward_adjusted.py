@@ -104,6 +104,8 @@ class DQN_average_reward_adjusted(DQN):
             with th.no_grad():
                 # Compute the target Q values
                 target_q = self.q_net_target(replay_data.next_observations)
+                #print("replay_data.next_observations",replay_data.next_observations)
+
                 # Follow greedy policy: use the one with the highest value
                 target_q, _ = target_q.max(dim=1)
                 # Avoid potential broadcast issue
@@ -230,21 +232,23 @@ class DQN_average_reward_adjusted(DQN):
                     break
 
                 # # Compute the target Q values
-                # target_st1 = self.q_net_target(new_obs)
-                # # Follow greedy policy: use the one with the highest value
-                # target_st1, _ = target_st1.max(dim=1)
-                # # Avoid potential broadcast issue
-                # target_st1 = target_st1.reshape(-1, 1)
-                #
-                # # Compute the target Q values
-                # target_st = self.q_net_target(old_observation)
-                # # Follow greedy policy: use the one with the highest value
-                # target_st, _ = target_st1.max(dim=1)
-                # # Avoid potential broadcast issue
-                # target_st = target_st1.reshape(-1, 1)
+                target_st1 = self.q_net_target(th.tensor(new_obs))
+                # Follow greedy policy: use the one with the highest value
+                target_st1, _ = target_st1.max(dim=1)
+                # Avoid potential broadcast issue
+                target_st1 = target_st1.reshape(-1, 1)
+
+                # Compute the target Q values
+                target_st = self.q_net_target(th.tensor(old_observation))
+                # Follow greedy policy: use the one with the highest value
+                print(target_st.tolist()[0][0])
+                target_st, _ = target_st.tolist()[0][0]
+                # buffer_action.astype(int)[0]
+                # Avoid potential broadcast issue
+                # target_st = target_st.reshape(-1, 1)
 
 
-                # self.rho = (1-self.alpha) * self.rho + self.alpha * (reward + target_st1) - target_st
+                self.rho = (1-self.alpha) * self.rho + self.alpha * (reward + float(target_st1)) - float(target_st)
 
             if done:
                 total_episodes += 1
