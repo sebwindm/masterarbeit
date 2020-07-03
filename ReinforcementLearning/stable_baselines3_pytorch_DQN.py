@@ -7,8 +7,10 @@ from stable_baselines3.common.evaluation import evaluate_policy
 #env = gym.make('CartPole-v1')
 env = gym.make('jobshop-v0')
 
-# Instantiate the agent
-model = DQN_average_reward_adjusted('MlpPolicy', env, verbose=0,learning_starts = 100)
+# Instantiate the agent with a modified DQN that is average reward adjusted.
+# DQN_average_reward_adjusted is based on stable_baselines3.dqn.DQN
+# 'MlpAverageRewardAdjustedPolicy' is based on stable_baselines3.dqn.policies.DQNPolicy
+model = DQN_average_reward_adjusted('MlpAverageRewardAdjustedPolicy', env, verbose=0,learning_starts = 100)
 
 from stable_baselines3.common.callbacks import BaseCallback
 
@@ -89,7 +91,7 @@ custom_callback = CustomCallback()
 # print("Random agent avg reward, std reward: ", mean_reward, std_reward)
 
 # Train the agent
-model.learn(total_timesteps=100000, callback=custom_callback)
+model.learn(total_timesteps=10000, callback=custom_callback)
 # Save the agent
 model.save("dqn_pytorch")
 

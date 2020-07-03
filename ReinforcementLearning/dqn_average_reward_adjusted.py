@@ -1,30 +1,18 @@
-from typing import List, Tuple, Type, Union, Callable, Optional, Dict, Any
-
-import numpy as np
+import gym, time, pickle, warnings
 import torch as th
+import numpy as np
+from typing import List, Tuple, Type, Union, Callable, Optional, Dict, Any
 import torch.nn.functional as F
-
 from stable_baselines3.common import logger
 from stable_baselines3.common.off_policy_algorithm import OffPolicyAlgorithm
 from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback
 from stable_baselines3.common.utils import get_linear_fn
-from stable_baselines3.dqn.policies import DQNPolicy
+
+#from stable_baselines3.dqn.policies import DQNPolicy
+from ReinforcementLearning.dqn_average_reward_adjusted_policy import DQN_policy_average_reward_adjusted
+
 from stable_baselines3 import DQN
-
-
-
-
-
-
-import time
-import pickle
-import warnings
 from typing import Union, Type, Optional, Dict, Any, Callable, List, Tuple
-
-import gym
-import torch as th
-import numpy as np
-
 from stable_baselines3.common import logger
 from stable_baselines3.common.base_class import BaseAlgorithm
 from stable_baselines3.common.policies import BasePolicy
@@ -39,7 +27,7 @@ from stable_baselines3.common.buffers import ReplayBuffer
 
 
 class DQN_average_reward_adjusted(DQN):
-    def __init__(self, policy: Union[str, Type[DQNPolicy]],
+    def __init__(self, policy: Union[str, Type[DQN_policy_average_reward_adjusted]],
                  env: Union[GymEnv, str],
                  learning_rate: Union[float, Callable] = 1e-4,
                  buffer_size: int = 1000000,
@@ -238,17 +226,17 @@ class DQN_average_reward_adjusted(DQN):
                 # Avoid potential broadcast issue
                 target_st1 = target_st1.reshape(-1, 1)
 
-                # Compute the target Q values
-                target_st = self.q_net_target(th.tensor(old_observation))
-                # Follow greedy policy: use the one with the highest value
-                print(target_st.tolist()[0][0])
-                target_st, _ = target_st.tolist()[0][0]
-                # buffer_action.astype(int)[0]
-                # Avoid potential broadcast issue
-                # target_st = target_st.reshape(-1, 1)
+                # # Compute the target Q values
+                # target_st = self.q_net_target(th.tensor(old_observation))
+                # # Follow greedy policy: use the one with the highest value
+                # print(target_st.tolist()[0][0])
+                # target_st, _ = target_st.tolist()[0][0]
+                # # buffer_action.astype(int)[0]
+                # # Avoid potential broadcast issue
+                # # target_st = target_st.reshape(-1, 1)
 
 
-                self.rho = (1-self.alpha) * self.rho + self.alpha * (reward + float(target_st1)) - float(target_st)
+                # self.rho = (1-self.alpha) * self.rho + self.alpha * (reward + float(target_st1)) - float(target_st)
 
             if done:
                 total_episodes += 1
@@ -268,3 +256,25 @@ class DQN_average_reward_adjusted(DQN):
         callback.on_rollout_end()
 
         return RolloutReturn(mean_reward, total_steps, total_episodes, continue_training)
+
+
+    def predict(self, observation: np.ndarray,
+                state: Optional[np.ndarray] = None,
+                mask: Optional[np.ndarray] = None,
+                deterministic: bool = False) -> Tuple[np.ndarray, Optional[np.ndarray]]:
+        """
+        Overrides the base_class predict function to include epsilon-greedy exploration.
+
+        :param observation: (np.ndarray) the input observation
+        :param state: (Optional[np.ndarray]) The last states (can be None, used in recurrent policies)
+        :param mask: (Optional[np.ndarray]) The last masks (can be None, used in recurrent policies)
+        :param deterministic: (bool) Whether or not to return deterministic actions.
+        :return: (Tuple[np.ndarray, Optional[np.ndarray]]) the model's action and the next state
+            (used in recurrent policies)
+        """
+        if not deterministic and np.random.rand() < self.exploration_rate:
+            n_batch = observation.shape[0]
+            action = np.array([self.action_space.sample() for _ in range(n_batch)])
+        else:
+            action, state = self.policy.predict(observation, state, mask, deterministic)
+        return action, state
