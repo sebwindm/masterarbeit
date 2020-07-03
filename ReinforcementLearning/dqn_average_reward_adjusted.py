@@ -1,33 +1,23 @@
-import gym, time, pickle, warnings
-import torch as th
+from typing import Union, Type, Optional, Dict, Any, Callable, Tuple
 import numpy as np
-from typing import List, Tuple, Type, Union, Callable, Optional, Dict, Any
+import torch as th
 import torch.nn.functional as F
-from stable_baselines3.common import logger
-from stable_baselines3.common.off_policy_algorithm import OffPolicyAlgorithm
-from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback
-from stable_baselines3.common.utils import get_linear_fn
-
-#from stable_baselines3.dqn.policies import DQNPolicy
-from ReinforcementLearning.dqn_average_reward_adjusted_policy import DQN_policy_average_reward_adjusted
-
 from stable_baselines3 import DQN
-from typing import Union, Type, Optional, Dict, Any, Callable, List, Tuple
 from stable_baselines3.common import logger
-from stable_baselines3.common.base_class import BaseAlgorithm
-from stable_baselines3.common.policies import BasePolicy
-from stable_baselines3.common.utils import safe_mean
-from stable_baselines3.common.vec_env import VecEnv
-from stable_baselines3.common.type_aliases import GymEnv, RolloutReturn, MaybeCallback
+from stable_baselines3.common.buffers import ReplayBuffer
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.noise import ActionNoise
-from stable_baselines3.common.buffers import ReplayBuffer
+from stable_baselines3.common.type_aliases import GymEnv, RolloutReturn
+from stable_baselines3.common.vec_env import VecEnv
+from ReinforcementLearning.dqn_average_reward_adjusted_policy import DQNPolicyAverageRewardAdjusted
 
 
-
-
-class DQN_average_reward_adjusted(DQN):
-    def __init__(self, policy: Union[str, Type[DQN_policy_average_reward_adjusted]],
+class DQNAverageRewardAdjusted(DQN):
+    """
+    DQNAverageRewardAdjusted is based on stable_baselines3.dqn
+    This class overwrites some methods from DQN
+    """
+    def __init__(self, policy: Union[str, Type[DQNPolicyAverageRewardAdjusted]],
                  env: Union[GymEnv, str],
                  learning_rate: Union[float, Callable] = 1e-4,
                  buffer_size: int = 1000000,
@@ -54,30 +44,30 @@ class DQN_average_reward_adjusted(DQN):
                  alpha: float = 0.001
                  ):
 
-        super(DQN_average_reward_adjusted, self).__init__(policy,
-                 env,
-                 learning_rate,
-                 buffer_size,
-                 learning_starts,
-                 batch_size,
-                 tau,
-                 gamma,
-                 train_freq,
-                 gradient_steps,
-                 n_episodes_rollout,
-                 optimize_memory_usage,
-                 target_update_interval,
-                 exploration_fraction,
-                 exploration_initial_eps,
-                 exploration_final_eps,
-                 max_grad_norm,
-                 tensorboard_log,
-                 create_eval_env,
-                 policy_kwargs,
-                 verbose,
-                 seed,
-                 device,
-                 _init_setup_model)
+        super(DQNAverageRewardAdjusted, self).__init__(policy,
+                                                       env,
+                                                       learning_rate,
+                                                       buffer_size,
+                                                       learning_starts,
+                                                       batch_size,
+                                                       tau,
+                                                       gamma,
+                                                       train_freq,
+                                                       gradient_steps,
+                                                       n_episodes_rollout,
+                                                       optimize_memory_usage,
+                                                       target_update_interval,
+                                                       exploration_fraction,
+                                                       exploration_initial_eps,
+                                                       exploration_final_eps,
+                                                       max_grad_norm,
+                                                       tensorboard_log,
+                                                       create_eval_env,
+                                                       policy_kwargs,
+                                                       verbose,
+                                                       seed,
+                                                       device,
+                                                       _init_setup_model)
         self.rho = 0
         self.alpha = alpha
 
@@ -219,24 +209,22 @@ class DQN_average_reward_adjusted(DQN):
                 if 0 < n_steps <= total_steps:
                     break
 
-                # # Compute the target Q values
+                # Compute the target Q values
                 target_st1 = self.q_net_target(th.tensor(new_obs))
                 # Follow greedy policy: use the one with the highest value
                 target_st1, _ = target_st1.max(dim=1)
                 # Avoid potential broadcast issue
-                target_st1 = target_st1.reshape(-1, 1)
+                target_st1 = float(target_st1.reshape(-1, 1))
 
-                # # Compute the target Q values
-                # target_st = self.q_net_target(th.tensor(old_observation))
-                # # Follow greedy policy: use the one with the highest value
-                # print(target_st.tolist()[0][0])
-                # target_st, _ = target_st.tolist()[0][0]
-                # # buffer_action.astype(int)[0]
-                # # Avoid potential broadcast issue
-                # # target_st = target_st.reshape(-1, 1)
+                # Compute the target Q values
+                target_st = self.q_net_target(th.tensor(old_observation))
+                # Avoid potential broadcast issue -> IS THIS NECESSARY?
+                target_st = target_st.reshape(-1, 1)
+                # Follow greedy policy: use the one with the highest value
+                target_st = float(target_st[0][0])
+                # buffer_action.astype(int)[0]
 
-
-                # self.rho = (1-self.alpha) * self.rho + self.alpha * (reward + float(target_st1)) - float(target_st)
+                self.rho = (1-self.alpha) * self.rho + self.alpha * (reward + target_st1 - target_st)
 
             if done:
                 total_episodes += 1

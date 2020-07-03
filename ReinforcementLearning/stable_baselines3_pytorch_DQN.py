@@ -1,17 +1,6 @@
 import gym, gym_jobshop
-from ReinforcementLearning.dqn_average_reward_adjusted import DQN_average_reward_adjusted
-from stable_baselines3 import DQN
+from ReinforcementLearning.dqn_average_reward_adjusted import DQNAverageRewardAdjusted
 from stable_baselines3.common.evaluation import evaluate_policy
-
-# Create environment
-#env = gym.make('CartPole-v1')
-env = gym.make('jobshop-v0')
-
-# Instantiate the agent with a modified DQN that is average reward adjusted.
-# DQN_average_reward_adjusted is based on stable_baselines3.dqn.DQN
-# 'MlpAverageRewardAdjustedPolicy' is based on stable_baselines3.dqn.policies.DQNPolicy
-model = DQN_average_reward_adjusted('MlpAverageRewardAdjustedPolicy', env, verbose=0,learning_starts = 100)
-
 from stable_baselines3.common.callbacks import BaseCallback
 
 
@@ -47,7 +36,7 @@ class CustomCallback(BaseCallback):
         This method is called before the first rollout starts.
         """
         print("Training start")
-        #print(self.model) #<stable_baselines3.dqn.dqn.DQN object at 0x7f7e8760dd30>
+        # print(self.model) #<stable_baselines3.dqn.dqn.DQN object at 0x7f7e8760dd30>
 
         pass
 
@@ -68,7 +57,7 @@ class CustomCallback(BaseCallback):
 
         :return: (bool) If the callback returns False, training is aborted early.
         """
-        #print(self.model.policy)
+        # print(self.model.policy)
         return True
 
     def _on_rollout_end(self) -> None:
@@ -87,13 +76,28 @@ class CustomCallback(BaseCallback):
 
 custom_callback = CustomCallback()
 
+# Create environment
+# env = gym.make('CartPole-v1')
+env = gym.make('jobshop-v0')
+
+
+def train_agent():
+    # Instantiate the agent with a modified DQN that is average reward adjusted.
+    # DQNAverageRewardAdjusted is based on stable_baselines3.dqn.DQN
+    # 'MlpAverageRewardAdjustedPolicy' is based on stable_baselines3.dqn.policies.DQNPolicy
+    model = DQNAverageRewardAdjusted('MlpAverageRewardAdjustedPolicy', env, verbose=0, learning_starts=100)
+
+    # Train the agent
+    model.learn(total_timesteps=10000, callback=custom_callback)
+    # Save the agent
+    model.save("dqn_avg_reward_adjusted")
+    return
+
+
 # mean_reward, std_reward = evaluate_policy(model, model.get_env(), n_eval_episodes=1)
 # print("Random agent avg reward, std reward: ", mean_reward, std_reward)
 
-# Train the agent
-model.learn(total_timesteps=10000, callback=custom_callback)
-# Save the agent
-model.save("dqn_pytorch")
+
 
 # Load the trained agent
 # model = DQN.load("dqn_pytorch")
@@ -106,4 +110,5 @@ model.save("dqn_pytorch")
 # for i in range(1000):
 #     action, _states = model.predict(obs, deterministic=True)
 #     obs, rewards, dones, info = env.step(action)
-
+if __name__ == '__main__':
+    train_agent()
