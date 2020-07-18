@@ -10,7 +10,6 @@ def get_environment_state():
     return np.array(main.get_current_environment_state()).flatten()
 
 
-
 class JobShopEnv(gym.Env):
     """
     Description:
@@ -56,7 +55,8 @@ class JobShopEnv(gym.Env):
     Episode Termination:
         Episodes end after 8000 periods, there are no other termination conditions.
     """
-    #metadata = {'render.modes': ['human']}
+
+    # metadata = {'render.modes': ['human']}
 
     def __init__(self):
         self.viewer = None
@@ -68,13 +68,6 @@ class JobShopEnv(gym.Env):
         self.action_space = gym.spaces.Discrete(3)
         self.observation_space = gym.spaces.flatten_space(
             gym.spaces.Box(low=0, high=10000, shape=(1, 36), dtype=np.float32))
-
-        # Create CSV file to store reward after each period
-        self.csv_prefix = str(datetime.datetime.now().strftime("%d.%m.%Y"))
-        with open(str('../' + self.csv_prefix) + '_rewards_per_period.csv', mode='w') as rewards_per_period_CSV:
-            self.results_writer = csv.writer(rewards_per_period_CSV, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            self.results_writer.writerow(['Period', 'Reward'])
-
 
     def step(self, action, debug=True):
         """
@@ -99,18 +92,11 @@ class JobShopEnv(gym.Env):
         observation = self.state
         # Obtain cost that accumulated during this period
         reward = main.get_results_from_this_period() / 300
-
         done = main.is_episode_done()  # Episode ends when 8000 periods are reached
-        #info = {main.get_info()}
         info = {}  # Not used
 
-        if debug == True:
-            with open(str('../' + self.csv_prefix) + '_rewards_per_period.csv', mode='a') as rewards_per_period_CSV:
-                self.results_writer = csv.writer(rewards_per_period_CSV, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                self.results_writer.writerow([self.period_counter, str(reward)])
-
         if self.period_counter % 5000 == 0:
-                print("Period " + str(self.period_counter) + " done")
+            print("Period " + str(self.period_counter) + " done")
         return observation, reward, done, info
 
     def reset(self):
@@ -119,16 +105,9 @@ class JobShopEnv(gym.Env):
         self.episode_counter += 1
         return self.state
 
-    # def render(self, mode='human', close=False):
-    #     """
-    #     Render is not supported in this environment.
-    #     """
-    #     raise Exception("render() is not supported in this environment.")
 
     def post_results(self):
         print(main.get_info())
 
     def get_observation(self):
         return get_environment_state()
-
-
