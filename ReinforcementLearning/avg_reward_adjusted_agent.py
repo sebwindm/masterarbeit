@@ -1,8 +1,8 @@
-import gym, gym_jobshop
-from ReinforcementLearning.dqn_average_reward_adjusted import DQNAverageRewardAdjusted
+import gym, gym_jobshop, time
+from ReinforcementLearning.average_reward_adjusted_algorithm import DQNAverageRewardAdjusted
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.callbacks import BaseCallback
-
+from statistics import mean
 
 class CustomCallback(BaseCallback):
     """
@@ -76,39 +76,82 @@ class CustomCallback(BaseCallback):
 
 custom_callback = CustomCallback()
 
-# Create environment
-# env = gym.make('CartPole-v1')
-env = gym.make('jobshop-v0')
-
 
 def train_agent():
+
+    # Create environment
+    # env = gym.make('CartPole-v1')
+    env = gym.make('jobshop-v0')
     # Instantiate the agent with a modified DQN that is average reward adjusted.
     # DQNAverageRewardAdjusted is based on stable_baselines3.dqn.DQN
     # 'MlpAverageRewardAdjustedPolicy' is based on stable_baselines3.dqn.policies.DQNPolicy
-    model = DQNAverageRewardAdjusted('MlpAverageRewardAdjustedPolicy', env, verbose=0, learning_starts=100)
+    model = DQNAverageRewardAdjusted('MlpAverageRewardAdjustedPolicy', env, verbose=1, learning_starts=100, tensorboard_log="./gym_jobshop_tensorboard_logs/")
 
     # Train the agent
-    model.learn(total_timesteps=10000, callback=custom_callback)
+    start_time = time.time()
+    model.learn(total_timesteps=300000, callback=custom_callback)
+    total_time = time.time() - start_time
+    print(f"Took {total_time:.2f}s")
     # Save the agent
     model.save("dqn_avg_reward_adjusted")
     return
 
+def evaluate_agent():
+    # We create a separate environment for evaluation
+    eval_env = gym.make('jobshop-v0')
+    model = DQNAverageRewardAdjusted.load("dqn_avg_reward_adjusted")
+    # Evaluate the trained agent
+    mean_reward, std_reward = evaluate_policy(model, eval_env, n_eval_episodes=1)
+    print(f'Custom DQN - Mean reward: {mean_reward} +/- {std_reward:.2f}')
+    return
 
-# mean_reward, std_reward = evaluate_policy(model, model.get_env(), n_eval_episodes=1)
-# print("Random agent avg reward, std reward: ", mean_reward, std_reward)
+def predict_with_DQN():
+    simulation_start_time = time.time()
+    env = gym.make('jobshop-v0')
+    model = DQNAverageRewardAdjusted.load("dqn_avg_reward_adjusted")
+
+    scores = []  # list of final scores after each episode
+    episodes = 1  # 30
+    max_periods = 8000  # 8000
+
+    for episode in range(episodes):
+        # Reset the game-state, done and score before every episode
+        next_state = env.reset()
+        score = 0
+
+        for period in range(max_periods):  # predict for x periods
+            action, _states = model.predict(next_state)
+            next_state, reward, done, info = env.step(action)
+            score += reward
+        scores.append(score)
+
+        print("Episode: {}/{}, score: {}".format(episode + 1, episodes, score))
+
+        # print("Observation space at the end: " + str(next_state))
+    print("Prediction finished after " + str(round(time.time() - simulation_start_time, 4)) + " seconds")
+    print("Final average score over " + str(episodes) + " episodes: " + str(mean(scores)))
+    return scores
 
 
-
-# Load the trained agent
-# model = DQN.load("dqn_pytorch")
-
-# Evaluate the agent
-# mean_reward, std_reward = evaluate_policy(model, model.get_env(), n_eval_episodes=1)
-# print("PyTorch DQN agent avg reward, std reward: ", mean_reward, std_reward)
-# Enjoy trained agent
-# obs = env.reset()
-# for i in range(1000):
-#     action, _states = model.predict(obs, deterministic=True)
-#     obs, rewards, dones, info = env.step(action)
-if __name__ == '__main__':
-    train_agent()
+if __name__ == "__main__":
+    answer = input('Type...to.. \n'
+                   '"a" train the model (creates model file)\n'
+                   '"b" delete Tensorboard logs (not implemented)\n'
+                   '"c" predict 1 episode\n'
+                   '"d" predict 1 episode and print mean + std of reward\n'
+                   '"e" not implemented\n'
+                   '"f" not implemented\n'
+                   )
+    if answer == "a":
+        train_agent()
+    if answer == "b":
+        # delete_tensorboard_logs()
+        raise NotImplementedError
+    if answer == "c":
+        predict_with_DQN()
+    if answer == "d":
+        evaluate_agent()
+    if answer == "e":
+        raise NotImplementedError
+    if answer == "f":
+        raise NotImplementedError

@@ -6,12 +6,6 @@ from stable_baselines3.dqn.policies import DQNPolicy, QNetwork
 from stable_baselines3.common.policies import register_policy
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor, FlattenExtractor
 
-with open('../' + 'q_values_learned_results.csv', mode='w') as results_CSV:
-    results_writer = csv.writer(results_CSV, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-    results_writer.writerow(['Action_0', 'Action_1', 'Action_2'])
-
-prediction_counter = 0
-
 
 class QNetworkAverageRewardAdjusted(QNetwork):
     """
@@ -75,22 +69,7 @@ class DQNPolicyAverageRewardAdjusted(DQNPolicy):
 
     def _predict(self, obs: th.Tensor, deterministic: bool = True) -> th.Tensor:
         action, q_values = self.q_net._predict(obs, deterministic=deterministic)
-        global prediction_counter
-        if prediction_counter % 100 == 0:
-            # print("Action: ",action," | Q-values: ",q_values)
-            # print("Observation: ", obs)
-            # Fixed observation
-            obs2 = th.tensor([[10., 0., 0., 0., 5., 0., 7., 1., 0., 0., 5., 1., 6., 1.,
-                               0., 0., 3., 0., 8., 0., 0., 0., 3., 2., 14., 2., 0., 0.,
-                               4., 2., 17., 1., 0., 0., 3., 1.]])
-            fix_observation = self.q_net._predict(obs2)[1][0]
-            # print("fix observation:", fix_observation)
-            with open('../' + 'q_values_learned_results.csv', mode='a') as results_CSV:
-                results_writer = csv.writer(results_CSV, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                results_writer.writerow(
-                    [float(fix_observation[0]), float(fix_observation[1]), float(fix_observation[2])])
 
-        prediction_counter += 1
         return action
 
 
