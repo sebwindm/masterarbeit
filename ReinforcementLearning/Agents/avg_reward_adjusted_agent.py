@@ -4,91 +4,48 @@ from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.callbacks import BaseCallback
 from statistics import mean
 
+
 class CustomCallback(BaseCallback):
     """
     A custom callback that derives from ``BaseCallback``.
-
     :param verbose: (int) Verbosity level 0: not output 1: info 2: debug
     """
-
     def __init__(self, verbose=0):
         super(CustomCallback, self).__init__(verbose)
-        # Those variables will be accessible in the callback
-        # (they are defined in the base class)
-        # The RL model
-        # self.model = None  # type: BaseAlgorithm
-        # An alias for self.model.get_env(), the environment used for training
-        # self.training_env = None  # type: Union[gym.Env, VecEnv, None]
-        # Number of time the callback was called
-        # self.n_calls = 0  # type: int
-        # self.num_timesteps = 0  # type: int
-        # local and global variables
-        # self.locals = None  # type: Dict[str, Any]
-        # self.globals = None  # type: Dict[str, Any]
-        # The logger object, used to report things in the terminal
-        # self.logger = None  # stable_baselines3.common.logger
-        # # Sometimes, for event callback, it is useful
-        # # to have access to the parent object
-        # self.parent = None  # type: Optional[BaseCallback]
-
-    def _on_training_start(self) -> None:
-        """
-        This method is called before the first rollout starts.
-        """
-        print("Training start")
-        # print(self.model) #<stable_baselines3.dqn.dqn.DQN object at 0x7f7e8760dd30>
-
-        pass
-
-    def _on_rollout_start(self) -> None:
-        """
-        A rollout is the collection of environment interaction
-        using the current policy.
-        This event is triggered before collecting new samples.
-        """
-        pass
 
     def _on_step(self) -> bool:
         """
         This method will be called by the model after each call to `env.step()`.
-
-        For child callback (of an `EventCallback`), this will be called
-        when the event is triggered.
-
         :return: (bool) If the callback returns False, training is aborted early.
         """
-        # print(self.model.policy)
+        training_duration = 10000
+        if self.model.num_timesteps % training_duration == 0:
+            answer = input('Continue training for another '+ str(training_duration) + ' steps? y or n \n')
+            if answer == "y":
+                return True
+            elif answer == "n":
+                self.model.save("dqn_avg_reward_adjusted")
+                print("Model saved")
+                return False
+
         return True
 
-    def _on_rollout_end(self) -> None:
-        """
-        This event is triggered before updating the policy.
-        """
-        pass
-
-    def _on_training_end(self) -> None:
-        """
-        This event is triggered before exiting the `learn()` method.
-        """
-        print("Training end")
-        pass
-
-
-custom_callback = CustomCallback()
 
 
 def train_agent():
-
+    """
+    Instantiate the environment, train the agent and after training save the trained model to a file.
+    """
     # Create environment
-    # env = gym.make('CartPole-v1')
     env = gym.make('jobshop-v0')
-    # Instantiate the agent with a modified DQN that is average reward adjusted.
+    # Instantiate the agent with a modified DQN that is average reward adjusted
     # DQNAverageRewardAdjusted is based on stable_baselines3.dqn.DQN
-    # 'MlpAverageRewardAdjustedPolicy' is based on stable_baselines3.dqn.policies.DQNPolicy
+    # MlpAverageRewardAdjustedPolicy is based on stable_baselines3.dqn.policies.DQNPolicy
     model = DQNAverageRewardAdjusted('MlpAverageRewardAdjustedPolicy', env, verbose=1, learning_starts=100, tensorboard_log="./gym_jobshop_tensorboard_logs/")
-
     # Train the agent
     start_time = time.time()
+    custom_callback = CustomCallback()
+    print("Training start")
     model.learn(total_timesteps=300000, callback=custom_callback)
     total_time = time.time() - start_time
     print(f"Took {total_time:.2f}s")
@@ -96,7 +53,11 @@ def train_agent():
     model.save("dqn_avg_reward_adjusted")
     return
 
+
 def evaluate_agent():
+    """
+    Evaluate the trained agent's performance using the evaluate_policy() function of Stable Baselines 3
+    """
     # We create a separate environment for evaluation
     eval_env = gym.make('jobshop-v0')
     model = DQNAverageRewardAdjusted.load("dqn_avg_reward_adjusted")
@@ -105,7 +66,12 @@ def evaluate_agent():
     print(f'Custom DQN - Mean reward: {mean_reward} +/- {std_reward:.2f}')
     return
 
+
 def predict_with_DQN():
+    """
+    Evaluate the trained agent's performance using a custom built function.
+    It is not very different from evaluate_Agent(), except that it returns only the sum of rewards.
+    """
     simulation_start_time = time.time()
     env = gym.make('jobshop-v0')
     model = DQNAverageRewardAdjusted.load("dqn_avg_reward_adjusted")
@@ -133,11 +99,18 @@ def predict_with_DQN():
     return scores
 
 
+def delete_tensorboard_logs():
+    import shutil
+    shutil.rmtree('../gym_jobshop_tensorboard_logs')
+    print("Deleted all Tensorboard logs")
+    return
+
+
 if __name__ == "__main__":
     answer = input('Type...to.. \n'
                    '"a" train the model (creates model file)\n'
-                   '"b" delete Tensorboard logs (not implemented)\n'
-                   '"c" predict 1 episode\n'
+                   '"b" delete Tensorboard logs\n'
+                   '"c" predict 1 episode and print sum of rewards\n'
                    '"d" predict 1 episode and print mean + std of reward\n'
                    '"e" not implemented\n'
                    '"f" not implemented\n'
@@ -145,8 +118,7 @@ if __name__ == "__main__":
     if answer == "a":
         train_agent()
     if answer == "b":
-        # delete_tensorboard_logs()
-        raise NotImplementedError
+        delete_tensorboard_logs()
     if answer == "c":
         predict_with_DQN()
     if answer == "d":

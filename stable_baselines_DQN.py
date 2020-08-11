@@ -20,7 +20,7 @@ import stable_baselines
 from stable_baselines.common.vec_env import DummyVecEnv
 from stable_baselines.deepq.policies import MlpPolicy
 from stable_baselines import DQN
-
+from stable_baselines.common.callbacks import BaseCallback
 env = gym.make('jobshop-v0')
 
 
@@ -95,12 +95,7 @@ def delete_tensorboard_logs():
     return
 
 
-# def _get_pretrain_placeholders(self):
-#     import tensorflow as tf
-#     policy = self.step_model
-#     return policy.obs_ph, tf.placeholder(tf.int32, [None]), policy.q_values
 
-from stable_baselines.common.callbacks import BaseCallback
 
 
 class CustomCallback(BaseCallback):
