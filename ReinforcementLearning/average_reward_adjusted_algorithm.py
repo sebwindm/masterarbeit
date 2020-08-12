@@ -13,6 +13,7 @@ from stable_baselines3.common.noise import ActionNoise
 from stable_baselines3.common.type_aliases import GymEnv, RolloutReturn
 from stable_baselines3.common.vec_env import VecEnv
 from ReinforcementLearning.average_reward_adjusted_policy import DQNPolicyAverageRewardAdjusted
+from stable_baselines3.common.utils import is_vectorized_observation
 import csv
 
 
@@ -79,9 +80,9 @@ class DQNAverageRewardAdjusted(DQN):
         print("obs space from avg rew adj algo: ",self.observation_space)
         # Overwrite off_policy_algorithm.py with custom replay buffer that features a boolean
         # variable "random_action" for indicating whether a random action was taken or not :
-        self.replay_buffer = ReplayBuffer(self.buffer_size, self.observation_space,
-                                                self.action_space, self.device,
-                                                optimize_memory_usage=self.optimize_memory_usage)
+        # self.replay_buffer = ReplayBuffer(self.buffer_size, self.observation_space,
+        #                                         self.action_space, self.device,
+        #                                         optimize_memory_usage=self.optimize_memory_usage)
         # End of overwriting off_policy_algorithm.py
 
         # Create CSV file to store Q-Values for a fixed observation (for debugging purposes):
@@ -239,6 +240,8 @@ class DQNAverageRewardAdjusted(DQN):
 
                 # Select action randomly or according to policy
                 action, buffer_action, is_random_action = self._sample_action(learning_starts, action_noise)
+                #print("action/buffer action/israndomaction ", action, buffer_action,is_random_action)
+                #action, buffer_action = self._sample_action(learning_starts, action_noise)
 
                 # Rescale and perform action
                 new_obs, reward, done, infos = env.step(action)
@@ -264,7 +267,7 @@ class DQNAverageRewardAdjusted(DQN):
                         self._last_original_obs, new_obs_, reward_ = self._last_obs, new_obs, reward
 
                     replay_buffer.add(self._last_original_obs, new_obs_, buffer_action, reward_,
-                                      done, is_random_action)
+                                      done)
                 old_observation = self._last_original_obs
                 self._last_obs = new_obs
                 # Save the unnormalized observation
@@ -305,7 +308,7 @@ class DQNAverageRewardAdjusted(DQN):
                 if is_random_action == 0:
                     self.rho = (1 - self.alpha) * self.rho + self.alpha * (reward_ + target_st1 - target_st)
 
-                # Fixed observation for debugging purposes
+                #Fixed observation for debugging purposes
                 obs2 = th.tensor([[10., 0., 0., 0., 5., 0., 7., 1., 0., 0., 5., 1., 6., 1.,
                                    0., 0., 3., 0., 8., 0., 0., 0., 3., 2., 14., 2., 0., 0.,
                                    4., 2., 17., 1., 0., 0., 3., 1.]])
@@ -358,9 +361,18 @@ class DQNAverageRewardAdjusted(DQN):
         if not deterministic and np.random.rand() < self.exploration_rate:
             # choose random action
             n_batch = observation.shape[0]
-            action = np.array([self.action_space.sample() for _ in range(n_batch)])
+            #action = np.array([self.action_space.sample() for _ in range(n_batch)])
+            action = np.array([self.action_space.sample()])
             is_random_action = 1
+            vectorized_env = is_vectorized_observation(observation, self.policy.observation_space)
+            if not vectorized_env:
+                action = action[0]
+            #print("is random action",action)
         else:
             action, state = self.policy.predict(observation, state, mask, deterministic)
             is_random_action = 0
+            #print("is nonrandom action", action, observation.shape[0])
+        # if type(action) is not np.array:
+        #     action = np.array([action])
         return action, state, is_random_action
+

@@ -38,6 +38,7 @@ def train_agent():
     """
     # Create environment
     env = gym.make('jobshop-v0')
+    #env = gym.make('CartPole-v1')
     # Instantiate the agent with a modified DQN that is average reward adjusted
     # DQNAverageRewardAdjusted is based on stable_baselines3.dqn.DQN
     # MlpAverageRewardAdjustedPolicy is based on stable_baselines3.dqn.policies.DQNPolicy
@@ -74,7 +75,8 @@ def predict_with_DQN():
     """
     simulation_start_time = time.time()
     env = gym.make('jobshop-v0')
-    model = DQNAverageRewardAdjusted.load("dqn_avg_reward_adjusted")
+    #env = gym.make('CartPole-v1')
+    model = DQNAverageRewardAdjusted.load("dqn_avg_reward_adjusted",env=env)
 
     scores = []  # list of final scores after each episode
     episodes = 1  # 30
@@ -86,7 +88,9 @@ def predict_with_DQN():
         score = 0
 
         for period in range(max_periods):  # predict for x periods
-            action, _states = model.predict(next_state)
+            action, _states, _ = model.predict(next_state)
+            #action, _states = model.predict(next_state)
+            #print("action: ",action)
             next_state, reward, done, info = env.step(action)
             score += reward
         scores.append(score)

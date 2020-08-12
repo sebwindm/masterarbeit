@@ -64,12 +64,16 @@ class DQNPolicyAverageRewardAdjusted(DQNPolicy):
                                                              optimizer_class,
                                                              optimizer_kwargs)
 
+
     def make_q_net(self) -> QNetworkAverageRewardAdjusted:
-        return QNetworkAverageRewardAdjusted(**self.net_args).to(self.device)
+        # Make sure we always have separate networks for feature extractors etc
+        features_extractor = self.features_extractor_class(self.observation_space, **self.features_extractor_kwargs)
+        features_dim = features_extractor.features_dim
+        return QNetworkAverageRewardAdjusted(features_extractor=features_extractor, features_dim=features_dim, **self.net_args).to(self.device)
+
 
     def _predict(self, obs: th.Tensor, deterministic: bool = True) -> th.Tensor:
         action, q_values = self.q_net._predict(obs, deterministic=deterministic)
-
         return action
 
 
