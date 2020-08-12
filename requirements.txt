@@ -8,7 +8,7 @@ gast==0.2.2
 google-pasta==0.2.0
 grpcio==1.29.0
 gym==0.17.2
--e git+ssh://git@github.com/sebwindm/masterarbeit.git@b148e2b887b8ca75f6ac05aaf4ff48a6c140cdda#egg=gym_jobshop&subdirectory=gym-jobshop
+-e git+ssh://git@github.com/sebwindm/masterarbeit.git@607785c5079ec32f41d94c017679b3376bf85f80#egg=gym_jobshop&subdirectory=gym-jobshop
 h5py==2.10.0
 importlib-metadata==1.6.1
 joblib==0.15.1
@@ -23,6 +23,7 @@ opt-einsum==3.2.1
 pandas==1.0.4
 Pillow==7.1.2
 protobuf==3.12.2
+psutil==5.7.2
 pyglet==1.5.0
 pyparsing==2.4.7
 python-dateutil==2.8.1
@@ -30,7 +31,7 @@ pytz==2020.1
 scipy==1.4.1
 six==1.15.0
 stable-baselines==2.10.0
-stable-baselines3 @ git+https://github.com/DLR-RM/stable-baselines3@4aa66ed34a631a7ab891781df07b978ba3547cab
+stable-baselines3==0.8.0
 tensorboard==1.15.0
 tensorflow==1.15.0
 tensorflow-estimator==1.15.1
