@@ -28,12 +28,12 @@ class JobShopEnv(gym.Env):
         elements, which contain the amount of orders for the six production steps
         (Order pool | Work center 1 | Work center 2 | Work center 3 | FGI | Shipped goods).
         Example:
-        [[   0    0    0    0   11 1381]
-         [   0    0    0    0    8 1392]
-         [   1    0    0    0   11 1346]
-         [   1    0    0    0   14 1306]
-         [   1    0    0    0   11 1395]
-         [   1    0    0    0   15 1279]]
+        [[  0    0    0    0   11 81
+            0    0    0    0    8 92
+            1    0    0    0   11 46
+            1    0    0    0   14 06
+            1    0    0    0   11 95
+            1    0    0    0   15 79]]
          The example state above indicates that there are 11 orders of product type 1 inside the finished goods inventory
          and 1381 orders of product type 1 are shipped.
          Product type 3 has one order in Work Center 1 and 1279 orders of product type 6 are shipped.
@@ -67,7 +67,7 @@ class JobShopEnv(gym.Env):
 
         self.action_space = gym.spaces.Discrete(3)
         self.observation_space = gym.spaces.flatten_space(
-            gym.spaces.Box(low=0, high=10000, shape=(1, 36), dtype=np.float32))
+            gym.spaces.Box(low=0, high=100, shape=(1,36), dtype=np.float32))
 
     def step(self, action, debug=True):
         """
