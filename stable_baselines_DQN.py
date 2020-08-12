@@ -90,7 +90,7 @@ def evaluate_policy():
 
 def delete_tensorboard_logs():
     import shutil
-    shutil.rmtree('./gym_jobshop_tensorboard_logs')
+    shutil.rmtree('ReinforcementLearning/gym_jobshop_tensorboard_logs')
     print("Deleted all Tensorboard logs")
     return
 
