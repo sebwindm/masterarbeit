@@ -58,7 +58,8 @@ temp_sum_of_late_orders_this_period = 0
 temp_cost_this_period = 0
 bottleneck_utilization_per_step = 0
 past_rewards = []
-product_type_shipped_in_this_period = [0,0,0,0,0,0]
+shipped_orders_by_prodtype_and_lateness = [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0],
+                                                               [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]
 
 create_orders_csv = False
 create_steps_csv = False
