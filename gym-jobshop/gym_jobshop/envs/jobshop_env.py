@@ -7,6 +7,7 @@ from gym_jobshop.envs.src import main
 
 
 def get_environment_state():
+    #print("state from env: ",np.array(main.get_current_environment_state()).flatten())
     return np.array(main.get_current_environment_state()).flatten()
 
 
@@ -21,23 +22,57 @@ class JobShopEnv(gym.Env):
     Source:
 
     Observations:
-        Type: Box(low=0, high=np.inf, shape=(6, 6), dtype=np.int_)
+        Type: Box(low=0, high=30, shape=(1, 96), dtype=np.int_)
         The observation space contains information on the current state of some production metrics.
-        It features the amount of orders in each stage of production, filtered by the product type of orders.
-        The state is always one array of arrays, containing six arrays, one per product type (1-6). Each array has six
-        elements, which contain the amount of orders for the six production steps
-        (Order pool | Work center 1 | Work center 2 | Work center 3 | FGI | Shipped goods).
-        Example:
-        [[  0    0    0    0   11 81
-            0    0    0    0    8 92
-            1    0    0    0   11 46
-            1    0    0    0   14 06
-            1    0    0    0   11 95
-            1    0    0    0   15 79]]
-         The example state above indicates that there are 11 orders of product type 1 inside the finished goods inventory
-         and 1381 orders of product type 1 are shipped.
-         Product type 3 has one order in Work Center 1 and 1279 orders of product type 6 are shipped.
+        It shows the amount of orders in each stage of production, filtered by the product type of orders and
+        sorted by earliness/lateness measured in periods (sorting only applies for order pool, FGI and shipped orders).
+        The state is always one array of arrays, containing six sub-arrays,
+        and one sub-array per product type (1-6). Each array has 16
+        elements, which contain the amount of orders inside the six production steps/stages.
 
+    Example state in theory:
+        order pool | WC1 | WC2 | WC3 | FGI     | Shipped
+    1   x,x,x,x    | x   | x   | x   | x,x,x,x | x,x,x,x,x
+    2   x,x,x,x    | x   | x   | x   | x,x,x,x | x,x,x,x,x
+    3   x,x,x,x    | x   | x   | x   | x,x,x,x | x,x,x,x,x
+    4   x,x,x,x    | x   | x   | x   | x,x,x,x | x,x,x,x,x
+    5   x,x,x,x    | x   | x   | x   | x,x,x,x | x,x,x,x,x
+    6   x,x,x,x    | x   | x   | x   | x,x,x,x | x,x,x,x,x
+    -> 1-6 = product type
+    -> x = amount of orders in the respective production stage
+    -> more than one x per production stage = order amounts are separated and sorted by
+        earliness/lateness/duedates in periods
+
+    Actual state example:
+    [ 0  2  0  6  0  0  0  9  0  0  0  0  0  0  1  0  0  4  2  6  0  0  0  2
+  0  0  0  0  0  0  0  0  0  6  0 10  3  0  0  2  0  0  0  0  1  0  0  0
+  0  3  2  7  1  0  0  2  0  0  0  0  1  0  0  1  0  3  0  7  1  0  0  3
+  0  0  0  0  1  0  0  0  0  4  1  8  1  0  0  2  0  0  0  0  0  2  0  0]
+
+
+    TODO: FURTHER EXPLANATION REQUIRED
+
+        Observation:
+        Type: Box(96,)
+        Num    Observation                                              Min         Max
+        0       No. of orders in order pool due in 1 period             0           15
+        1       No. of orders in order pool due in 2 periods            0           15
+        2       No. of orders in order pool due in 3 periods            0           15
+        3       No. of orders in order pool due in 4 or more periods    0           30
+        4       No. of orders in work center 1                          0           15
+        5       No. of orders in work center 2                          0           15
+        6       No. of orders in work center 3                          0           15
+        7       No. of orders in FGI early by 1 period                  0           30
+        8       No. of orders in FGI early by 2 periods                 0           15
+        9       No. of orders in FGI early by 3 periods                 0           15
+        10      No. of orders in FGI early by 4 or more periods         0           15
+        11      No. of orders shipped in time                           0           15
+        12      No. of orders shipped late by 1 period                  0           15
+        13      No. of orders shipped late by 2 periods                 0           15
+        14      No. of orders shipped late by 2 periods                 0           15
+        15      No. of orders shipped late by 4 or more periods         0           15
+        ... AND SO ON for the other product types. The 16 observations above are just for product type 1.
+        All other product types have the exact same structure, so this goes up to 16*6 = 96 observations
     Actions:
         Type: Discrete(3)
         Num |   Action
@@ -65,10 +100,57 @@ class JobShopEnv(gym.Env):
         self.period_counter = 0
         self.state = self.reset()
 
-        self.action_space = gym.spaces.Discrete(3)
-        self.observation_space = gym.spaces.flatten_space(
-            gym.spaces.Box(low=0, high=100, shape=(1,36), dtype=np.float32))
+        self.action_space = gym.spaces.Discrete(3) # discrete action space with three possible actions
+        # Below is the lower boundary of the observation space. It is an array of 96 elements, all are 0.
+        # Due to the state logic of the production system, there cannot be any state below 0.
+        self.low = np.empty(96, dtype=np.float32)
+        self.low.fill(0)
+        # Below is the upper boundary of the observation space. It is an array of 96 elements, all are
+        # either 15 or 30. The number should be as low as possible, but high enough that the real numbers
+        # don't exceed the upper limit. 15 was chosen as the upper limit for most values, but for some that
+        # tend to exceed 15 the upper limit of 30 was chosen.
+        # As the neural network uses the upper boundary of the observation space as a denominator/bottom
+        # in fractions, a higher number as upper boundary would add unnecessary noise, whereas a lower
+        # number reduces noise. Thus it's advisable to keep the upper boundary numbers as close to the highest
+        # occuring real numbers as possible.
+        self.high = np.array([
+            # prod type 1
+            15,15,15,30, # order pool
+            15,15,15, # work centers
+            30,15,15,15, # FGI
+            15,15,15,15,15, # shipped
+            # prod type 2
+            15,15,15,30, # order pool
+            15,15,15, # work centers
+            30,15,15,15, # FGI
+            15,15,15,15,15, # shipped
+            # prod type 3
+            15,15,15,30, # order pool
+            15,15,15, # work centers
+            30,15,15,15, # FGI
+            15,15,15,15,15, # shipped
+            # prod type 4
+            15,15,15,30, # order pool
+            15,15,15, # work centers
+            30,15,15,15, # FGI
+            15,15,15,15,15, # shipped
+            # prod type 5
+            15,15,15,30, # order pool
+            15,15,15, # work centers
+            30,15,15,15, # FGI
+            15,15,15,15,15, # shipped
+            # prod type 6
+            15,15,15,30, # order pool
+            15,15,15, # work centers
+            30,15,15,15, # FGI
+            15,15,15,15,15 # shipped
+                              ])
 
+        self.observation_space = gym.spaces.flatten_space(
+             gym.spaces.Box(low=self.low, high=self.high, dtype=np.float32))
+
+        print(self.low)
+        print(self.high)
     def step(self, action, debug=True):
         """
         Step one period (= 960 simulation steps) ahead.
