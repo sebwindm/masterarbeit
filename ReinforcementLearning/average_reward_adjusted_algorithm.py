@@ -6,7 +6,6 @@ import torch as th
 import torch.nn.functional as F
 from stable_baselines3 import DQN
 from stable_baselines3.common import logger
-from ReinforcementLearning.custom_replay_buffer import CustomReplayBuffer
 from stable_baselines3.common.buffers import ReplayBuffer
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.noise import ActionNoise
@@ -77,13 +76,7 @@ class DQNAverageRewardAdjusted(DQN):
         self.rho = 0
         self.alpha = alpha
         self.period_counter = 0
-        print("obs space from avg rew adj algo: ",self.observation_space)
-        # Overwrite off_policy_algorithm.py with custom replay buffer that features a boolean
-        # variable "random_action" for indicating whether a random action was taken or not :
-        # self.replay_buffer = ReplayBuffer(self.buffer_size, self.observation_space,
-        #                                         self.action_space, self.device,
-        #                                         optimize_memory_usage=self.optimize_memory_usage)
-        # End of overwriting off_policy_algorithm.py
+        self.current_observation = None
 
         # Create CSV file to store Q-Values for a fixed observation (for debugging purposes):
         with open('../' + 'q_values_learned_results.csv', mode='w') as results_CSV:
@@ -96,8 +89,6 @@ class DQNAverageRewardAdjusted(DQN):
                                         quoting=csv.QUOTE_MINIMAL)
             results_writer.writerow(['Period', 'Reward', 'Rho'])
 
-        # print(self.action_space)
-        # print(self.observation_space)
 
     def train(self, gradient_steps: int, batch_size: int = 100) -> None:
         # Update learning rate according to schedule
@@ -189,6 +180,7 @@ class DQNAverageRewardAdjusted(DQN):
             action = buffer_action
         return action, buffer_action, is_random_action
 
+
     def collect_rollouts(self,
                          env: VecEnv,
                          callback: BaseCallback,
@@ -246,6 +238,7 @@ class DQNAverageRewardAdjusted(DQN):
                 # Rescale and perform action
                 new_obs, reward, done, infos = env.step(action)
                 self.period_counter += 1
+                self.current_observation = new_obs
 
                 # Only stop training if return value is False, not when it is None.
                 if callback.on_step() is False:
@@ -311,7 +304,12 @@ class DQNAverageRewardAdjusted(DQN):
                 #Fixed observation for debugging purposes
                 obs2 = th.tensor([[10., 0., 0., 0., 5., 0., 7., 1., 0., 0., 5., 1., 6., 1.,
                                    0., 0., 3., 0., 8., 0., 0., 0., 3., 2., 14., 2., 0., 0.,
-                                   4., 2., 17., 1., 0., 0., 3., 1.]])
+                                   4., 2., 17., 1., 0., 0., 3., 1.,10., 0., 0., 0., 5., 0., 7., 1., 0., 0., 5., 1., 6., 1.,
+                                   0., 0., 3., 0., 8., 0., 0., 0., 3., 2., 14., 2., 0., 0.,
+                                   4., 2., 17., 1., 0., 0., 3., 1.,
+                                   10., 0., 0., 0., 5., 0., 7., 1., 0., 0., 5., 1., 6., 1.,
+                                   0., 0., 3., 0., 8., 0., 0., 0., 3., 2.
+                                   ]])
                 fix_observation = self.q_net._predict(obs2)[1][0]
                 with open('../' + 'q_values_learned_results.csv', mode='a') as results_CSV:
                     results_writer = csv.writer(results_CSV, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
@@ -376,3 +374,10 @@ class DQNAverageRewardAdjusted(DQN):
         #     action = np.array([action])
         return action, state, is_random_action
 
+    def get_q_values_for_current_observation(self):
+        #print("self.current_observation:", self.current_observation)
+        action, q_values  = self.q_net._predict(th.tensor(self.current_observation))
+        q1 = float(q_values[0][0])
+        q2 = float(q_values[0][1])
+        q3 = float(q_values[0][2])
+        return q1, q2, q3, int(action[0])
