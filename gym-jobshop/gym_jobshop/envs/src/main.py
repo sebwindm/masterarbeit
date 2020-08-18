@@ -55,7 +55,7 @@ def get_current_environment_state():
     for product_type_element in [1, 2, 3, 4, 5, 6]:
         state.append(environment.get_order_amounts_by_product_type(product_type_element))
 
-    #print("State from main.py: ", state)
+    # print("State from main.py: ", state)
     return state
 
 
@@ -131,8 +131,12 @@ def get_results_from_this_period():
     cost = global_settings.temp_cost_this_period
     return cost * -1
 
+
 def get_exponentially_smoothed_reward():
-    #
+    """
+    UNUSED FUNCTION
+    TODO: delete this?
+    """
     latest_reward = get_results_from_this_period()
     if len(global_settings.past_rewards == 5):
         global_settings.past_rewards.pop([0])
@@ -142,12 +146,12 @@ def get_exponentially_smoothed_reward():
 
     a = 5
     test = [1, 10, 100, 1000, 10000]
-    weights = [0.1* a, 0.2, 0.3, 0.4, 0.5]
+    weights = [0.1 * a, 0.2, 0.3, 0.4, 0.5]
 
     new_result = []
 
     for i in test:
-     new_result.append(i* weights[test.index(i)])
+        new_result.append(i * weights[test.index(i)])
 
     print(new_result)
     return
@@ -163,9 +167,6 @@ def is_episode_done():
     else:
         done = False
     return done
-
-
-
 
 
 if __name__ == '__main__':
@@ -192,7 +193,6 @@ if __name__ == '__main__':
             """
             for i in range(global_settings.duration_of_one_period):
                 step_one_step_ahead()
-
 
         ################################################## END MAIN LOOP ##################################################
 
@@ -223,16 +223,14 @@ if __name__ == '__main__':
 
 
 def get_info():
-    return(
-        "Iteration " + str(global_settings.random_seed) + " finished. Orders shipped: " + str(len(
+    return (
+            "Iteration " + str(global_settings.random_seed) + " finished. Orders shipped: " + str(len(
         environment.shipped_orders)) + " | WIP cost: " + str(
         global_settings.sum_shopfloor_cost) + " | FGI cost: " + str(
         global_settings.sum_fgi_cost) + " | lateness cost: " + str(global_settings.sum_lateness_cost) +
-        " | overtime cost: " + str(global_settings.sum_overtime_cost) +
-        " | total cost: " + str(global_settings.total_cost) +
-        " | Bottleneck utilization: " + str(global_settings.bottleneck_utilization_per_step /
-                  (global_settings.duration_of_one_period * global_settings.number_of_periods))
-            )
-
-
-
+            " | overtime cost: " + str(global_settings.sum_overtime_cost) +
+            " | total cost: " + str(global_settings.total_cost) +
+            " | Bottleneck utilization: " + str(global_settings.bottleneck_utilization_per_step /
+                                                (
+                                                            global_settings.duration_of_one_period * global_settings.number_of_periods))
+    )

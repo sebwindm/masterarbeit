@@ -18,61 +18,74 @@ class JobShopEnv(gym.Env):
         1 period = 960 steps
         1 episode = 8000 periods
         The reinforcement learning agent can take an action once every period by using the step() method
-
+        TODO: further documentation needed
     Source:
 
     Observations:
-        Type: Box(low=0, high=30, shape=(1, 96), dtype=np.int_)
+        Type: Box(low=self.low, high=self.high)
         The observation space contains information on the current state of some production metrics.
         It shows the amount of orders in each stage of production, filtered by the product type of orders and
         sorted by earliness/lateness measured in periods (sorting only applies for order pool, FGI and shipped orders).
         The state is always one array of arrays, containing six sub-arrays,
-        and one sub-array per product type (1-6). Each array has 16
+        and one sub-array per product type (1-6). Each sub-array has 22
         elements, which contain the amount of orders inside the six production steps/stages.
+        While the production simulation works with arrays, the Gym environment flattens
+        all arrays into one single array before it gets passed to the agent as an observation.
+        The structure remains the same after flattening, just all square brackets and commas are removed.
+        See the examples below for a better understanding. Flattening is done with numpy.ndarray.flatten
 
-    Example state in theory:
-        order pool | WC1 | WC2 | WC3 | FGI     | Shipped
-    1   x,x,x,x    | x   | x   | x   | x,x,x,x | x,x,x,x,x
-    2   x,x,x,x    | x   | x   | x   | x,x,x,x | x,x,x,x,x
-    3   x,x,x,x    | x   | x   | x   | x,x,x,x | x,x,x,x,x
-    4   x,x,x,x    | x   | x   | x   | x,x,x,x | x,x,x,x,x
-    5   x,x,x,x    | x   | x   | x   | x,x,x,x | x,x,x,x,x
-    6   x,x,x,x    | x   | x   | x   | x,x,x,x | x,x,x,x,x
-    -> 1-6 = product type
+        Normalization: currently the observation state is not normalized. Should it be required
+        to use a normalized observation state, this must be done inside the agent/algorithm.
+
+    Structure of the observation state without real numbers and before flattening:
+        Order pool              | WC1 | WC2 | WC3 | FGI     | Shipped
+    1   x,x,x,x,x,x,x,x,x,x     | x   | x   | x   | x,x,x,x | x,x,x,x,x
+    2   x,x,x,x,x,x,x,x,x,x     | x   | x   | x   | x,x,x,x | x,x,x,x,x
+    3   x,x,x,x,x,x,x,x,x,x     | x   | x   | x   | x,x,x,x | x,x,x,x,x
+    4   x,x,x,x,x,x,x,x,x,x     | x   | x   | x   | x,x,x,x | x,x,x,x,x
+    5   x,x,x,x,x,x,x,x,x,x     | x   | x   | x   | x,x,x,x | x,x,x,x,x
+    6   x,x,x,x,x,x,x,x,x,x     | x   | x   | x   | x,x,x,x | x,x,x,x,x
+    -> row 1-6 = product type
     -> x = amount of orders in the respective production stage
     -> more than one x per production stage = order amounts are separated and sorted by
         earliness/lateness/duedates in periods
 
-    Actual state example:
-    [ 0  2  0  6  0  0  0  9  0  0  0  0  0  0  1  0  0  4  2  6  0  0  0  2
-  0  0  0  0  0  0  0  0  0  6  0 10  3  0  0  2  0  0  0  0  1  0  0  0
-  0  3  2  7  1  0  0  2  0  0  0  0  1  0  0  1  0  3  0  7  1  0  0  3
-  0  0  0  0  1  0  0  0  0  4  1  8  1  0  0  2  0  0  0  0  0  2  0  0]
+    Example with real numbers after flattening. This is how the observation state looks when
+    it gets passed to the agent:
+    [0 0 3 0 3 0 0 0 0 0 0 0 0 4 0 0 0 0 0 1 0 0 0 3 2 0 4 2 0 2 0 0 0 0 0 2 0
+     0 0 0 0 0 0 0 0 0 0 2 1 3 2 0 0 0 1 0 0 1 0 0 0 0 0 0 0 1 0 3 2 0 1 2 0 3
+     1 0 0 0 0 5 0 0 0 0 0 0 1 0 0 2 0 1 0 1 0 1 2 0 0 0 0 3 0 0 0 0 1 0 0 0 0
+     1 1 3 3 0 2 1 1 0 0 0 0 2 0 0 0 0 0 1 0 0]
 
-
-    TODO: FURTHER EXPLANATION REQUIRED
 
         Observation:
-        Type: Box(96,)
+        Type: Box(132,)
         Num    Observation                                              Min         Max
         0       No. of orders in order pool due in 1 period             0           15
         1       No. of orders in order pool due in 2 periods            0           15
         2       No. of orders in order pool due in 3 periods            0           15
-        3       No. of orders in order pool due in 4 or more periods    0           30
-        4       No. of orders in work center 1                          0           15
-        5       No. of orders in work center 2                          0           15
-        6       No. of orders in work center 3                          0           15
-        7       No. of orders in FGI early by 1 period                  0           30
-        8       No. of orders in FGI early by 2 periods                 0           15
-        9       No. of orders in FGI early by 3 periods                 0           15
-        10      No. of orders in FGI early by 4 or more periods         0           15
-        11      No. of orders shipped in time                           0           15
-        12      No. of orders shipped late by 1 period                  0           15
-        13      No. of orders shipped late by 2 periods                 0           15
-        14      No. of orders shipped late by 2 periods                 0           15
-        15      No. of orders shipped late by 4 or more periods         0           15
-        ... AND SO ON for the other product types. The 16 observations above are just for product type 1.
-        All other product types have the exact same structure, so this goes up to 16*6 = 96 observations
+        3       No. of orders in order pool due in 4 periods            0           15
+        4       No. of orders in order pool due in 5 periods            0           15
+        5       No. of orders in order pool due in 6 periods            0           15
+        6       No. of orders in order pool due in 7 periods            0           15
+        7       No. of orders in order pool due in 8 periods            0           15
+        8       No. of orders in order pool due in 9 periods            0           15
+        9       No. of orders in order pool due in 10 periods           0           15
+        10      No. of orders in work center 1                          0           15
+        11      No. of orders in work center 2                          0           15
+        12      No. of orders in work center 3                          0           15
+        13      No. of orders in FGI early by 1 period                  0           30
+        14      No. of orders in FGI early by 2 periods                 0           15
+        15      No. of orders in FGI early by 3 periods                 0           15
+        16      No. of orders in FGI early by 4 or more periods         0           15
+        17      No. of orders shipped in time                           0           15
+        18      No. of orders shipped late by 1 period                  0           15
+        19      No. of orders shipped late by 2 periods                 0           15
+        20      No. of orders shipped late by 2 periods                 0           15
+        21      No. of orders shipped late by 4 or more periods         0           15
+        ... AND SO ON for the other product types. The 22 observations above are just for product type 1.
+        All other product types have the exact same structure, so this goes up to 22*6 = 132 observations
+
     Actions:
         Type: Discrete(3)
         Num |   Action
@@ -81,17 +94,19 @@ class JobShopEnv(gym.Env):
         2   |   Increase capacity by 50%
 
     Reward:
-        Reward is the final cost after each episode. It is always a negative number, e.g. -246601
+        Reward is the final cost after each episode. It is always a negative number, e.g. -246
+        It is recommended to normalize the reward either by setting self.normalization_denominator
+        to a value higher than 1 or by normalizing inside the agent/algorithm.
 
     Starting state:
         All stages of production start with zero orders inside them, thus the starting state is an
-        array with six arrays, each consisting of six elements that all have the value 0.
+        array with six arrays, each consisting of 22 elements that all have the value 0.
 
     Episode Termination:
         Episodes end after 8000 periods, there are no other termination conditions.
     """
 
-    # metadata = {'render.modes': ['human']}
+
 
     def __init__(self):
         self.viewer = None
@@ -99,13 +114,17 @@ class JobShopEnv(gym.Env):
         self.episode_counter = -1
         self.period_counter = 0
         self.state = self.reset()
+        self.normalization_denominator = 1 # Integer. Default: 1 (which means no normalization)
+        # this is the denominator by which all rewards from the environment get divided.
+        # Its purpose is to normalize rewards before they are passed to the agent.
+        # It is recommended to normalize
 
         self.action_space = gym.spaces.Discrete(3) # discrete action space with three possible actions
-        # Below is the lower boundary of the observation space. It is an array of 96 elements, all are 0.
+        # Below is the lower boundary of the observation space. It is an array of 132 elements, all are 0.
         # Due to the state logic of the production system, there cannot be any state below 0.
-        self.low = np.empty(96, dtype=np.float32)
+        self.low = np.empty(132, dtype=np.float32)
         self.low.fill(0)
-        # Below is the upper boundary of the observation space. It is an array of 96 elements, all are
+        # Below is the upper boundary of the observation space. It is an array of 132 elements, all are
         # either 15 or 30. The number should be as low as possible, but high enough that the real numbers
         # don't exceed the upper limit. 15 was chosen as the upper limit for most values, but for some that
         # tend to exceed 15 the upper limit of 30 was chosen.
@@ -115,32 +134,32 @@ class JobShopEnv(gym.Env):
         # occuring real numbers as possible.
         self.high = np.array([
             # prod type 1
-            15,15,15,30, # order pool
+            15,15,15,15,15,15,15,15,15,15, # order pool
             15,15,15, # work centers
             30,15,15,15, # FGI
             15,15,15,15,15, # shipped
             # prod type 2
-            15,15,15,30, # order pool
+            15,15,15,15,15,15,15,15,15,15, # order pool
             15,15,15, # work centers
             30,15,15,15, # FGI
             15,15,15,15,15, # shipped
             # prod type 3
-            15,15,15,30, # order pool
+            15,15,15,15,15,15,15,15,15,15, # order pool
             15,15,15, # work centers
             30,15,15,15, # FGI
             15,15,15,15,15, # shipped
             # prod type 4
-            15,15,15,30, # order pool
+            15,15,15,15,15,15,15,15,15,15, # order pool
             15,15,15, # work centers
             30,15,15,15, # FGI
             15,15,15,15,15, # shipped
             # prod type 5
-            15,15,15,30, # order pool
+            15,15,15,15,15,15,15,15,15,15, # order pool
             15,15,15, # work centers
             30,15,15,15, # FGI
             15,15,15,15,15, # shipped
             # prod type 6
-            15,15,15,30, # order pool
+            15,15,15,15,15,15,15,15,15,15, # order pool
             15,15,15, # work centers
             30,15,15,15, # FGI
             15,15,15,15,15 # shipped
@@ -173,7 +192,7 @@ class JobShopEnv(gym.Env):
         self.state = get_environment_state()
         observation = self.state
         # Obtain cost that accumulated during this period
-        reward = main.get_results_from_this_period() / 300
+        reward = main.get_results_from_this_period() / self.normalization_denominator
         done = main.is_episode_done()  # Episode ends when 8000 periods are reached
         info = {}  # Not used
 

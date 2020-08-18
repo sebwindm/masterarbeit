@@ -181,7 +181,6 @@ def get_order_amounts_by_product_type(product_type):
     ### Calculate the amount of orders that were shipped in this period
     amount_in_shipped_goods = get_shipped_levels_by_lateness(product_type)
 
-
     ### Aggregate all amounts to one list
     order_amounts = []
     for i in amount_in_order_pool:
@@ -194,7 +193,6 @@ def get_order_amounts_by_product_type(product_type):
     for i in amount_in_shipped_goods:
         order_amounts.append(i)
     return order_amounts
-
 
 
 def reset_machines():
@@ -220,19 +218,33 @@ def get_order_pool_levels_by_due_date(product_type):
     due_in_1_period = 0
     due_in_2_periods = 0
     due_in_3_periods = 0
-    due_in_4_or_more_periods = 0
+    due_in_4_periods = 0
+    due_in_5_periods = 0
+    due_in_6_periods = 0
+    due_in_7_periods = 0
+    due_in_8_periods = 0
+    due_in_9_periods = 0
+    due_in_10_periods = 0
     order_pool_levels_by_due_date = []
 
     for order_element in order_pool:
         if order_element.product_type == product_type:
             due_in = (order_element.due_date - global_settings.current_time) / global_settings.duration_of_one_period
             if due_in <= 1: due_in_1_period += 1
-            if due_in > 1 and due_in <= 2: due_in_2_periods += 1
-            if due_in > 2 and due_in <= 3: due_in_3_periods += 1
-            if due_in > 3: due_in_4_or_more_periods += 1
+            if 1 < due_in <= 2: due_in_2_periods += 1
+            if 2 < due_in <= 3: due_in_3_periods += 1
+            if 3 < due_in <= 4: due_in_4_periods += 1
+            if 4 < due_in <= 5: due_in_5_periods += 1
+            if 5 < due_in <= 6: due_in_6_periods += 1
+            if 6 < due_in <= 7: due_in_7_periods += 1
+            if 7 < due_in <= 8: due_in_8_periods += 1
+            if 8 < due_in <= 9: due_in_9_periods += 1
+            if due_in > 9: due_in_10_periods += 1
+
     order_pool_levels_by_due_date.extend((due_in_1_period, due_in_2_periods,
-                                          due_in_3_periods, due_in_4_or_more_periods))
-    # print("ptype ",product_type,": order pool by due date: ",get_order_pool_levels_by_due_date)
+                                          due_in_3_periods, due_in_4_periods, due_in_5_periods, due_in_6_periods,
+                                          due_in_7_periods, due_in_8_periods, due_in_9_periods, due_in_10_periods))
+    #print("ptype ",product_type,": order pool by due date: ",order_pool_levels_by_due_date)
     return order_pool_levels_by_due_date
 
 
@@ -253,15 +265,15 @@ def get_fgi_levels_by_earliness(product_type):
             if early_by > 3: early_by_4_or_more_periods += 1
 
     fgi_levels_by_earliness.extend((early_by_1_period, early_by_2_periods,
-                                early_by_3_periods, early_by_4_or_more_periods))
-    #print("ptype ",product_type,": fgi earliness: ",fgi_levels_by_earliness)
+                                    early_by_3_periods, early_by_4_or_more_periods))
+    # print("ptype ",product_type,": fgi earliness: ",fgi_levels_by_earliness)
 
     return fgi_levels_by_earliness
 
 
 def get_shipped_levels_by_lateness(product_type):
-    shipped_levels_by_lateness = global_settings.shipped_orders_by_prodtype_and_lateness[int(product_type)-1]
+    shipped_levels_by_lateness = global_settings.shipped_orders_by_prodtype_and_lateness[int(product_type) - 1]
 
-    #print("ptype ",product_type,": shipped lateness: ",shipped_levels_by_lateness)
+    # print("ptype ",product_type,": shipped lateness: ",shipped_levels_by_lateness)
 
     return shipped_levels_by_lateness
