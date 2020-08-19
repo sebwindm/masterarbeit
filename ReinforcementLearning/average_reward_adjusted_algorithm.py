@@ -6,14 +6,14 @@ import torch as th
 import torch.nn.functional as F
 from stable_baselines3 import DQN
 from stable_baselines3.common import logger
-from ReinforcementLearning.custom_replay_buffer import CustomReplayBuffer
 from stable_baselines3.common.buffers import ReplayBuffer
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.noise import ActionNoise
 from stable_baselines3.common.type_aliases import GymEnv, RolloutReturn
-from stable_baselines3.common.vec_env import VecEnv
+from stable_baselines3.common.vec_env import DummyVecEnv, VecEnv, VecNormalize, VecTransposeImage
 from ReinforcementLearning.average_reward_adjusted_policy import DQNPolicyAverageRewardAdjusted
 from stable_baselines3.common.utils import is_vectorized_observation
+from stable_baselines3.common.preprocessing import is_image_space
 import csv
 
 
@@ -77,13 +77,7 @@ class DQNAverageRewardAdjusted(DQN):
         self.rho = 0
         self.alpha = alpha
         self.period_counter = 0
-        print("obs space from avg rew adj algo: ",self.observation_space)
-        # Overwrite off_policy_algorithm.py with custom replay buffer that features a boolean
-        # variable "random_action" for indicating whether a random action was taken or not :
-        # self.replay_buffer = ReplayBuffer(self.buffer_size, self.observation_space,
-        #                                         self.action_space, self.device,
-        #                                         optimize_memory_usage=self.optimize_memory_usage)
-        # End of overwriting off_policy_algorithm.py
+        self.current_observation = None
 
         # Create CSV file to store Q-Values for a fixed observation (for debugging purposes):
         with open('../' + 'q_values_learned_results.csv', mode='w') as results_CSV:
@@ -95,9 +89,6 @@ class DQNAverageRewardAdjusted(DQN):
             results_writer = csv.writer(rewards_per_period_CSV, delimiter='\t', quotechar='"',
                                         quoting=csv.QUOTE_MINIMAL)
             results_writer.writerow(['Period', 'Reward', 'Rho'])
-
-        # print(self.action_space)
-        # print(self.observation_space)
 
     def train(self, gradient_steps: int, batch_size: int = 100) -> None:
         # Update learning rate according to schedule
@@ -240,12 +231,15 @@ class DQNAverageRewardAdjusted(DQN):
 
                 # Select action randomly or according to policy
                 action, buffer_action, is_random_action = self._sample_action(learning_starts, action_noise)
-                #print("action/buffer action/israndomaction ", action, buffer_action,is_random_action)
-                #action, buffer_action = self._sample_action(learning_starts, action_noise)
+                # print("action/buffer action/israndomaction ", action, buffer_action,is_random_action)
+                # action, buffer_action = self._sample_action(learning_starts, action_noise)
 
                 # Rescale and perform action
                 new_obs, reward, done, infos = env.step(action)
+                # print("Reward: ", reward)
+                # print("Observation:", new_obs)
                 self.period_counter += 1
+                self.current_observation = new_obs
 
                 # Only stop training if return value is False, not when it is None.
                 if callback.on_step() is False:
@@ -308,10 +302,20 @@ class DQNAverageRewardAdjusted(DQN):
                 if is_random_action == 0:
                     self.rho = (1 - self.alpha) * self.rho + self.alpha * (reward_ + target_st1 - target_st)
 
-                #Fixed observation for debugging purposes
+                # Fixed observation for debugging purposes
+                # TODO: GENERATE RANDOM NUMBERS OR COME UP WITH BETTER NUMBERS
                 obs2 = th.tensor([[10., 0., 0., 0., 5., 0., 7., 1., 0., 0., 5., 1., 6., 1.,
                                    0., 0., 3., 0., 8., 0., 0., 0., 3., 2., 14., 2., 0., 0.,
-                                   4., 2., 17., 1., 0., 0., 3., 1.]])
+                                   4., 2., 17., 1., 0., 0., 3., 1., 10., 0., 0., 0., 5., 0., 7., 1., 0., 0., 5., 1., 6.,
+                                   1.,
+                                   0., 0., 3., 0., 8., 0., 0., 0., 3., 2., 14., 2., 0., 0.,
+                                   4., 2., 17., 1., 0., 0., 3., 1.,
+                                   10., 0., 0., 0., 5., 0., 7., 1., 0., 0., 5., 1., 6., 1.,
+                                   0., 0., 3., 0., 8., 0., 0., 0., 3., 2.,
+                                   10., 0., 0., 0., 5., 0., 7., 1., 0., 0., 5., 1.,
+                                   10., 0., 0., 0., 5., 0., 7., 1., 0., 0., 5., 1.,
+                                   10., 0., 0., 0., 5., 0., 7., 1., 0., 0., 5., 1.
+                                   ]])
                 fix_observation = self.q_net._predict(obs2)[1][0]
                 with open('../' + 'q_values_learned_results.csv', mode='a') as results_CSV:
                     results_writer = csv.writer(results_CSV, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
@@ -361,18 +365,50 @@ class DQNAverageRewardAdjusted(DQN):
         if not deterministic and np.random.rand() < self.exploration_rate:
             # choose random action
             n_batch = observation.shape[0]
-            #action = np.array([self.action_space.sample() for _ in range(n_batch)])
+            # action = np.array([self.action_space.sample() for _ in range(n_batch)])
             action = np.array([self.action_space.sample()])
             is_random_action = 1
             vectorized_env = is_vectorized_observation(observation, self.policy.observation_space)
             if not vectorized_env:
                 action = action[0]
-            #print("is random action",action)
+            # print("is random action",action)
         else:
             action, state = self.policy.predict(observation, state, mask, deterministic)
             is_random_action = 0
-            #print("is nonrandom action", action, observation.shape[0])
+            # print("is nonrandom action", action, observation.shape[0])
         # if type(action) is not np.array:
         #     action = np.array([action])
         return action, state, is_random_action
 
+    def get_q_values_for_current_observation(self):
+        """
+        Custom method for debugging
+        :return: the Q-values for each of the three possible actions and which action was chosen
+        """
+        action, q_values = self.q_net._predict(th.tensor(self.current_observation))
+        q1 = float(q_values[0][0])
+        q2 = float(q_values[0][1])
+        q3 = float(q_values[0][2])
+        return q1, q2, q3, int(action[0])
+
+    def _wrap_env(self, env: GymEnv) -> VecEnv:
+        """
+        This overrides _wrap_env from stable_baselines3.common.base_class.BaseAlgorithm
+        Now the DummyVecEnv gets wrapped inside a VecNormalize environment to normalize rewards and observations
+        """
+        if not isinstance(env, VecEnv):
+            if self.verbose >= 1:
+                print("Wrapping the env in a DummyVecEnv.")
+            env = DummyVecEnv([lambda: env])
+            # Automatically normalize the input features and reward
+            # norm_obs/norm_reward: True if obs/rew should be normalized
+            # clip_obs: Max absolute value for observation
+            # clip_reward: Max value absolute for discounted reward
+            # gamma: discount factor
+            env = VecNormalize(env, training=True, norm_obs=True, norm_reward=True,
+                                gamma=0.99) # clip_obs=10., clip_reward=10.0,
+        if is_image_space(env.observation_space) and not isinstance(env, VecTransposeImage):
+            if self.verbose >= 1:
+                print("Wrapping the env in a VecTransposeImage.")
+            env = VecTransposeImage(env)
+        return env

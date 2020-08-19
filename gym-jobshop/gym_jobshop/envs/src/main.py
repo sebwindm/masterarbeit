@@ -3,7 +3,7 @@ from gym_jobshop.envs.src import environment, order_generation, debugging, csv_h
     global_settings, order_release, order_movement, performance_measurement
 
 # Python native module (stdlib) imports
-import time, random, statistics
+import time, random
 
 
 def initialize_random_numbers():
@@ -31,16 +31,31 @@ def reset():
 def get_current_environment_state():
     """
     Get environment's state as an array, with each array element representing one of the possible product_types of orders.
-    Each array element containins the amounts of orders in each stage of production for the associated product_type.
+    Each array element contains the amounts of orders in each stage of production for the associated product_type.
     The order within the array elements is as follows: Order pool | Work center 1 | Work center 2 | Work center 3 |
-    FGI | Shipped goods
-    :return: state, an array with six elements
+    FGI | Shipped goods. For the order pool, FGI and shipped goods, there is not just the total amount of orders
+    inside that stage, but a sub-array containing the amounts of orders by earliness/lateness in periods.
+    For example, the order pool sub-array contains four elements, the first indicating the amount of orders
+    due in 1 period, the 2nd for orders due in 2 periods up to the 4th element which  features orders due in 4
+    or more periods. The FGI array contains order amounts sorted by earliness(early by 1 up to 4+ periods) and
+    the shipped orders contain the amounts sorted by lateness (in time, late by 1 up to 4+ periods)
+    :return: state, an array with 16x6 (= 96) elements
+
+    Example state:
+    order pool | WC1 | WC2 | WC3 | FGI | Shipped
+1   x,x,x,x | x | x | x | x,x,x,x | x,x,x,x,x
+2   x,x,x,x | x | x | x | x,x,x,x | x,x,x,x,x
+3   x,x,x,x | x | x | x | x,x,x,x | x,x,x,x,x
+4   x,x,x,x | x | x | x | x,x,x,x | x,x,x,x,x
+5   x,x,x,x | x | x | x | x,x,x,x | x,x,x,x,x
+6   x,x,x,x | x | x | x | x,x,x,x | x,x,x,x,x
+1-6 => product type
     """
     state = []
     for product_type_element in [1, 2, 3, 4, 5, 6]:
-        # for production_stage_element in environment.get_order_amounts_by_product_type(product_type_element):
-        #     state.append(production_stage_element)
         state.append(environment.get_order_amounts_by_product_type(product_type_element))
+
+    # print("State from main.py: ", state)
     return state
 
 
@@ -116,8 +131,12 @@ def get_results_from_this_period():
     cost = global_settings.temp_cost_this_period
     return cost * -1
 
+
 def get_exponentially_smoothed_reward():
-    #
+    """
+    UNUSED FUNCTION
+    TODO: delete this?
+    """
     latest_reward = get_results_from_this_period()
     if len(global_settings.past_rewards == 5):
         global_settings.past_rewards.pop([0])
@@ -125,15 +144,14 @@ def get_exponentially_smoothed_reward():
 
     new_smoothed_reward = 0
 
-
     a = 5
     test = [1, 10, 100, 1000, 10000]
-    weights = [0.1* a, 0.2, 0.3, 0.4, 0.5]
+    weights = [0.1 * a, 0.2, 0.3, 0.4, 0.5]
 
     new_result = []
 
     for i in test:
-     new_result.append(i* weights[test.index(i)])
+        new_result.append(i * weights[test.index(i)])
 
     print(new_result)
     return
@@ -176,7 +194,6 @@ if __name__ == '__main__':
             for i in range(global_settings.duration_of_one_period):
                 step_one_step_ahead()
 
-
         ################################################## END MAIN LOOP ##################################################
 
         ################################################## ANALYSIS ##################################################
@@ -206,16 +223,14 @@ if __name__ == '__main__':
 
 
 def get_info():
-    return(
-        "Iteration " + str(global_settings.random_seed) + " finished. Orders shipped: " + str(len(
+    return (
+            "Iteration " + str(global_settings.random_seed) + " finished. Orders shipped: " + str(len(
         environment.shipped_orders)) + " | WIP cost: " + str(
         global_settings.sum_shopfloor_cost) + " | FGI cost: " + str(
         global_settings.sum_fgi_cost) + " | lateness cost: " + str(global_settings.sum_lateness_cost) +
-        " | overtime cost: " + str(global_settings.sum_overtime_cost) +
-        " | total cost: " + str(global_settings.total_cost) +
-        " | Bottleneck utilization: " + str(global_settings.bottleneck_utilization_per_step /
-                  (global_settings.duration_of_one_period * global_settings.number_of_periods))
-            )
-
-
-
+            " | overtime cost: " + str(global_settings.sum_overtime_cost) +
+            " | total cost: " + str(global_settings.total_cost) +
+            " | Bottleneck utilization: " + str(global_settings.bottleneck_utilization_per_step /
+                                                (
+                                                            global_settings.duration_of_one_period * global_settings.number_of_periods))
+    )
