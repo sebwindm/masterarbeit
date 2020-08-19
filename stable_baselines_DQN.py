@@ -20,7 +20,7 @@ import stable_baselines
 from stable_baselines.common.vec_env import DummyVecEnv
 from stable_baselines.deepq.policies import MlpPolicy
 from stable_baselines import DQN
-
+from stable_baselines.common.callbacks import BaseCallback
 env = gym.make('jobshop-v0')
 
 
@@ -90,16 +90,12 @@ def evaluate_policy():
 
 def delete_tensorboard_logs():
     import shutil
-    shutil.rmtree('./gym_jobshop_tensorboard_logs')
+    shutil.rmtree('ReinforcementLearning/gym_jobshop_tensorboard_logs')
     print("Deleted all Tensorboard logs")
     return
 
-# def _get_pretrain_placeholders(self):
-#     import tensorflow as tf
-#     policy = self.step_model
-#     return policy.obs_ph, tf.placeholder(tf.int32, [None]), policy.q_values
 
-from stable_baselines.common.callbacks import BaseCallback
+
 
 
 class CustomCallback(BaseCallback):
@@ -135,7 +131,7 @@ class CustomCallback(BaseCallback):
         This method is called before the first rollout starts.
         """
         print("TRAINING START")
-        #print("model.sess: ", self.model.sess)
+        # print("model.sess: ", self.model.sess)
         pass
 
     def _on_rollout_start(self) -> None:
@@ -160,13 +156,12 @@ class CustomCallback(BaseCallback):
         # policy.q_values
         #####
 
+        # print("self.model.policy = ", self.model.policy.q_values)
 
-        #print("self.model.policy = ", self.model.policy.q_values)
+        # print("action_space",self.model.action_space)
+        # print("q values: ", self.model.policy.get_q_values(self.model.policy))
 
-        #print("action_space",self.model.action_space)
-        #print("q values: ", self.model.policy.get_q_values(self.model.policy))
-
-        #print("proba_step: ",self.model.policy.proba_step(self, env.state))
+        # print("proba_step: ",self.model.policy.proba_step(self, env.state))
         # sess = self.model.sess
         # result: self.model =  <stable_baselines.deepq.dqn.DQN object at 0x7fc110406080>
 
@@ -225,5 +220,4 @@ if __name__ == "__main__":
         model = DQN.load("deepq_jobshop")
         print(model)
         print(model.policy)
-        #print(model.policy().step(obs=env.get_observation(), state=None, mask=None, deterministic=False))
-
+        # print(model.policy().step(obs=env.get_observation(), state=None, mask=None, deterministic=False))

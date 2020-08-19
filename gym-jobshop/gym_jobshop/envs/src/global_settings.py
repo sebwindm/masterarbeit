@@ -19,7 +19,10 @@ shop_type = "job_shop_1_machine"  # Must be either "flow_shop", "job_shop" or "j
 order_release_policy = "bil"  # must be "periodic", "bil" or "lums"
 scheduling_policy = "first_come_first_serve"
 time_of_next_order_arrival = 0  # gets overwritten for every new order
-due_date_multiplier = 9  # how many periods the due date of new orders is in the future. Default: 10 periods
+due_date_multiplier = 9  # how many periods the due date of new orders is in the future (due date slack).
+# Default: 10 periods. Note that the due_date_multiplier must be 1 lower than the intended due date slack.
+# Example: if you want a due date slack of 10 periods, the due_date_multiplier must be set to 9.
+
 planned_release_date_multiplier = 2  # used for the BIL order release policy.
 # Planned release date is always planned_release_date_multiplier * duration_of_one_period + current_time
 
@@ -55,7 +58,8 @@ temp_sum_of_late_orders_this_period = 0
 temp_cost_this_period = 0
 bottleneck_utilization_per_step = 0
 past_rewards = []
-product_type_shipped_in_this_period = [0,0,0,0,0,0]
+shipped_orders_by_prodtype_and_lateness = [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0],
+                                                               [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]
 
 create_orders_csv = False
 create_steps_csv = False

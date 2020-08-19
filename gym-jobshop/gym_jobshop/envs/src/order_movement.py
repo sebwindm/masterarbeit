@@ -2,14 +2,13 @@ from gym_jobshop.envs.src import environment, global_settings
 
 
 def ship_orders():
-    global_settings.product_type_shipped_in_this_period = [0,0,0,0,0,0]
+    global_settings.shipped_orders_by_prodtype_and_lateness = [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0],
+                                                               [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]
     # Move orders from FGI to shipped_orders once they have reached their due_date
-    # Calculate lateness for each order
-    if len(environment.finished_goods_inventory) > 0:
+    # Then, calculate lateness for each order and update the system state for shipped goods
+    if len(environment.finished_goods_inventory) > 0: # ship only if there are finished orders
         for order_element in environment.finished_goods_inventory:
-            if order_element.due_date <= global_settings.current_time:
-                global_settings.product_type_shipped_in_this_period[
-                    int(order_element.product_type)-1] += 1
+            if order_element.due_date <= global_settings.current_time: # ship only orders which are due
                 order_element.shipping_date = global_settings.current_time
                 order_element.current_production_step = None
                 # Calculate lateness/earliness of order:
@@ -20,6 +19,25 @@ def ship_orders():
                     order_element.earliness = order_element.shipping_date - order_element.finished_production_date
                 # Calculate flow time of order:
                 order_element.flow_time = order_element.finished_production_date - order_element.order_release_date
+                # Update the matrix which contains the shipped order amounts sorted by lateness
+                periods_late = order_element.lateness/global_settings.duration_of_one_period # calculate order's
+                # lateness in periods
+                if periods_late == 0:
+                    global_settings.shipped_orders_by_prodtype_and_lateness[
+                    int(order_element.product_type)-1][0] += 1
+                elif periods_late >0 and periods_late <=1:
+                    global_settings.shipped_orders_by_prodtype_and_lateness[
+                    int(order_element.product_type)-1][1] += 1
+                elif periods_late >1 and periods_late <=2:
+                    global_settings.shipped_orders_by_prodtype_and_lateness[
+                    int(order_element.product_type)-1][2] += 1
+                elif periods_late >2 and periods_late <=3:
+                    global_settings.shipped_orders_by_prodtype_and_lateness[
+                    int(order_element.product_type)-1][3] += 1
+                elif periods_late >3:
+                    global_settings.shipped_orders_by_prodtype_and_lateness[
+                    int(order_element.product_type)-1][4] += 1
+
                 # Optional debugging info:
                 if global_settings.show_order_shipping == True:
                     print("Step " + str(global_settings.current_time) + ": Shipped orderID " +
