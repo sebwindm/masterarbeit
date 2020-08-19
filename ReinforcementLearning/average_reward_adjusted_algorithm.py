@@ -11,10 +11,12 @@ from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.noise import ActionNoise
 from stable_baselines3.common.type_aliases import GymEnv, RolloutReturn
 from stable_baselines3.common.vec_env import DummyVecEnv, VecEnv, VecNormalize, VecTransposeImage
-from ReinforcementLearning.average_reward_adjusted_policy import DQNPolicyAverageRewardAdjusted
 from stable_baselines3.common.utils import is_vectorized_observation
 from stable_baselines3.common.preprocessing import is_image_space
 import csv
+
+from ReinforcementLearning.average_reward_adjusted_policy import DQNPolicyAverageRewardAdjusted
+from ReinforcementLearning.util import exponential_decay
 
 
 class DQNAverageRewardAdjusted(DQN):
@@ -47,7 +49,10 @@ class DQNAverageRewardAdjusted(DQN):
                  seed: Optional[int] = None,
                  device: Union[th.device, str] = 'auto',
                  _init_setup_model: bool = True,
-                 alpha: float = 0.001
+                 alpha: float = 0.01,
+                 alpha_min: float = 5e-5,
+                 alpha_decay_rate: float = 0.5,
+                 alpha_decay_steps: int = 10000
                  ):
 
         super(DQNAverageRewardAdjusted, self).__init__(policy,
@@ -76,6 +81,9 @@ class DQNAverageRewardAdjusted(DQN):
                                                        _init_setup_model)
         self.rho = 0
         self.alpha = alpha
+        self.alpha_min = alpha_min
+        self.alpha_decay_rate = alpha_decay_rate
+        self.alpha_decay_steps = alpha_decay_steps
         self.period_counter = 0
         self.current_observation = None
 
@@ -300,7 +308,8 @@ class DQNAverageRewardAdjusted(DQN):
                 # TODO 2: laut paper wird zuerst rho berechnet, aber hier machen wir es einen step verzögert
                 # buffer_action.astype(int)[0]
                 if is_random_action == 0:
-                    self.rho = (1 - self.alpha) * self.rho + self.alpha * (reward_ + target_st1 - target_st)
+                    decayed_alpha = self.exp_decay_alpha()
+                    self.rho = (1 - decayed_alpha) * self.rho + decayed_alpha * (reward_ + target_st1 - target_st)
 
                 # Fixed observation for debugging purposes
                 # TODO: GENERATE RANDOM NUMBERS OR COME UP WITH BETTER NUMBERS
@@ -347,6 +356,12 @@ class DQNAverageRewardAdjusted(DQN):
         callback.on_rollout_end()
 
         return RolloutReturn(mean_reward, total_steps, total_episodes, continue_training)
+
+    def exp_decay_alpha(self) -> float:
+        """
+        Get the decayed alpha value.
+        """
+        return exponential_decay(self.alpha_min, self.alpha_decay_rate, self.alpha_decay_steps, self.period_counter, self.alpha)
 
     def predict(self, observation: np.ndarray,
                 state: Optional[np.ndarray] = None,
