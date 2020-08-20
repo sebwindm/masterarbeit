@@ -361,7 +361,8 @@ class DQNAverageRewardAdjusted(DQN):
         """
         Get the decayed alpha value.
         """
-        return exponential_decay(self.alpha_min, self.alpha_decay_rate, self.alpha_decay_steps, self.period_counter, self.alpha)
+        return exponential_decay(self.alpha_min, self.alpha_decay_rate, self.alpha_decay_steps, self.period_counter,
+                                 self.alpha)
 
     def predict(self, observation: np.ndarray,
                 state: Optional[np.ndarray] = None,
@@ -420,8 +421,8 @@ class DQNAverageRewardAdjusted(DQN):
             # clip_obs: Max absolute value for observation
             # clip_reward: Max value absolute for discounted reward
             # gamma: discount factor
-            env = VecNormalize(env, training=True, norm_obs=True, norm_reward=True,
-                                gamma=0.99) # clip_obs=10., clip_reward=10.0,
+            env = VecNormalize(env, training=True, norm_obs=True,
+                               gamma=0.99)  # clip_obs=10., clip_reward=10.0, norm_reward=True,
         if is_image_space(env.observation_space) and not isinstance(env, VecTransposeImage):
             if self.verbose >= 1:
                 print("Wrapping the env in a VecTransposeImage.")

@@ -45,10 +45,10 @@ next_order_arrival_exponential_rate_parameter = 118  # this is the λ (lambda) o
 
 #################### Variables that are used as result metrics ####################
 count_of_generated_orders = 0
-cost_per_item_in_shopfloor = 1  # Cost per period for every order which is either inside a machine or wip
-cost_per_item_in_fgi = 4  # Cost per period for storing one order in finished goods inventory
-cost_per_late_item = 16  # Cost per period for exceeding an order's due date
-cost_per_overtime_period = 32  # Cost per period for running overtime on a bottleneck machine
+cost_per_item_in_shopfloor = 1  # Cost per period for every order which is either inside a machine or wip. Default: 1
+cost_per_item_in_fgi = 4  # Cost per period for storing one order in finished goods inventory. Default: 4
+cost_per_late_item = 16  # Cost per period for exceeding an order's due date. Default: 16
+cost_per_overtime_period = 32  # Cost per period for running overtime on a bottleneck machine. Default: 32
 total_cost = 0
 sum_shopfloor_cost = 0
 sum_fgi_cost = 0

@@ -114,10 +114,11 @@ class JobShopEnv(gym.Env):
         self.episode_counter = -1
         self.period_counter = 0
         self.state = self.reset()
-        self.normalization_denominator = 1 # Integer. Default: 1 (which means no normalization)
+        self.normalization_denominator = 300 # Integer. Default: 1 (which means no normalization)
         # this is the denominator by which all rewards from the environment get divided.
         # Its purpose is to normalize rewards before they are passed to the agent.
-        # It is recommended to normalize
+        # A good value for normalization_denominator is 300,
+        # if the normalization should take place inside the environment
 
         self.action_space = gym.spaces.Discrete(3) # discrete action space with three possible actions
         # Below is the lower boundary of the observation space. It is an array of 132 elements, all are 0.
@@ -168,8 +169,6 @@ class JobShopEnv(gym.Env):
         self.observation_space = gym.spaces.flatten_space(
              gym.spaces.Box(low=self.low, high=self.high, dtype=np.float32))
 
-        print(self.low)
-        print(self.high)
     def step(self, action, debug=True):
         """
         Step one period (= 960 simulation steps) ahead.
@@ -191,7 +190,7 @@ class JobShopEnv(gym.Env):
         # Retrieve new state from the environment
         self.state = get_environment_state()
         observation = self.state
-        # Obtain cost that accumulated during this period
+        # Obtain cost that accumulated during this period and normalize the reward
         reward = main.get_results_from_this_period() / self.normalization_denominator
         done = main.is_episode_done()  # Episode ends when 8000 periods are reached
         info = {}  # Not used
