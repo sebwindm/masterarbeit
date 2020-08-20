@@ -84,13 +84,12 @@ def train_agent():
     # Instantiate the agent with a modified DQN that is average reward adjusted
     # DQNAverageRewardAdjusted is based on stable_baselines3.dqn.DQN
     # MlpAverageRewardAdjustedPolicy is based on stable_baselines3.dqn.policies.DQNPolicy
-    model = DQNAverageRewardAdjusted('MlpAverageRewardAdjustedPolicy', env, verbose=1, learning_starts=100,
-                                     tensorboard_log="./gym_jobshop_tensorboard_logs/")
+    model = DQNAverageRewardAdjusted('MlpAverageRewardAdjustedPolicy', env, verbose=1, learning_starts=100) #,tensorboard_log="./gym_jobshop_tensorboard_logs/"
     # Train the agent
     start_time = time.time()
     custom_callback = CustomCallback()
     print("Training start")
-    # model.learn(total_timesteps=300000) # learn with no callback
+    #model.learn(total_timesteps=10000000) # learn with no callback
     model.learn(total_timesteps=300000, callback=custom_callback)  # learn with custom callback
     total_time = time.time() - start_time
     print(f"Took {total_time:.2f}s")

@@ -10,11 +10,16 @@ from stable_baselines3.common.buffers import ReplayBuffer
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.noise import ActionNoise
 from stable_baselines3.common.type_aliases import GymEnv, RolloutReturn
-from stable_baselines3.common.vec_env import DummyVecEnv, VecEnv, VecNormalize, VecTransposeImage
-from ReinforcementLearning.average_reward_adjusted_policy import DQNPolicyAverageRewardAdjusted
+from stable_baselines3.common.vec_env import DummyVecEnv, VecEnv, VecTransposeImage
 from stable_baselines3.common.utils import is_vectorized_observation
 from stable_baselines3.common.preprocessing import is_image_space
 import csv
+
+from ReinforcementLearning.average_reward_adjusted_policy import DQNPolicyAverageRewardAdjusted
+from ReinforcementLearning import util
+
+
+
 
 
 class DQNAverageRewardAdjusted(DQN):
@@ -36,9 +41,9 @@ class DQNAverageRewardAdjusted(DQN):
                  n_episodes_rollout: int = -1,
                  optimize_memory_usage: bool = False,
                  target_update_interval: int = 10000,
-                 exploration_fraction: float = 0.1,
+                 exploration_fraction: float = 0.15,  # Default for 3 machines: 0.40 edited todo
                  exploration_initial_eps: float = 1.0,
-                 exploration_final_eps: float = 0.05,
+                 exploration_final_eps: float = 0.01,  # edited todo
                  max_grad_norm: float = 10,
                  tensorboard_log: Optional[str] = None,
                  create_eval_env: bool = False,
@@ -47,7 +52,12 @@ class DQNAverageRewardAdjusted(DQN):
                  seed: Optional[int] = None,
                  device: Union[th.device, str] = 'auto',
                  _init_setup_model: bool = True,
-                 alpha: float = 0.001
+
+                 # Parameters for util.py: todo
+                 alpha: float = 0.01,
+                 alpha_min: float = 1e-5,
+                 alpha_decay_rate: float = 0.55,
+                 alpha_decay_steps: int = 15000  # default for 3 machines: 50000
                  ):
 
         super(DQNAverageRewardAdjusted, self).__init__(policy,
@@ -76,6 +86,9 @@ class DQNAverageRewardAdjusted(DQN):
                                                        _init_setup_model)
         self.rho = 0
         self.alpha = alpha
+        self.alpha_min = alpha_min
+        self.alpha_decay_rate = alpha_decay_rate
+        self.alpha_decay_steps = alpha_decay_steps
         self.period_counter = 0
         self.current_observation = None
 
@@ -236,9 +249,14 @@ class DQNAverageRewardAdjusted(DQN):
 
                 # Rescale and perform action
                 new_obs, reward, done, infos = env.step(action)
+                new_obs = util.normalize_observation(new_obs)
+                reward = util.normalize_reward(reward)
                 # print("Reward: ", reward)
                 # print("Observation:", new_obs)
                 self.period_counter += 1
+                if self.period_counter % 5000 == 0:
+                    decayed_alpha = self.exp_decay_alpha()
+                    print("decayed_alpha: ", decayed_alpha, " | Exploration rate: ", self.exploration_rate)
                 self.current_observation = new_obs
 
                 # Only stop training if return value is False, not when it is None.
@@ -299,23 +317,42 @@ class DQNAverageRewardAdjusted(DQN):
                 # TODO: Welchen der drei indices von target_st nehmen wir? ->maximalen
                 # TODO 2: laut paper wird zuerst rho berechnet, aber hier machen wir es einen step verzögert
                 # buffer_action.astype(int)[0]
-                if is_random_action == 0:
-                    self.rho = (1 - self.alpha) * self.rho + self.alpha * (reward_ + target_st1 - target_st)
+                if is_random_action == 0 or self.period_counter < 1000:
+                    decayed_alpha = self.exp_decay_alpha()
+                    self.rho = (1 - decayed_alpha) * self.rho + decayed_alpha * (reward_ + target_st1 - target_st)
 
                 # Fixed observation for debugging purposes
-                # TODO: GENERATE RANDOM NUMBERS OR COME UP WITH BETTER NUMBERS
-                obs2 = th.tensor([[10., 0., 0., 0., 5., 0., 7., 1., 0., 0., 5., 1., 6., 1.,
-                                   0., 0., 3., 0., 8., 0., 0., 0., 3., 2., 14., 2., 0., 0.,
-                                   4., 2., 17., 1., 0., 0., 3., 1., 10., 0., 0., 0., 5., 0., 7., 1., 0., 0., 5., 1., 6.,
-                                   1.,
-                                   0., 0., 3., 0., 8., 0., 0., 0., 3., 2., 14., 2., 0., 0.,
-                                   4., 2., 17., 1., 0., 0., 3., 1.,
-                                   10., 0., 0., 0., 5., 0., 7., 1., 0., 0., 5., 1., 6., 1.,
-                                   0., 0., 3., 0., 8., 0., 0., 0., 3., 2.,
-                                   10., 0., 0., 0., 5., 0., 7., 1., 0., 0., 5., 1.,
-                                   10., 0., 0., 0., 5., 0., 7., 1., 0., 0., 5., 1.,
-                                   10., 0., 0., 0., 5., 0., 7., 1., 0., 0., 5., 1.
-                                   ]])
+                # TODO: use real state and normalize
+                obs2 = th.tensor([[0, 2, 2, 1, 0, 2, 1, 1, 1, 0,
+                                   0, 0, 0,
+                                   6, 0, 0, 0,
+                                   0, 1, 0, 0, 0,
+
+                                   0, 0, 2, 1, 1, 4, 1, 0, 1, 0,
+                                   0, 0, 0,
+                                   3, 0, 0, 0,
+                                   0, 0, 0, 0, 0,
+
+                                   0, 1, 0, 1, 6, 1, 1, 2, 2, 0,
+                                   0, 0, 0,
+                                   2, 0, 0, 0,
+                                   0, 2, 1, 0, 0,
+
+                                   0, 1, 0, 0, 3, 1, 1, 3, 2, 0,
+                                   0, 0, 0,
+                                   2, 0, 0, 0,
+                                   0, 1, 0, 0, 0,
+
+                                   0, 0, 0, 1, 2, 0, 0, 2, 2, 0,
+                                   0, 0, 0,
+                                   6, 0, 0, 0,
+                                   0, 0, 1, 0, 0,
+
+                                   0, 0, 3, 2, 0, 1, 4, 0, 0, 0,
+                                   0, 0, 0,
+                                   7, 0, 0, 0,
+                                   0, 1, 1, 1, 1]])
+                obs2 = util.normalize_observation(obs2)
                 fix_observation = self.q_net._predict(obs2)[1][0]
                 with open('../' + 'q_values_learned_results.csv', mode='a') as results_CSV:
                     results_writer = csv.writer(results_CSV, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
@@ -347,6 +384,13 @@ class DQNAverageRewardAdjusted(DQN):
         callback.on_rollout_end()
 
         return RolloutReturn(mean_reward, total_steps, total_episodes, continue_training)
+
+    def exp_decay_alpha(self) -> float:
+        """
+        Get the decayed alpha value.
+        """
+        return util.exponential_decay(self.alpha_min, self.alpha_decay_rate, self.alpha_decay_steps, self.period_counter,
+                                 self.alpha)
 
     def predict(self, observation: np.ndarray,
                 state: Optional[np.ndarray] = None,
@@ -385,7 +429,7 @@ class DQNAverageRewardAdjusted(DQN):
         Custom method for debugging
         :return: the Q-values for each of the three possible actions and which action was chosen
         """
-        action, q_values = self.q_net._predict(th.tensor(self.current_observation))
+        action, q_values = self.q_net._predict(th.tensor(util.normalize_observation(self.current_observation)))
         q1 = float(q_values[0][0])
         q2 = float(q_values[0][1])
         q3 = float(q_values[0][2])
@@ -405,8 +449,8 @@ class DQNAverageRewardAdjusted(DQN):
             # clip_obs: Max absolute value for observation
             # clip_reward: Max value absolute for discounted reward
             # gamma: discount factor
-            env = VecNormalize(env, training=True, norm_obs=True, norm_reward=True,
-                                gamma=0.99) # clip_obs=10., clip_reward=10.0,
+            # env = VecNormalize(env, training=True, norm_obs=False, norm_reward=False,
+            #                    gamma=0.99)  # clip_obs=10., clip_reward=10.0,
         if is_image_space(env.observation_space) and not isinstance(env, VecTransposeImage):
             if self.verbose >= 1:
                 print("Wrapping the env in a VecTransposeImage.")
