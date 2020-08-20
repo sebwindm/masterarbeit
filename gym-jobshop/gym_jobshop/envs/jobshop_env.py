@@ -114,7 +114,7 @@ class JobShopEnv(gym.Env):
         self.episode_counter = -1
         self.period_counter = 0
         self.state = self.reset()
-        self.normalization_denominator = 300 # Integer. Default: 1 (which means no normalization)
+        self.normalization_denominator = 1 # Integer. Default: 1 (which means no normalization)
         # this is the denominator by which all rewards from the environment get divided.
         # Its purpose is to normalize rewards before they are passed to the agent.
         # A good value for normalization_denominator is 300,
