@@ -3,6 +3,7 @@ from ReinforcementLearning.average_reward_adjusted_algorithm import DQNAverageRe
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.callbacks import BaseCallback
 from statistics import mean
+import numpy as np
 
 
 # Create environment
@@ -46,17 +47,35 @@ class CustomCallback(BaseCallback):
             elif user_input == "":  # if Enter key gets pressed, train for one step
                 self.train_for_x_steps = 1
                 return True
-            elif user_input == "s":  # Print observation state and some statistics,
+            elif user_input == "s" and self.model.num_timesteps > 0:  # Print observation state and some statistics,
                 # afterwards train for one step
-                observation = env.get_observation()
+                observation = env.get_observation().tolist()
+                separator_indices = [0,10,13,17,
+                                     22,32,35,39,
+                                     44,54,57,61,
+                                     66,76,79,83,
+                                     88,98,101,105,
+                                     110,120,123,127
+                                     ]
+                separator_names = ["OP1: ", "WC1:","FGI1: ","SG1: ",
+                                   "OP2: ", "WC2:","FGI2: ","SG2: ",
+                                   "OP3: ", "WC3:","FGI3: ","SG3: ",
+                                   "OP4: ", "WC4:","FGI4: ","SG4: ",
+                                   "OP5: ", "WC5:","FGI5: ","SG5: ",
+                                   "OP6: ", "WC6:","FGI6: ","SG6: "
+                                   ]
+                for i in separator_indices:
+                    observation.insert(i + separator_indices.index(i) ,separator_names[separator_indices.index(i)])
                 print("Observation state:", observation)
+                print("Unnormalized reward:", self.model.current_unnormalized_reward)
+                print("Costs per production step: ",env.get_cost_rundown())
                 print("Rho: ", self.model.rho[0])
                 q1, q2, q3, action = self.model.get_q_values_for_current_observation()
                 print("Predicted action: ",action, " | Q values for current observation: \n",
                       q1, q2, q3)
-
                 self.train_for_x_steps = 1
-
+            elif user_input == "s" and self.model.num_timesteps <= 0:
+                raise ValueError("You need to train for at least one step before accessing statistics")
             elif user_input == "x":
                 steps = input('Train for how many steps?\n')
                 try:
