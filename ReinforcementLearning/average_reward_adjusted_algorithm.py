@@ -12,7 +12,6 @@ from stable_baselines3.common.noise import ActionNoise
 from stable_baselines3.common.type_aliases import GymEnv, RolloutReturn
 from stable_baselines3.common.vec_env import DummyVecEnv, VecEnv, VecTransposeImage
 from stable_baselines3.common.utils import is_vectorized_observation
-from stable_baselines3.common.preprocessing import is_image_space
 import csv
 
 from ReinforcementLearning.average_reward_adjusted_policy import DQNPolicyAverageRewardAdjusted
@@ -91,6 +90,7 @@ class DQNAverageRewardAdjusted(DQN):
         self.alpha_decay_steps = alpha_decay_steps
         self.period_counter = 0
         self.current_observation = None
+        self.current_unnormalized_reward = None
 
         # Create CSV file to store Q-Values for a fixed observation (for debugging purposes):
         with open('../' + 'q_values_learned_results.csv', mode='w') as results_CSV:
@@ -248,11 +248,13 @@ class DQNAverageRewardAdjusted(DQN):
                 # action, buffer_action = self._sample_action(learning_starts, action_noise)
 
                 # Rescale and perform action
+                # Afterwards, normalize new observation and reward to make it easier for the
+                # neural network to handle the values. Single values of Reward and observation
+                # should be (roughly) between -1 and +1
                 new_obs, reward, done, infos = env.step(action)
-                new_obs = util.normalize_observation(new_obs)
-                reward = util.normalize_reward(reward)
-                # print("Reward: ", reward)
-                # print("Observation:", new_obs)
+                self.current_unnormalized_reward = reward
+                new_obs = util.normalize_observation(new_obs) # custom normalization of observation
+                reward = util.normalize_reward(reward) # custom normalization of reward
                 self.period_counter += 1
                 if self.period_counter % 5000 == 0:
                     decayed_alpha = self.exp_decay_alpha()
