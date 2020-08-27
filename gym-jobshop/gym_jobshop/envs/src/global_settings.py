@@ -56,6 +56,11 @@ sum_lateness_cost = 0
 sum_overtime_cost = 0
 temp_sum_of_late_orders_this_period = 0
 temp_cost_this_period = 0
+temp_overtime_cost = 0
+temp_wip_cost = 0
+temp_lateness_cost = 0
+temp_fgi_cost = 0
+
 bottleneck_utilization_per_step = 0
 past_rewards = []
 shipped_orders_by_prodtype_and_lateness = [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0],

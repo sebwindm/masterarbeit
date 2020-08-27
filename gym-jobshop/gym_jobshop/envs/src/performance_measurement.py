@@ -26,7 +26,7 @@ def get_cost_from_current_period():
 
     ################### Measure cost for finished goods inventory:
     temp_fgi_cost = len(environment.finished_goods_inventory) * global_settings.cost_per_item_in_fgi
-
+    print("FGI: ",len(environment.finished_goods_inventory), " orders", " Temp FGI cost: ", temp_fgi_cost)
     ################### Measure cost for late goods (= backorder cost):
     temp_late_cost = global_settings.temp_sum_of_late_orders_this_period * global_settings.cost_per_late_item
 
@@ -55,15 +55,20 @@ def update_total_cost():
 
     ################### Update total cost for shopfloor (machines + WIP inventories):
     global_settings.sum_shopfloor_cost += all_costs_from_this_period[1]
+    global_settings.temp_wip_cost = all_costs_from_this_period[1]
 
     ################### Update total cost for finished goods inventory:
     global_settings.sum_fgi_cost += all_costs_from_this_period[3]
+    global_settings.temp_fgi_cost = all_costs_from_this_period[3]
+    print("global settings Temp FGI cost: ",global_settings.temp_fgi_cost)
 
     ################### Update total cost for late goods (= backorder cost) in the last step of simulation:
     global_settings.sum_lateness_cost += all_costs_from_this_period[4]
+    global_settings.temp_lateness_cost = all_costs_from_this_period[4]
 
     ################### Update total cost for overtime:
     global_settings.sum_overtime_cost += all_costs_from_this_period[2]
+    global_settings.temp_overtime_cost = all_costs_from_this_period[2]
 
     ################### Update total cost:
     global_settings.total_cost += all_costs_from_this_period[0]

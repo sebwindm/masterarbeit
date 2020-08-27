@@ -126,10 +126,14 @@ def get_results_from_this_period():
     Get the costs of the current period which will be used in the Gym environment's reward mechanism.
     Reinforcement Learning agents try to maximize reward, so we cannot return the actual cost as reward. Otherwise, the
     agents would try to maximize the cost. Therefore returned costs are multiplied by -1.
-    :return: (total cost of the simulation iteration) * -1
+    :return: (total cost of the simulation iteration) * -1,
+            cost_rundown (a list of the costs per production step)
     """
     cost = global_settings.temp_cost_this_period
-    return cost * -1
+    cost_rundown = ["WIP: ",global_settings.temp_wip_cost,"FGI: ", global_settings.temp_fgi_cost,
+                    "Late:", global_settings.temp_lateness_cost,"Overtime: " ,global_settings.temp_overtime_cost]
+    print(cost_rundown)
+    return cost * -1, cost_rundown
 
 
 def get_exponentially_smoothed_reward():
@@ -232,5 +236,6 @@ def get_info():
             " | total cost: " + str(global_settings.total_cost) +
             " | Bottleneck utilization: " + str(global_settings.bottleneck_utilization_per_step /
                                                 (
-                                                            global_settings.duration_of_one_period * global_settings.number_of_periods))
+                                                        global_settings.duration_of_one_period *
+                                                        global_settings.number_of_periods))
     )
