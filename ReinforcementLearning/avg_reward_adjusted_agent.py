@@ -1,9 +1,10 @@
 import gym, gym_jobshop, time
+
 from ReinforcementLearning.average_reward_adjusted_algorithm import DQNAverageRewardAdjusted
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.callbacks import BaseCallback
 from statistics import mean
-import numpy as np
+
 
 
 # Create environment
@@ -29,7 +30,7 @@ class CustomCallback(BaseCallback):
         Take user input to decide whether to train for 1 or many steps or to quit training and save the model.
         """
         if self.model.num_timesteps % self.train_for_x_steps == 0:
-            user_input = input('\nTimestep ' + str(self.model.num_timesteps) + ': press...and then Enter...\n'
+            user_input = input('\nTimestep ' + str(self.model.num_timesteps) + ' done: press...and then Enter...\n'
                 '"y"... to train to the next increment of ' + str(
                 self.default_training_steps) + ' steps\n'
                 '"x" ... to enter an amount of steps to train\n'
@@ -73,6 +74,7 @@ class CustomCallback(BaseCallback):
                 q1, q2, q3, action = self.model.get_q_values_for_current_observation()
                 print("Predicted action: ",action, " | Q values for current observation: \n",
                       q1, q2, q3)
+                print("-----------------------------------------------------------------------")
                 self.train_for_x_steps = 1
             elif user_input == "s" and self.model.num_timesteps <= 0:
                 raise ValueError("You need to train for at least one step before accessing statistics")

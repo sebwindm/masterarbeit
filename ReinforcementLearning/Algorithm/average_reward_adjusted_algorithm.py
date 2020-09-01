@@ -10,15 +10,12 @@ from stable_baselines3.common.buffers import ReplayBuffer
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.noise import ActionNoise
 from stable_baselines3.common.type_aliases import GymEnv, RolloutReturn
-from stable_baselines3.common.vec_env import DummyVecEnv, VecEnv, VecTransposeImage
+from stable_baselines3.common.vec_env import VecEnv
 from stable_baselines3.common.utils import is_vectorized_observation
 import csv
 
 from ReinforcementLearning.average_reward_adjusted_policy import DQNPolicyAverageRewardAdjusted
 from ReinforcementLearning import util
-
-
-
 
 
 class DQNAverageRewardAdjusted(DQN):
@@ -253,8 +250,8 @@ class DQNAverageRewardAdjusted(DQN):
                 # should be (roughly) between -1 and +1
                 new_obs, reward, done, infos = env.step(action)
                 self.current_unnormalized_reward = reward
-                new_obs = util.normalize_observation(new_obs) # custom normalization of observation
-                reward = util.normalize_reward(reward) # custom normalization of reward
+                new_obs = util.normalize_observation(new_obs)  # custom normalization of observation
+                reward = util.normalize_reward(reward)  # custom normalization of reward
                 self.period_counter += 1
                 if self.period_counter % 5000 == 0:
                     decayed_alpha = self.exp_decay_alpha()
@@ -391,8 +388,9 @@ class DQNAverageRewardAdjusted(DQN):
         """
         Get the decayed alpha value.
         """
-        return util.exponential_decay(self.alpha_min, self.alpha_decay_rate, self.alpha_decay_steps, self.period_counter,
-                                 self.alpha)
+        return util.exponential_decay(self.alpha_min, self.alpha_decay_rate, self.alpha_decay_steps,
+                                      self.period_counter,
+                                      self.alpha)
 
     def predict(self, observation: np.ndarray,
                 state: Optional[np.ndarray] = None,
@@ -436,25 +434,3 @@ class DQNAverageRewardAdjusted(DQN):
         q2 = float(q_values[0][1])
         q3 = float(q_values[0][2])
         return q1, q2, q3, int(action[0])
-
-    # def _wrap_env(self, env: GymEnv) -> VecEnv:
-    #     """
-    #     This overrides _wrap_env from stable_baselines3.common.base_class.BaseAlgorithm
-    #     Now the DummyVecEnv gets wrapped inside a VecNormalize environment to normalize rewards and observations
-    #     """
-    #     if not isinstance(env, VecEnv):
-    #         if self.verbose >= 1:
-    #             print("Wrapping the env in a DummyVecEnv.")
-    #         env = DummyVecEnv([lambda: env])
-    #         # Automatically normalize the input features and reward
-    #         # norm_obs/norm_reward: True if obs/rew should be normalized
-    #         # clip_obs: Max absolute value for observation
-    #         # clip_reward: Max value absolute for discounted reward
-    #         # gamma: discount factor
-    #         # env = VecNormalize(env, training=True, norm_obs=False, norm_reward=False,
-    #         #                    gamma=0.99)  # clip_obs=10., clip_reward=10.0,
-    #     if is_image_space(env.observation_space) and not isinstance(env, VecTransposeImage):
-    #         if self.verbose >= 1:
-    #             print("Wrapping the env in a VecTransposeImage.")
-    #         env = VecTransposeImage(env)
-    #     return env
