@@ -14,8 +14,8 @@ from stable_baselines3.common.vec_env import VecEnv
 from stable_baselines3.common.utils import is_vectorized_observation
 import csv
 
-from ReinforcementLearning.Algorithm.average_reward_adjusted_policy import DQNPolicyAverageRewardAdjusted
-from ReinforcementLearning.Algorithm import util
+from .average_reward_adjusted_policy import DQNPolicyAverageRewardAdjusted
+from .util import *
 
 
 class DQNAverageRewardAdjusted(DQN):
@@ -250,8 +250,8 @@ class DQNAverageRewardAdjusted(DQN):
                 # should be (roughly) between -1 and +1
                 new_obs, reward, done, infos = env.step(action)
                 self.current_unnormalized_reward = reward
-                new_obs = util.normalize_observation(new_obs)  # custom normalization of observation
-                reward = util.normalize_reward(reward)  # custom normalization of reward
+                new_obs = normalize_observation(new_obs)  # custom normalization of observation
+                reward = normalize_reward(reward)  # custom normalization of reward
                 self.period_counter += 1
                 if self.period_counter % 5000 == 0:
                     decayed_alpha = self.exp_decay_alpha()
@@ -351,7 +351,7 @@ class DQNAverageRewardAdjusted(DQN):
                                    0, 0, 0,
                                    7, 0, 0, 0,
                                    0, 1, 1, 1, 1]])
-                obs2 = util.normalize_observation(obs2)
+                obs2 = normalize_observation(obs2)
                 fix_observation = self.q_net._predict(obs2)[1][0]
                 with open('../' + 'q_values_learned_results.csv', mode='a') as results_CSV:
                     results_writer = csv.writer(results_CSV, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
@@ -388,7 +388,7 @@ class DQNAverageRewardAdjusted(DQN):
         """
         Get the decayed alpha value.
         """
-        return util.exponential_decay(self.alpha_min, self.alpha_decay_rate, self.alpha_decay_steps,
+        return exponential_decay(self.alpha_min, self.alpha_decay_rate, self.alpha_decay_steps,
                                       self.period_counter,
                                       self.alpha)
 
@@ -429,7 +429,7 @@ class DQNAverageRewardAdjusted(DQN):
         Custom method for debugging
         :return: the Q-values for each of the three possible actions and which action was chosen
         """
-        action, q_values = self.q_net._predict(th.tensor(util.normalize_observation(self.current_observation)))
+        action, q_values = self.q_net._predict(th.tensor(normalize_observation(self.current_observation)))
         q1 = float(q_values[0][0])
         q2 = float(q_values[0][1])
         q3 = float(q_values[0][2])
