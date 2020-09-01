@@ -102,10 +102,6 @@ def step_one_step_ahead():
     ################# Process orders in machines #################
     order_processing.process_orders()
 
-    ################# Measure utilization of machines and wips  #################
-    if global_settings.create_steps_csv == True:
-        performance_measurement.utilization_per_step()
-
     ################# Measure incurred costs #################
     if global_settings.current_time % global_settings.duration_of_one_period == 0:
         performance_measurement.update_total_cost()
@@ -130,35 +126,10 @@ def get_results_from_this_period():
             cost_rundown (a list of the costs per production step)
     """
     cost = global_settings.temp_cost_this_period
-    cost_rundown = ["WIP: ",global_settings.temp_wip_cost,"FGI: ", global_settings.temp_fgi_cost,
-                    "Late:", global_settings.temp_lateness_cost,"Overtime: " ,global_settings.temp_overtime_cost]
-    print(cost_rundown)
+    cost_rundown = ["WIP: ", global_settings.temp_wip_cost, "FGI: ", global_settings.temp_fgi_cost,
+                    "Late:", global_settings.temp_lateness_cost, "Overtime: ", global_settings.temp_overtime_cost]
+    print("Step", global_settings.current_time / 960 - 1, "done | Costs:", cost_rundown, " (from main.py)")
     return cost * -1, cost_rundown
-
-
-def get_exponentially_smoothed_reward():
-    """
-    UNUSED FUNCTION
-    TODO: delete this?
-    """
-    latest_reward = get_results_from_this_period()
-    if len(global_settings.past_rewards == 5):
-        global_settings.past_rewards.pop([0])
-    global_settings.past_rewards.append(latest_reward)
-
-    new_smoothed_reward = 0
-
-    a = 5
-    test = [1, 10, 100, 1000, 10000]
-    weights = [0.1 * a, 0.2, 0.3, 0.4, 0.5]
-
-    new_result = []
-
-    for i in test:
-        new_result.append(i * weights[test.index(i)])
-
-    print(new_result)
-    return
 
 
 def is_episode_done():
@@ -171,6 +142,29 @@ def is_episode_done():
     else:
         done = False
     return done
+
+
+def get_info():
+    return (
+            "Iteration " + str(global_settings.random_seed) + " finished. Orders shipped: " + str(len(
+        environment.shipped_orders)) + " | WIP cost: " + str(
+        global_settings.sum_shopfloor_cost) + " | FGI cost: " + str(
+        global_settings.sum_fgi_cost) + " | lateness cost: " + str(global_settings.sum_lateness_cost) +
+            " | overtime cost: " + str(global_settings.sum_overtime_cost) +
+            " | total cost: " + str(global_settings.total_cost) +
+            " | Bottleneck utilization: " + str(global_settings.bottleneck_utilization_per_step /
+                                                (
+                                                        global_settings.duration_of_one_period *
+                                                        global_settings.number_of_periods))
+    )
+
+
+def get_fgi_state():
+    return len(environment.finished_goods_inventory)
+
+
+def get_current_time():
+    return global_settings.current_time, global_settings.current_time / 960
 
 
 if __name__ == '__main__':
@@ -213,10 +207,12 @@ if __name__ == '__main__':
                   (global_settings.duration_of_one_period * global_settings.number_of_periods)))
         # Append simulation results to CSV file
         csv_handler.write_simulation_results()
+
+        # TODO: delete everything related to create_orders_csv
         # Measure order flow times. This currently supports only 1 iteration,
         # file output may behave unexpectedly for more iterations
-        if global_settings.create_orders_csv == True:
-            performance_measurement.measure_order_flow_times()
+        # if global_settings.create_orders_csv == True:
+        #     performance_measurement.measure_order_flow_times()
 
         global_settings.random_seed += 1
         iterations_remaining -= 1
@@ -224,18 +220,3 @@ if __name__ == '__main__':
     print(str(global_settings.repetitions) + " iterations done. ")
     print("Simulation ran for " + str(round(time.time() - simulation_start_time, 4)) + ' seconds and '
           + str(global_settings.number_of_periods) + " periods per iteration.")
-
-
-def get_info():
-    return (
-            "Iteration " + str(global_settings.random_seed) + " finished. Orders shipped: " + str(len(
-        environment.shipped_orders)) + " | WIP cost: " + str(
-        global_settings.sum_shopfloor_cost) + " | FGI cost: " + str(
-        global_settings.sum_fgi_cost) + " | lateness cost: " + str(global_settings.sum_lateness_cost) +
-            " | overtime cost: " + str(global_settings.sum_overtime_cost) +
-            " | total cost: " + str(global_settings.total_cost) +
-            " | Bottleneck utilization: " + str(global_settings.bottleneck_utilization_per_step /
-                                                (
-                                                        global_settings.duration_of_one_period *
-                                                        global_settings.number_of_periods))
-    )

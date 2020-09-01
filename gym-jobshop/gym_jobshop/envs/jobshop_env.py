@@ -1,14 +1,50 @@
 # External module imports
 import numpy as np
-import gym, csv, datetime
+import gym
 
 # Custom module imports
 from gym_jobshop.envs.src import main
 
 
 def get_environment_state():
-    #print("state from env: ",np.array(main.get_current_environment_state()).flatten())
+    """
+    Retrieve observation state from inside the main simulation
+    """
     return np.array(main.get_current_environment_state()).flatten()
+
+
+def debug_observation():
+    """
+    Return the observation state with descriptive text for easier debugging
+    Example for what gets returned:
+    ['OP1: ', 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 'WC1:', 0, 0, 0, 'FGI1: ', 0, 0, 0, 0,
+    'SG1: ', 0, 0, 0, 0, 0, 'OP2: ', 0, 0, 0, 0, 1, 0, 0, 3, 1, 0, 'WC2:', 0, 0, 0,
+    'FGI2: ', 0, 0, 0, 0, 'SG2: ', 0, 0, 0, 0, 0, 'OP3: ', 0, 0, 0, 0, 2, 0, 2, 0, 2, 0,
+    'WC3:', 0, 0, 0, 'FGI3: ', 0, 0, 0, 0, 'SG3: ', 0, 0, 0, 0, 0,
+    'OP4: ', 0, 0, 0, 0, 0, 1, 1, 0, 5, 0, 'WC4:', 0, 0, 0, 'FGI4: ', 0, 0, 0, 0,
+    'SG4: ', 0, 0, 0, 0, 0, 'OP5: ', 0, 0, 0, 0, 1, 2, 1, 3, 0, 0, 'WC5:', 0, 0, 0,
+    'FGI5: ', 0, 0, 0, 0, 'SG5: ', 0, 0, 0, 0, 0, 'OP6: ', 0, 0, 0, 0, 1, 1, 0, 0, 1, 0,
+    'WC6:', 0, 0, 0, 'FGI6: ', 0, 0, 0, 0, 'SG6: ', 0, 0, 0, 0, 0]
+    """
+    observation = get_environment_state().tolist()
+    separator_indices = [0, 10, 13, 17,
+                         22, 32, 35, 39,
+                         44, 54, 57, 61,
+                         66, 76, 79, 83,
+                         88, 98, 101, 105,
+                         110, 120, 123, 127
+                         ]
+    separator_names = ["OP1: ", "WC1:", "FGI1: ", "SG1: ",
+                       "OP2: ", "WC2:", "FGI2: ", "SG2: ",
+                       "OP3: ", "WC3:", "FGI3: ", "SG3: ",
+                       "OP4: ", "WC4:", "FGI4: ", "SG4: ",
+                       "OP5: ", "WC5:", "FGI5: ", "SG5: ",
+                       "OP6: ", "WC6:", "FGI6: ", "SG6: "
+                       ]
+    for i in separator_indices:
+        observation.insert(i + separator_indices.index(i), separator_names[separator_indices.index(i)])
+    time1, time2 = main.get_current_time()
+    return observation, time1, time2
 
 
 class JobShopEnv(gym.Env):
@@ -106,17 +142,15 @@ class JobShopEnv(gym.Env):
         Episodes end after 8000 periods, there are no other termination conditions.
     """
 
-
-
     def __init__(self):
         self.viewer = None
         main.initialize_random_numbers()
         self.episode_counter = -1
         self.period_counter = 0
         self.state = self.reset()
-        self.cost_rundown = [0,0,0,0]
+        self.cost_rundown = [0, 0, 0, 0]
 
-        self.action_space = gym.spaces.Discrete(3) # discrete action space with three possible actions
+        self.action_space = gym.spaces.Discrete(3)  # discrete action space with three possible actions
         # Below is the lower boundary of the observation space. It is an array of 132 elements, all are 0.
         # Due to the state logic of the production system, there cannot be any state below 0.
         self.low = np.empty(132, dtype=np.float32)
@@ -131,39 +165,39 @@ class JobShopEnv(gym.Env):
         # occuring real numbers as possible.
         self.high = np.array([
             # prod type 1
-            15,15,15,15,15,15,15,15,15,15, # order pool
-            15,15,15, # work centers
-            30,15,15,15, # FGI
-            15,15,15,15,15, # shipped
+            15, 15, 15, 15, 15, 15, 15, 15, 15, 15,  # order pool
+            15, 15, 15,  # work centers
+            30, 15, 15, 15,  # FGI
+            15, 15, 15, 15, 15,  # shipped
             # prod type 2
-            15,15,15,15,15,15,15,15,15,15, # order pool
-            15,15,15, # work centers
-            30,15,15,15, # FGI
-            15,15,15,15,15, # shipped
+            15, 15, 15, 15, 15, 15, 15, 15, 15, 15,  # order pool
+            15, 15, 15,  # work centers
+            30, 15, 15, 15,  # FGI
+            15, 15, 15, 15, 15,  # shipped
             # prod type 3
-            15,15,15,15,15,15,15,15,15,15, # order pool
-            15,15,15, # work centers
-            30,15,15,15, # FGI
-            15,15,15,15,15, # shipped
+            15, 15, 15, 15, 15, 15, 15, 15, 15, 15,  # order pool
+            15, 15, 15,  # work centers
+            30, 15, 15, 15,  # FGI
+            15, 15, 15, 15, 15,  # shipped
             # prod type 4
-            15,15,15,15,15,15,15,15,15,15, # order pool
-            15,15,15, # work centers
-            30,15,15,15, # FGI
-            15,15,15,15,15, # shipped
+            15, 15, 15, 15, 15, 15, 15, 15, 15, 15,  # order pool
+            15, 15, 15,  # work centers
+            30, 15, 15, 15,  # FGI
+            15, 15, 15, 15, 15,  # shipped
             # prod type 5
-            15,15,15,15,15,15,15,15,15,15, # order pool
-            15,15,15, # work centers
-            30,15,15,15, # FGI
-            15,15,15,15,15, # shipped
+            15, 15, 15, 15, 15, 15, 15, 15, 15, 15,  # order pool
+            15, 15, 15,  # work centers
+            30, 15, 15, 15,  # FGI
+            15, 15, 15, 15, 15,  # shipped
             # prod type 6
-            15,15,15,15,15,15,15,15,15,15, # order pool
-            15,15,15, # work centers
-            30,15,15,15, # FGI
-            15,15,15,15,15 # shipped
-                              ])
+            15, 15, 15, 15, 15, 15, 15, 15, 15, 15,  # order pool
+            15, 15, 15,  # work centers
+            30, 15, 15, 15,  # FGI
+            15, 15, 15, 15, 15  # shipped
+        ])
 
         self.observation_space = gym.spaces.flatten_space(
-             gym.spaces.Box(low=self.low, high=self.high, dtype=np.float32))
+            gym.spaces.Box(low=self.low, high=self.high, dtype=np.float32))
 
     def step(self, action, debug=True):
         """
@@ -190,7 +224,9 @@ class JobShopEnv(gym.Env):
         reward, self.cost_rundown = main.get_results_from_this_period()
         done = main.is_episode_done()  # Episode ends when 8000 periods are reached
         info = {}  # Not used
-
+        obs, time1, time2 = debug_observation()
+        print("FGI:", main.get_fgi_state(), "| steps:", time1, "| periods done:", time2)
+        print("Reward:",reward,"| Obs:", obs)
         if self.period_counter % 5000 == 0:
             print("Period " + str(self.period_counter) + " done")
         return observation, reward, done, info
@@ -200,7 +236,6 @@ class JobShopEnv(gym.Env):
         self.state = get_environment_state()
         self.episode_counter += 1
         return self.state
-
 
     def post_results(self):
         print(main.get_info())

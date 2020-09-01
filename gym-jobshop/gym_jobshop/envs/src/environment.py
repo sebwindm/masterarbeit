@@ -1,5 +1,5 @@
 from gym_jobshop.envs.src import class_Machine, global_settings
-import random, math, numpy
+import random, math
 
 random.seed(global_settings.random_seed)
 
@@ -174,6 +174,10 @@ def get_order_amounts_by_product_type(product_type):
     if global_settings.shop_type == "job_shop_1_machine":
         amount_in_work_center_2 = 0
         amount_in_work_center_3 = 0
+    else:
+        amount_in_work_center_2 = None
+        amount_in_work_center_3 = None
+        raise RuntimeError("shop type is wrong")
 
     ### Calculate amount of orders inside the FGI
     amount_in_fgi = get_fgi_levels_by_earliness(product_type)
