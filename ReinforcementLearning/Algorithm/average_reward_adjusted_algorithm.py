@@ -14,8 +14,8 @@ from stable_baselines3.common.vec_env import VecEnv
 from stable_baselines3.common.utils import is_vectorized_observation
 import csv
 
-from ReinforcementLearning.average_reward_adjusted_policy import DQNPolicyAverageRewardAdjusted
-from ReinforcementLearning import util
+from ReinforcementLearning.Algorithm.average_reward_adjusted_policy import DQNPolicyAverageRewardAdjusted
+from ReinforcementLearning.Algorithm import util
 
 
 class DQNAverageRewardAdjusted(DQN):

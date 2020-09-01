@@ -1,6 +1,5 @@
 import gym, gym_jobshop, time
-
-from ReinforcementLearning.average_reward_adjusted_algorithm import DQNAverageRewardAdjusted
+from Algorithm.average_reward_adjusted_algorithm import DQNAverageRewardAdjusted # ignore the error message in PyCharm
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.callbacks import BaseCallback
 from statistics import mean
