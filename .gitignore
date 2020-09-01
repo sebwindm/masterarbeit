@@ -6,5 +6,5 @@ TODO.py
 *.csv
 gym_jobshop.egg-info
 *.zip
-*.sh
+.sh
 gym_jobshop_tensorboard_logs
