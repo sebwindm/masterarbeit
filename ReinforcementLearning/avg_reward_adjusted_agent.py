@@ -109,12 +109,13 @@ def train_agent():
     start_time = time.time()
     custom_callback = CustomCallback()
     print("Training start")
+    # Train the model. Default total_timesteps for 1 machine = 300000
     #model.learn(total_timesteps=10000000) # learn with no callback
-    model.learn(total_timesteps=300000, callback=custom_callback)  # learn with custom callback
+    model.learn(total_timesteps=500000, callback=custom_callback)  # learn with custom callback
     total_time = time.time() - start_time
     print(f"Took {total_time:.2f}s")
     # Save the agent
-    model.save("dqn_avg_reward_adjusted")
+    model.save("dqn_avg_reward_adjusted_3_machines")
     return
 
 
@@ -138,10 +139,10 @@ def predict_with_DQN():
     """
     env.reset()
     simulation_start_time = time.time()
-    model = DQNAverageRewardAdjusted.load("dqn_avg_reward_adjusted", env=env)
+    model = DQNAverageRewardAdjusted.load("dqn_avg_reward_adjusted_3_machines", env=env)
 
     scores = []  # list of final scores after each episode
-    episodes = 1  # 30
+    episodes = 5  # 30
     max_periods = 8000  # 8000
 
     for episode in range(episodes):
@@ -171,13 +172,38 @@ def delete_tensorboard_logs():
     print("Deleted all Tensorboard logs")
     return
 
+def evaluate_with_default_action():
+    env.reset()
+    simulation_start_time = time.time()
+    model = DQNAverageRewardAdjusted.load("dqn_avg_reward_adjusted", env=env)
+
+    scores = []  # list of final scores after each episode
+    episodes = 5  # 30
+    max_periods = 8000  # 8000
+    action = 0
+    for episode in range(episodes):
+        # Reset the game-state, done and score before every episode
+        next_state = env.reset()
+        score = 0
+        for period in range(max_periods):  # predict for x periods
+            next_state, reward, done, info = env.step(action)
+            score += reward
+        scores.append(score)
+
+        print("Episode: {}/{}, score: {}".format(episode + 1, episodes, score))
+
+    print("Evaluation finished after " + str(round(time.time() - simulation_start_time, 4)) + " seconds")
+    print("Final average score over " + str(episodes) + " episodes: " + str(mean(scores)))
+    return scores
+
+
 
 if __name__ == "__main__":
     answer = input('Type...to.. \n'
                    '"a" or "Enter" train the model (creates model file)\n'
                    '"b" delete Tensorboard logs\n'
-                   '"c" predict 1 episode and print sum of rewards\n'
-                   '"d" predict 1 episode and print mean + std of reward (SB3 built-in evaluation)\n'
+                   '"c" predict 30 episodes and print sum of rewards\n'
+                   '"d" evaluate with default action only\n'
                    )
     if answer == "a"or answer == "":
         train_agent()
@@ -186,5 +212,5 @@ if __name__ == "__main__":
     if answer == "c":
         predict_with_DQN()
     if answer == "d":
-        evaluate_agent()
+        evaluate_with_default_action()
 
