@@ -2,12 +2,17 @@ from gym_jobshop.envs.src import environment, global_settings
 
 
 def ship_orders():
+    """
+    Move orders from FGI to shipped when order due date is reached
+    """
     global_settings.shipped_orders_by_prodtype_and_lateness = [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0],
                                                                [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]
     # Move orders from FGI to shipped_orders once they have reached their due_date
     # Then, calculate lateness for each order and update the system state for shipped goods
     if len(environment.finished_goods_inventory) > 0: # ship only if there are finished orders
-        for order_element in environment.finished_goods_inventory:
+        # Create a copy of finished_goods_inventory
+        copy_of_fgi = environment.finished_goods_inventory.copy()
+        for order_element in copy_of_fgi:
             if order_element.due_date <= global_settings.current_time: # ship only orders which are due
                 order_element.shipping_date = global_settings.current_time
                 order_element.current_production_step = None
@@ -38,11 +43,12 @@ def ship_orders():
                     global_settings.shipped_orders_by_prodtype_and_lateness[
                     int(order_element.product_type)-1][4] += 1
 
-                # Optional debugging info:
-                if global_settings.show_order_shipping == True:
-                    print("Step " + str(global_settings.current_time) + ": Shipped orderID " +
-                          str(order_element.orderID) + " with due date " + str(
-                        order_element.due_date) + " Lateness: " + str(order_element.lateness))
+                # # Optional debugging info:
+                # if global_settings.show_order_shipping == True:
+                #     print("Step " + str(global_settings.current_time) + ": Shipped orderID " +
+                #           str(order_element.orderID) + " with due date " + str(
+                #         order_element.due_date) + " Lateness: " + str(order_element.lateness))
+                # print(global_settings.current_time,": shipped with due date", order_element.due_date)
                 # Move order from FGI to shipped goods inventory
                 environment.shipped_orders.append(
                     environment.finished_goods_inventory.pop(
@@ -172,10 +178,6 @@ def move_orders_flow_shop():
             machine.orders_inside_the_machine[0].processing_time_remaining = machine.processing_time
             machine.orders_inside_the_machine[0].arrival_times_m1m2m3.append(global_settings.current_time)
 
-    ##################### Step 3: move orders from FGI to shipped when order due date is reached
-    if global_settings.current_time % global_settings.duration_of_one_period == 0:
-        ship_orders()
-
     return
 
 
@@ -253,10 +255,6 @@ def move_orders_job_shop():
             machine.orders_inside_the_machine[0].processing_time_remaining = machine.processing_time
             machine.orders_inside_the_machine[0].arrival_times_m1m2m3.append(global_settings.current_time)
 
-    ##################### Step 3: move orders from FGI to shipped when order due date is reached
-    # Move orders from FGI to shipped_orders once they have reached their due_date
-    if global_settings.current_time % global_settings.duration_of_one_period == 0:
-        ship_orders()
     return
 
 
@@ -281,10 +279,7 @@ def move_orders_job_shop_1_machine():
         environment.set_new_random_processing_time(environment.machine_A)  # set a new random processing time for the next order
         environment.machine_A.orders_inside_the_machine[0].processing_time_remaining = environment.machine_A.processing_time
         environment.machine_A.orders_inside_the_machine[0].arrival_times_m1m2m3.append(global_settings.current_time)
-    ##################### Step 3: move orders from FGI to shipped when order due date is reached
-    # Move orders from FGI to shipped_orders once they have reached their due_date
-    if global_settings.current_time % global_settings.duration_of_one_period == 0:
-        ship_orders()
+
     return
 
 

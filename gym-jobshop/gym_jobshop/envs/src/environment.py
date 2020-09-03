@@ -162,7 +162,6 @@ def get_order_amounts_by_product_type(product_type):
         for order_element in machine_B.orders_inside_the_machine:
             if order_element.product_type == product_type:
                 amount_in_work_center_2 += 1
-
         amount_in_work_center_3 = 0
         for order_element in wip_C:
             if order_element.product_type == product_type:
@@ -174,10 +173,9 @@ def get_order_amounts_by_product_type(product_type):
     if global_settings.shop_type == "job_shop_1_machine":
         amount_in_work_center_2 = 0
         amount_in_work_center_3 = 0
-    else:
-        amount_in_work_center_2 = None
-        amount_in_work_center_3 = None
-        raise RuntimeError("shop type is wrong")
+    # elif global_settings.shop_type != "job_shop_1_machine" or "job_shop":
+    #     raise RuntimeError("global_settings.shop_type is wrong. Flow shop currently not supported")
+    # Todo: make proper sanity check
 
     ### Calculate amount of orders inside the FGI
     amount_in_fgi = get_fgi_levels_by_earliness(product_type)
@@ -263,14 +261,16 @@ def get_fgi_levels_by_earliness(product_type):
         if order_element.product_type == product_type:
             early_by = (order_element.due_date - global_settings.current_time) / \
                        global_settings.duration_of_one_period
-            if early_by <= 1: early_by_1_period += 1
+            if early_by <= 1:
+                early_by_1_period += 1
+                if early_by < 0:
+                    raise ValueError("Step",global_settings.current_time,"an order is due but still in FGI")
             if early_by > 1 and early_by <= 2: early_by_2_periods += 1
             if early_by > 2 and early_by <= 3: early_by_3_periods += 1
             if early_by > 3: early_by_4_or_more_periods += 1
 
     fgi_levels_by_earliness.extend((early_by_1_period, early_by_2_periods,
                                     early_by_3_periods, early_by_4_or_more_periods))
-    # print("ptype ",product_type,": fgi earliness: ",fgi_levels_by_earliness)
 
     return fgi_levels_by_earliness
 
