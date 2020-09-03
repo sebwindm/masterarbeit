@@ -53,7 +53,7 @@ class DQNAverageRewardAdjusted(DQN):
                  alpha: float = 0.01,
                  alpha_min: float = 1e-5,
                  alpha_decay_rate: float = 0.55,
-                 alpha_decay_steps: int = 15000  # default for 3 machines: 50000
+                 alpha_decay_steps: int = 50000  # default for 3 machines: 50000, for 1 machine 15000
                  ):
 
         super(DQNAverageRewardAdjusted, self).__init__(policy,
@@ -321,36 +321,37 @@ class DQNAverageRewardAdjusted(DQN):
                     self.rho = (1 - decayed_alpha) * self.rho + decayed_alpha * (reward_ + target_st1 - target_st)
 
                 # Fixed observation for debugging purposes
-                # TODO: use real state and normalize
-                obs2 = th.tensor([[0, 2, 2, 1, 0, 2, 1, 1, 1, 0,
-                                   0, 0, 0,
-                                   6, 0, 0, 0,
-                                   0, 1, 0, 0, 0,
-
-                                   0, 0, 2, 1, 1, 4, 1, 0, 1, 0,
-                                   0, 0, 0,
-                                   3, 0, 0, 0,
+                # Observation state:
+                obs2 = th.tensor([[0, 0, 3, 1, 1, 3, 2, 0, 1, 0,
+                                   2, 0, 0,
+                                   0, 0, 0, 0,
                                    0, 0, 0, 0, 0,
 
-                                   0, 1, 0, 1, 6, 1, 1, 2, 2, 0,
-                                   0, 0, 0,
-                                   2, 0, 0, 0,
-                                   0, 2, 1, 0, 0,
+                                   2, 2, 3, 2, 1, 3, 3, 0, 1, 0,
+                                   1, 0, 0,
+                                   0, 0, 0, 0,
+                                   0, 0, 0, 0, 0,
 
-                                   0, 1, 0, 0, 3, 1, 1, 3, 2, 0,
-                                   0, 0, 0,
-                                   2, 0, 0, 0,
-                                   0, 1, 0, 0, 0,
+                                   0, 0, 1, 3, 2, 1, 1, 2, 4, 0,
+                                   1, 0, 0,
+                                   0, 0, 0, 0,
+                                   0, 0, 0, 0, 0,
 
-                                   0, 0, 0, 1, 2, 0, 0, 2, 2, 0,
-                                   0, 0, 0,
-                                   6, 0, 0, 0,
-                                   0, 0, 1, 0, 0,
+                                   1, 3, 1, 2, 3, 1, 2, 1, 0, 0,
+                                   1, 0, 0,
+                                   0, 0, 0, 0,
+                                   0, 0, 0, 0, 0,
 
-                                   0, 0, 3, 2, 0, 1, 4, 0, 0, 0,
+                                   1, 2, 2, 0, 0, 3, 1, 0, 1, 0,
+                                   1, 0, 0,
+                                   0, 0, 0, 0,
+                                   0, 0, 0, 0, 0,
+
+                                   2, 4, 3, 2, 1, 1, 2, 3, 5, 0,
                                    0, 0, 0,
-                                   7, 0, 0, 0,
-                                   0, 1, 1, 1, 1]])
+                                   0, 0, 0, 0,
+                                   0, 0, 0, 0, 0
+                                   ]])
                 obs2 = normalize_observation(obs2)
                 fix_observation = self.q_net._predict(obs2)[1][0]
                 with open('../' + 'q_values_learned_results.csv', mode='a') as results_CSV:
