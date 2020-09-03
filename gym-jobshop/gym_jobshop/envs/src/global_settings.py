@@ -13,7 +13,7 @@ demand_distribution = "exponential"  # must be "exponential" or "uniform". Used 
 # environment.py/set_next_order_arrival_time()
 
 processing_time_distribution = "exponential"  # must be "exponential" or "uniform"
-shop_type = "job_shop_1_machine"  # Must be either "flow_shop", "job_shop" or "job_shop_1_machine"
+shop_type = "job_shop"  # Must be either "flow_shop", "job_shop" or "job_shop_1_machine"
 
 #################### Variables used during the simulation runtime ####################
 order_release_policy = "bil"  # must be "periodic", "bil" or "lums"
