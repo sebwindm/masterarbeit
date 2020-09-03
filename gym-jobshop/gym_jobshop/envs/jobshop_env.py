@@ -204,29 +204,30 @@ class JobShopEnv(gym.Env):
         Step one period (= 960 simulation steps) ahead.
         :param action: Integer number, must be either 0, 1 or 2. Used to adjust the processing times of
         bottleneck machines. More info at main.py -> adjust_processing_times()
-        :return: observation (array of arrays, contains production metrics),
-        reward (floating-point number, indicates the cost that accumulated during the period),
-        done (boolean value, tells whether to terminate the episode),
-        info (diagnostic information for debugging)
+        :return:
+        * observation: array of arrays, contains production system metrics. See class JobShopEnv docstrings
+        * reward: floating-point number, indicates the cost that accumulated during the period
+        * done: boolean value, tells whether to terminate the episode (resets the simulation to defaults)
+        * info: not used, but some algorithms expect at least empty curly brackets
         """
         # Verify if action is valid
         assert self.action_space.contains(action), "%r (%s) invalid action" % (action, type(action))
         # Adjust processing times of bottleneck machines (capacity) depending on action
         main.adjust_processing_times(action)
         # Step one period ( = 960 steps) ahead
-        for i in range(960):
-            main.step_one_step_ahead()
+        #reward, self.cost_rundown = main.get_results_from_this_period()
+        reward, environment_state1, self.cost_rundown = main.step_one_period_ahead()
         self.period_counter += 1
         # Retrieve new state from the environment
         self.state = get_environment_state()
         observation = self.state
-        # Obtain cost that accumulated during this period
-        reward, self.cost_rundown = main.get_results_from_this_period()
+
         done = main.is_episode_done()  # Episode ends when 8000 periods are reached
         info = {}  # Not used
+
         obs, time1, time2 = debug_observation()
-        print("FGI:", main.get_fgi_state(), "| steps:", time1, "| periods done:", time2)
-        print("Reward:",reward,"| Obs:", obs)
+        # print("FGI:", main.get_fgi_state(), "| steps:", time1, "| periods done:", time2)
+        # print("Reward:",reward,"| Obs:", obs)
         if self.period_counter % 5000 == 0:
             print("Period " + str(self.period_counter) + " done")
         return observation, reward, done, info
@@ -237,7 +238,7 @@ class JobShopEnv(gym.Env):
         self.episode_counter += 1
         return self.state
 
-    def post_results(self):
+    def post_results(self): # used for debugging. todo: consider whether to keep this for final release
         print(main.get_info())
 
     def get_observation(self):
