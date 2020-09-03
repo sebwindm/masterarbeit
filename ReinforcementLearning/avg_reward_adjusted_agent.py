@@ -1,4 +1,4 @@
-import gym, gym_jobshop, time
+import gym, gym_jobshop, time, random
 from Algorithm.average_reward_adjusted_algorithm import DQNAverageRewardAdjusted # ignore the error message in PyCharm
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.callbacks import BaseCallback
@@ -9,7 +9,7 @@ from statistics import mean
 # Create environment
 env = gym.make('jobshop-v0')
 # env = gym.make('CartPole-v1')
-
+number_of_evaluation_episodes = 5 # default = 30
 
 class CustomCallback(BaseCallback):
     """
@@ -142,7 +142,7 @@ def predict_with_DQN():
     model = DQNAverageRewardAdjusted.load("dqn_avg_reward_adjusted_3_machines", env=env)
 
     scores = []  # list of final scores after each episode
-    episodes = 5  # 30
+    episodes = number_of_evaluation_episodes
     max_periods = 8000  # 8000
 
     for episode in range(episodes):
@@ -172,13 +172,14 @@ def delete_tensorboard_logs():
     print("Deleted all Tensorboard logs")
     return
 
+
 def evaluate_with_default_action():
     env.reset()
     simulation_start_time = time.time()
-    model = DQNAverageRewardAdjusted.load("dqn_avg_reward_adjusted", env=env)
+    model = DQNAverageRewardAdjusted.load("dqn_avg_reward_adjusted_3_machines", env=env)
 
     scores = []  # list of final scores after each episode
-    episodes = 5  # 30
+    episodes = number_of_evaluation_episodes
     max_periods = 8000  # 8000
     action = 0
     for episode in range(episodes):
@@ -197,13 +198,37 @@ def evaluate_with_default_action():
     return scores
 
 
+def evaluate_with_random_action():
+    env.reset()
+    simulation_start_time = time.time()
+    model = DQNAverageRewardAdjusted.load("dqn_avg_reward_adjusted_3_machines", env=env)
+
+    scores = []  # list of final scores after each episode
+    episodes = number_of_evaluation_episodes
+    max_periods = 8000  # 8000
+    for episode in range(episodes):
+        # Reset the game-state, done and score before every episode
+        next_state = env.reset()
+        score = 0
+        for period in range(max_periods):  # predict for x periods
+            action = random.randrange(0, 3)  # set action to a random number between 0 and 2
+            next_state, reward, done, info = env.step(action)
+            score += reward
+        scores.append(score)
+
+        print("Episode: {}/{}, score: {}".format(episode + 1, episodes, score))
+
+    print("Evaluation finished after " + str(round(time.time() - simulation_start_time, 4)) + " seconds")
+    print("Final average score over " + str(episodes) + " episodes: " + str(mean(scores)))
+    return scores
 
 if __name__ == "__main__":
     answer = input('Type...to.. \n'
                    '"a" or "Enter" train the model (creates model file)\n'
                    '"b" delete Tensorboard logs\n'
-                   '"c" predict 30 episodes and print sum of rewards\n'
+                   '"c" evaluate with trained agent\n'
                    '"d" evaluate with default action only\n'
+                   '"e" evaluate with random action \n'
                    )
     if answer == "a"or answer == "":
         train_agent()
@@ -213,4 +238,6 @@ if __name__ == "__main__":
         predict_with_DQN()
     if answer == "d":
         evaluate_with_default_action()
+    if answer == "e":
+        evaluate_with_random_action()
 
