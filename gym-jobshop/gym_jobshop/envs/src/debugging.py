@@ -18,33 +18,13 @@ def verify_machines():
                                      " Wrong product type in machine " + str(machine.name) +
                                      " || product type " + str(machine.orders_inside_the_machine[0].product_type))
 
-                ######## JOB SHOP NOT YET IMPLEMENTED
+                # VERIFICATION FOR JOB SHOP NOT YET IMPLEMENTED TODO
     elif global_settings.shop_type == "flow_shop":
         list_of_machines = environment.list_of_all_machines
         list_of_allowed_product_types = [
             [1, 2, 3, 4, 5, 6], [1, 2, 3], [4, 5, 6], [1, 4], [2, 5], [3, 6]
         ]
     return
-
-
-# def verify_wips():  # THIS FUNCTION MIGHT BE UNNECESSARY (checking the machines is enough)
-#     # Raise error if a machine contains the wrong product type
-#     for order_element in environment.wip_B:
-#         if order_element.product_type in (4, 5, 6):
-#             raise ValueError("Wrong product type in wip ")
-#     for order_element in environment.wip_C:
-#         if order_element.product_type in (1, 2, 3):
-#             raise ValueError("Wrong product type in wip ")
-#     for order_element in environment.wip_D:
-#         if order_element.product_type in (2, 3, 5, 6):
-#             raise ValueError("Wrong product type in wip ")
-#     for order_element in environment.wip_E:
-#         if order_element.product_type in (1, 3, 4, 6):
-#             raise ValueError("Wrong product type in wip ")
-#     for order_element in environment.wip_F:
-#         if order_element.product_type in (1, 2, 4, 5):
-#             raise ValueError("Wrong product type in wip ")
-#     return
 
 
 def verify_policies():
@@ -58,19 +38,6 @@ def verify_policies():
                          "Please review scheduling_policy at global_settings.py ")
     return
 
-    # This runs over every order in the finished goods inventory to see if there are orders left
-    # which should have been removed long ago. WARNING: takes a lot of resources, only run at the very end
-
-
-def verify_fgi():
-    # Raise error if there are orders in the FGI (finished goods inventory) even though they shouldn't be there
-    # if len(environment.finished_goods_inventory) > 0:
-    #     for order_element in environment.finished_goods_inventory:
-    #         if order_element.due_date < global_settings.current_time:
-    #             raise ValueError("Programming error in finished goods inventory: "
-    #                              "overdue order is still inside the inventory. ")
-    return
-
 
 def verify_all():
     # The following checks are performed every 50 steps of the simulation
@@ -80,20 +47,64 @@ def verify_all():
     # The following checks are only performed in the first step of the simulation
     if global_settings.current_time == 0:
         verify_policies()
-    # The following checks are only performed in the last step of the simulation
-    if global_settings.current_time == global_settings.maximum_simulation_duration - 1:
-        verify_fgi()
+
 
 def verify_reset():
-    # print("Settings reset. Current time: " + str(global_settings.current_time) +
-    #       " | FGI " + str(len(environment.finished_goods_inventory)) +
-    #       " | WIPs " + str(len(environment.wip_A)+len(environment.wip_B)+len(environment.wip_C)+len(environment.wip_D)+len(environment.wip_E)+len(environment.wip_F)) +
-    #       " | Machines " + str(len(environment.machine_A.orders_inside_the_machine)+len(environment.machine_B.orders_inside_the_machine)+len(environment.machine_C.orders_inside_the_machine)+len(environment.machine_D.orders_inside_the_machine)+len(environment.machine_E.orders_inside_the_machine)+len(environment.machine_F.orders_inside_the_machine)) +
-    #       " | total cost " + str(global_settings.total_cost) +
-    #       " | Order pool: " + str(len(environment.order_pool)) +
-    #       " | Next order at step: " + str(global_settings.time_of_next_order_arrival)
-    #       )
+    variables_to_check = [
+        global_settings.current_time,
+        global_settings.sum_fgi_cost, global_settings.total_cost,
+        global_settings.sum_shopfloor_cost, global_settings.sum_lateness_cost,
+        global_settings.sum_overtime_cost, global_settings.bottleneck_utilization_per_step,
+        len(environment.order_pool),
+        len(environment.wip_A), len(environment.machine_A.orders_inside_the_machine),
+
+        len(environment.finished_goods_inventory), len(environment.shipped_orders)
+    ]
+    for variable in variables_to_check:
+        if variable != 0:
+            raise ValueError("Environment was not correctly reset:", variable)
+    if global_settings.shop_type == "job_shop":
+        additional_variables_to_check = [len(environment.wip_B), len(environment.machine_B.orders_inside_the_machine),
+                                         len(environment.wip_C), len(environment.machine_C.orders_inside_the_machine)]
+        for variable in additional_variables_to_check:
+            if variable != 0:
+                raise ValueError("Environment was not correctly reset:", variable)
     return
 
 
-
+def verify_observation_state(state):
+    """
+    Compare the values of the observation state with the actual numbers from the
+    system to identify mistakes.
+    :param state: the observation state as generated by main.get_current_environment_state()
+    """
+    # Verify order pool:
+    state_of_order_pool = 0
+    for prodtype in range(6):
+        state_of_order_pool += sum(state[prodtype][0:10])
+    if state_of_order_pool != len(environment.order_pool):
+        raise ValueError("Observation state is incorrect - order pool")
+    # Verify work centers
+    state_of_work_centers = 0
+    for prodtype in range(6):
+        state_of_work_centers += sum(state[prodtype][10:13])
+    actual_numbers_wip = 0
+    for wip in environment.list_of_all_wip_elements:
+        actual_numbers_wip += len(wip)
+    for machine in environment.list_of_all_machines:
+        actual_numbers_wip += len(machine.orders_inside_the_machine)
+    if state_of_work_centers != actual_numbers_wip:
+        raise ValueError("Observation state is incorrect - work centers")
+    # Verify FGI
+    state_of_fgi = 0
+    for prodtype in range(6):
+        state_of_fgi += sum(state[prodtype][13:17])
+    if state_of_fgi != len(environment.finished_goods_inventory):
+        raise ValueError("Observation state is incorrect - FGI")
+    # Verify shipped goods
+    state_of_shipped_goods = 0
+    for prodtype in range(6):
+        state_of_shipped_goods += sum(state[prodtype][17:22])
+    if state_of_shipped_goods != global_settings.temp_amount_of_shipped_orders:
+        raise ValueError("Observation state is incorrect - shipped goods")
+    return
