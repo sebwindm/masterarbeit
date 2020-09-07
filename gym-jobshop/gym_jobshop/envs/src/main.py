@@ -1,5 +1,5 @@
 # Own module imports
-from gym_jobshop.envs.src import environment, order_generation, debugging, csv_handler, order_processing, \
+from gym_jobshop.envs.src import environment, order_generation, debugging, order_processing, \
     global_settings, order_release, order_movement, performance_measurement
 
 # Python native module (stdlib) imports
@@ -14,18 +14,19 @@ def initialize_random_numbers():
 def reset():
     # these are used at the beginning of the production main loop
     # this function is not to be confused with reset() of the actual Gym environment in jobshop_env.py
-    ################################################## INITIAL SETUP & RESET ##################################################
+    # INITIAL SETUP & RESET
     global_settings.random_seed += 1
     random.seed(global_settings.random_seed)
     global_settings.reset_global_settings()
     performance_measurement.reset_all_costs()
     environment.reset_machines()
     environment.reset_inventories()
+    global_settings.bottleneck_utilization_per_step = 0
     debugging.verify_reset()
     if global_settings.shop_type != "flow_shop":
         return get_current_environment_state()
     else:
-        print("States have not been implemented for global_settings.shop_type == flow_shop")
+        raise ValueError("States have not been implemented for global_settings.shop_type == flow_shop")
 
 
 def get_current_environment_state():
@@ -58,8 +59,7 @@ def get_current_environment_state():
     state = []
     for product_type_element in [1, 2, 3, 4, 5, 6]:
         state.append(environment.get_order_amounts_by_product_type(product_type_element))
-
-    # print("State from main.py: ", state)
+    debugging.verify_observation_state(state) # sanity check for the observation state
     return state
 
 
@@ -99,10 +99,10 @@ def step_one_step_ahead():
     # then update time at which to generate next order
     if global_settings.current_time == global_settings.time_of_next_order_arrival:
         order_generation.generate_order()
-
     # Move orders between machines and inventories; ship orders
     order_movement.move_orders()
-
+    # Measure bottleneck utilization
+    performance_measurement.measure_bottleneck_utilization()
     # Process orders in machines
     order_processing.process_orders()
 
@@ -118,6 +118,10 @@ def step_one_period_ahead():
     * environment_state:
     * cost_rundown:
     """
+    # Reset temporary lists for shipped orders
+    global_settings.shipped_orders_by_prodtype_and_lateness = [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0],
+                                                               [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]
+    global_settings.temp_amount_of_shipped_orders = 0
     # Release orders
     order_release.release_orders()
     # Run for 960 steps
@@ -127,8 +131,6 @@ def step_one_period_ahead():
     # After each period:
     # Measure cost
     performance_measurement.update_total_cost()
-    # Measure bottleneck utilization
-    performance_measurement.measure_bottleneck_utilization()
     # Get results
     reward, cost_rundown = get_results_from_this_period()
     environment_state = get_current_environment_state()
@@ -151,11 +153,7 @@ def get_results_from_this_period():
     cost_rundown = ["WIP: ", global_settings.temp_wip_cost, "FGI: ", global_settings.temp_fgi_cost,
                     "Late:", global_settings.temp_lateness_cost, "Overtime: ", global_settings.temp_overtime_cost]
 
-
-    #print("Step", global_settings.current_time / 960 - 1, "done | Costs:", cost_rundown, " (from main.py)")#for debugging TODO: delete for final release
-
-
-    if cost < 0: # sanity check stops the run if cost is negative
+    if cost < 0:  # sanity check stops the run if cost is negative
         raise ValueError("get_results_from_this_period() received negative costs where they should be positive")
     return cost * -1, cost_rundown
 
@@ -167,6 +165,7 @@ def is_episode_done():
     """
     if global_settings.current_time >= (global_settings.number_of_periods * global_settings.duration_of_one_period):
         done = True
+        print(bottleneck())
     else:
         done = False
     return done
@@ -175,9 +174,9 @@ def is_episode_done():
 def get_info():
     return (
             "Iteration " + str(global_settings.random_seed) + " finished. Orders shipped: " + str(len(
-        environment.shipped_orders)) + " | WIP cost: " + str(
-        global_settings.sum_shopfloor_cost) + " | FGI cost: " + str(
-        global_settings.sum_fgi_cost) + " | lateness cost: " + str(global_settings.sum_lateness_cost) +
+                environment.shipped_orders)) + " | WIP cost: " + str(
+                global_settings.sum_shopfloor_cost) + " | FGI cost: " + str(
+                global_settings.sum_fgi_cost) + " | lateness cost: " + str(global_settings.sum_lateness_cost) +
             " | overtime cost: " + str(global_settings.sum_overtime_cost) +
             " | total cost: " + str(global_settings.total_cost) +
             " | Bottleneck utilization: " + str(global_settings.bottleneck_utilization_per_step /
@@ -187,11 +186,12 @@ def get_info():
     )
 
 
-def get_fgi_state(): # used for debugging. todo: delete for final release
-    return len(environment.finished_goods_inventory)
+def bottleneck():  # used for debugging. todo: delete for final release
+    return ("Bottleneck utilization: ",global_settings.current_time,global_settings.bottleneck_utilization_per_step,
+            global_settings.bottleneck_utilization_per_step / global_settings.maximum_simulation_duration)
 
 
-def get_current_time():# used for debugging. todo: delete for final release
+def get_current_time():  # used for debugging. todo: delete for final release
     return global_settings.current_time, global_settings.current_time / global_settings.duration_of_one_period
 
 
@@ -201,8 +201,6 @@ if __name__ == '__main__':
     While it's mostly useful for debugging (direct access to everything that happens inside the environment),
     it is recommended to access the simulation over the gym-jobshop environment.
     """
-    csv_handler.initialize_csv_files()
-
     simulation_start_time = time.time()
     iterations_remaining = global_settings.repetitions
 
@@ -210,7 +208,7 @@ if __name__ == '__main__':
         reset()
         reward = 0
         print("Starting simulation. Iteration #" + str(global_settings.random_seed))
-        ################################################## START SIMULATION MAIN LOOP ##################################################
+        # START SIMULATION MAIN LOOP
         for period in range(global_settings.number_of_periods):
             """
             This is the main loop of the simulation. It increases a global timer with every step of the loop, 
@@ -224,10 +222,9 @@ if __name__ == '__main__':
             """
             for i in range(global_settings.duration_of_one_period):
                 step_one_step_ahead()
+        # END MAIN LOOP
 
-        ################################################## END MAIN LOOP ##################################################
-
-        ################################################## ANALYSIS ##################################################
+        # ANALYSIS
         print("Iteration " + str(global_settings.random_seed) + " finished. Orders shipped: " + str(len(
             environment.shipped_orders)) +
               " | WIP cost: " + str(global_settings.sum_shopfloor_cost) +
@@ -238,8 +235,7 @@ if __name__ == '__main__':
         print("Bottleneck utilization: " +
               str(global_settings.bottleneck_utilization_per_step /
                   (global_settings.duration_of_one_period * global_settings.number_of_periods)))
-        # Append simulation results to CSV file
-        csv_handler.write_simulation_results()
+
 
         # TODO: delete everything related to create_orders_csv
         # Measure order flow times. This currently supports only 1 iteration,

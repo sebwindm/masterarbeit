@@ -13,40 +13,6 @@ def get_environment_state():
     return np.array(main.get_current_environment_state()).flatten()
 
 
-def debug_observation():
-    """
-    Return the observation state with descriptive text for easier debugging
-    Example for what gets returned:
-    ['OP1: ', 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 'WC1:', 0, 0, 0, 'FGI1: ', 0, 0, 0, 0,
-    'SG1: ', 0, 0, 0, 0, 0, 'OP2: ', 0, 0, 0, 0, 1, 0, 0, 3, 1, 0, 'WC2:', 0, 0, 0,
-    'FGI2: ', 0, 0, 0, 0, 'SG2: ', 0, 0, 0, 0, 0, 'OP3: ', 0, 0, 0, 0, 2, 0, 2, 0, 2, 0,
-    'WC3:', 0, 0, 0, 'FGI3: ', 0, 0, 0, 0, 'SG3: ', 0, 0, 0, 0, 0,
-    'OP4: ', 0, 0, 0, 0, 0, 1, 1, 0, 5, 0, 'WC4:', 0, 0, 0, 'FGI4: ', 0, 0, 0, 0,
-    'SG4: ', 0, 0, 0, 0, 0, 'OP5: ', 0, 0, 0, 0, 1, 2, 1, 3, 0, 0, 'WC5:', 0, 0, 0,
-    'FGI5: ', 0, 0, 0, 0, 'SG5: ', 0, 0, 0, 0, 0, 'OP6: ', 0, 0, 0, 0, 1, 1, 0, 0, 1, 0,
-    'WC6:', 0, 0, 0, 'FGI6: ', 0, 0, 0, 0, 'SG6: ', 0, 0, 0, 0, 0]
-    """
-    observation = get_environment_state().tolist()
-    separator_indices = [0, 10, 13, 17,
-                         22, 32, 35, 39,
-                         44, 54, 57, 61,
-                         66, 76, 79, 83,
-                         88, 98, 101, 105,
-                         110, 120, 123, 127
-                         ]
-    separator_names = ["OP1: ", "WC1:", "FGI1: ", "SG1: ",
-                       "OP2: ", "WC2:", "FGI2: ", "SG2: ",
-                       "OP3: ", "WC3:", "FGI3: ", "SG3: ",
-                       "OP4: ", "WC4:", "FGI4: ", "SG4: ",
-                       "OP5: ", "WC5:", "FGI5: ", "SG5: ",
-                       "OP6: ", "WC6:", "FGI6: ", "SG6: "
-                       ]
-    for i in separator_indices:
-        observation.insert(i + separator_indices.index(i), separator_names[separator_indices.index(i)])
-    time1, time2 = main.get_current_time()
-    return observation, time1, time2
-
-
 class JobShopEnv(gym.Env):
     """
     Description:
@@ -215,19 +181,15 @@ class JobShopEnv(gym.Env):
         # Adjust processing times of bottleneck machines (capacity) depending on action
         main.adjust_processing_times(action)
         # Step one period ( = 960 steps) ahead
-        #reward, self.cost_rundown = main.get_results_from_this_period()
         reward, environment_state1, self.cost_rundown = main.step_one_period_ahead()
         self.period_counter += 1
         # Retrieve new state from the environment
         self.state = get_environment_state()
         observation = self.state
-
         done = main.is_episode_done()  # Episode ends when 8000 periods are reached
         info = {}  # Not used
 
-        obs, time1, time2 = debug_observation()
-        # print("FGI:", main.get_fgi_state(), "| steps:", time1, "| periods done:", time2)
-        # print("Reward:",reward,"| Obs:", obs)
+        # obs, time1, time2 = debug_observation()
         if self.period_counter % 5000 == 0:
             print("Period " + str(self.period_counter) + " done")
         return observation, reward, done, info
@@ -238,14 +200,47 @@ class JobShopEnv(gym.Env):
         self.episode_counter += 1
         return self.state
 
-    def post_results(self): # used for debugging. todo: consider whether to keep this for final release
-        print(main.get_info())
+    def get_cost_rundown(self):
+        """
+        Return a list of which costs occured where. Useful for debugging.
+        """
+        return self.cost_rundown
+
+    def debug_observation(self):
+        """
+        Return the observation state with descriptive text for easier debugging
+        Example for what gets returned:
+        ['OP1: ', 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 'WC1:', 0, 0, 0, 'FGI1: ', 0, 0, 0, 0,
+        'SG1: ', 0, 0, 0, 0, 0, 'OP2: ', 0, 0, 0, 0, 1, 0, 0, 3, 1, 0, 'WC2:', 0, 0, 0,
+        'FGI2: ', 0, 0, 0, 0, 'SG2: ', 0, 0, 0, 0, 0, 'OP3: ', 0, 0, 0, 0, 2, 0, 2, 0, 2, 0,
+        'WC3:', 0, 0, 0, 'FGI3: ', 0, 0, 0, 0, 'SG3: ', 0, 0, 0, 0, 0,
+        'OP4: ', 0, 0, 0, 0, 0, 1, 1, 0, 5, 0, 'WC4:', 0, 0, 0, 'FGI4: ', 0, 0, 0, 0,
+        'SG4: ', 0, 0, 0, 0, 0, 'OP5: ', 0, 0, 0, 0, 1, 2, 1, 3, 0, 0, 'WC5:', 0, 0, 0,
+        'FGI5: ', 0, 0, 0, 0, 'SG5: ', 0, 0, 0, 0, 0, 'OP6: ', 0, 0, 0, 0, 1, 1, 0, 0, 1, 0,
+        'WC6:', 0, 0, 0, 'FGI6: ', 0, 0, 0, 0, 'SG6: ', 0, 0, 0, 0, 0]
+        """
+        observation = get_environment_state().tolist()
+        separator_indices = [0, 10, 13, 17,
+                             22, 32, 35, 39,
+                             44, 54, 57, 61,
+                             66, 76, 79, 83,
+                             88, 98, 101, 105,
+                             110, 120, 123, 127
+                             ]
+        separator_names = ["OP1: ", "WC1:", "FGI1: ", "SG1: ",
+                           "OP2: ", "WC2:", "FGI2: ", "SG2: ",
+                           "OP3: ", "WC3:", "FGI3: ", "SG3: ",
+                           "OP4: ", "WC4:", "FGI4: ", "SG4: ",
+                           "OP5: ", "WC5:", "FGI5: ", "SG5: ",
+                           "OP6: ", "WC6:", "FGI6: ", "SG6: "
+                           ]
+        for i in separator_indices:
+            observation.insert(i + separator_indices.index(i), separator_names[separator_indices.index(i)])
+        time1, time2 = main.get_current_time()
+        return observation, time1, time2
 
     def get_observation(self):
         return get_environment_state()
 
-    def get_cost_rundown(self):
-        """
-        Return a list of which costs occured where
-        """
-        return self.cost_rundown
+    def post_results(self):  # used for debugging. todo: consider whether to keep this for final release
+        print(main.get_info())

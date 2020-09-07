@@ -33,16 +33,6 @@ def get_cost_from_current_period():
 
     global_settings.temp_sum_of_late_orders_this_period = 0  # reset the count of late orders until the next period's end
 
-
-    # temp_amount_wip = 0
-    # for wip in environment.list_of_all_wip_elements:
-    #     temp_amount_wip += len(wip)
-    # for machine in environment.list_of_all_machines:
-    #     temp_amount_wip += len(machine.orders_inside_the_machine)
-    # print("tmp fgi cost:",temp_fgi_cost, "len fgi:",len(environment.finished_goods_inventory),
-    #       "tmp wip cost:",temp_wip_cost, "len wips:",temp_amount_wip)
-
-
     return [total_cost_this_period, temp_wip_cost, temp_overtime_cost, temp_fgi_cost, temp_late_cost]
 
 
@@ -69,9 +59,6 @@ def update_total_cost():
     global_settings.sum_fgi_cost += all_costs_from_this_period[3]
     global_settings.temp_fgi_cost = all_costs_from_this_period[3]
 
-
-    #print("global_settings.temp_fgi_cost: ",global_settings.temp_fgi_cost)
-
     # Update total cost for late goods (= backorder cost) in the last step of simulation:
     global_settings.sum_lateness_cost += all_costs_from_this_period[4]
     global_settings.temp_lateness_cost = all_costs_from_this_period[4]
@@ -96,6 +83,10 @@ def reset_all_costs():
 
 
 def measure_bottleneck_utilization():
+    """
+    For each step that there is an order inside the bottleneck machine,
+    increase bottleneck_utilization_per_step by 1.
+    """
     if len(environment.bottleneck_machine.orders_inside_the_machine) > 0:
         global_settings.bottleneck_utilization_per_step += 1
     return

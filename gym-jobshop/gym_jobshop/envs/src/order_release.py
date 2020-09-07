@@ -4,8 +4,10 @@
 from gym_jobshop.envs.src import environment, global_settings
 
 
-# CURRENTLY NOT IN USE
 def sort_order_pool_by_due_date():
+    """
+    CURRENTLY NOT IN USE
+    """
     print("order pool element 0 due date:" + str(environment.order_pool[0].due_date))
     environment.order_pool.sort(key=lambda x: x.due_date, reverse=False)
     print("order pool sorted by due date")
@@ -13,8 +15,10 @@ def sort_order_pool_by_due_date():
     return
 
 
-# Periodic release policy:
 def release_using_periodic_release():
+    """
+    Periodic release policy:
+    """
     # Flow shop logic: each element in the order_pool gets moved to wip_A
     if global_settings.shop_type == "flow_shop":
         temporary_list = environment.order_pool.copy()
@@ -31,11 +35,11 @@ def release_using_periodic_release():
         for order_element in temporary_list:
             order_element.order_release_date = global_settings.current_time
             order_element.current_production_step = 0
-            if order_element.product_type in (1,2):
+            if order_element.product_type in (1, 2):
                 environment.wip_A.append(environment.order_pool.pop(environment.order_pool.index(order_element)))
-            elif order_element.product_type in (3,4):
+            elif order_element.product_type in (3, 4):
                 environment.wip_B.append(environment.order_pool.pop(environment.order_pool.index(order_element)))
-            elif order_element.product_type in (5,6):
+            elif order_element.product_type in (5, 6):
                 environment.wip_C.append(environment.order_pool.pop(environment.order_pool.index(order_element)))
             temp_number_of_released_orders += 1
     # Same as job shop logic, but for 1 machine only
@@ -48,23 +52,17 @@ def release_using_periodic_release():
             order_element.current_production_step = 0
             environment.wip_A.append(environment.order_pool.pop(environment.order_pool.index(order_element)))
             temp_number_of_released_orders += 1
-
-    # debug info:
-    if temp_number_of_released_orders > 0 and global_settings.show_order_release == True:
-        print("Step " + str(global_settings.current_time) + ": " + str(temp_number_of_released_orders) + " orders released. Orders in pool: " + str(len(
-            environment.order_pool)))
     return
 
-
-# LUMS policy
-# Hybrid rule based order release model, e.g. LUMS-COR after Thürer et al. 2012:
-# release periodically and pull a job forward from the order pool if work center is (about to) starve
-def release_using_lums():
-    raise ValueError("LUMS not implemented")
-    return
 
 def release_using_bil():
-    #planned_release_date
+    """
+    Release order using the BIL (backward infinite loading) policy
+    Each generated order gets a planned release date, at which it will be released to production.
+    The planned release date is defined by global_settings.planned_release_date_multiplier.
+    Planned release date = (multiplier * duration of a period in minutes) + current time in minutes.
+    As soon as the current time equals the planned release date, the order gets released.
+    """
     # Flow shop logic: each element in the order_pool gets moved to wip_A
     if global_settings.shop_type == "flow_shop":
         temporary_list = environment.order_pool.copy()
@@ -83,11 +81,11 @@ def release_using_bil():
             if order_element.planned_release_date <= global_settings.current_time:
                 order_element.order_release_date = global_settings.current_time
                 order_element.current_production_step = 0
-                if order_element.product_type in (1,2):
+                if order_element.product_type in (1, 2):
                     environment.wip_A.append(environment.order_pool.pop(environment.order_pool.index(order_element)))
-                elif order_element.product_type in (3,4):
+                elif order_element.product_type in (3, 4):
                     environment.wip_B.append(environment.order_pool.pop(environment.order_pool.index(order_element)))
-                elif order_element.product_type in (5,6):
+                elif order_element.product_type in (5, 6):
                     environment.wip_C.append(environment.order_pool.pop(environment.order_pool.index(order_element)))
                 temp_number_of_released_orders += 1
     # Same as job shop logic, but for 1 machine only
@@ -101,22 +99,12 @@ def release_using_bil():
                 order_element.current_production_step = 0
                 environment.wip_A.append(environment.order_pool.pop(environment.order_pool.index(order_element)))
                 temp_number_of_released_orders += 1
-
-
-    # debug info:
-    if temp_number_of_released_orders > 0 and global_settings.show_order_release == True:
-        print("Step " + str(global_settings.current_time) + ": " + str(temp_number_of_released_orders) + " orders released. Orders in pool: " + str(len(
-            environment.order_pool)))
-
     return
 
 
 def release_orders():
-    # sort_order_pool_by_due_date()
     if global_settings.order_release_policy == "periodic":
         release_using_periodic_release()
     elif global_settings.order_release_policy == "bil":
         release_using_bil()
-    elif global_settings.order_release_policy == "lums":
-        release_using_lums() # NOT YET IMPLEMENTED
     return

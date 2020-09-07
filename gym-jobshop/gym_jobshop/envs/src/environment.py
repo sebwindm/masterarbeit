@@ -41,7 +41,7 @@ if global_settings.shop_type == "flow_shop":
 elif global_settings.shop_type == "job_shop":
     machine_A = class_Machine.Machine("Machine A", 30, 130, 80)
     machine_B = class_Machine.Machine("Machine B", 30, 130, 77.5)
-    machine_C = class_Machine.Machine("Machine C", 65, 125, 95)
+    machine_C = class_Machine.Machine("Machine C", 65, 125, 106.1999115)  # default 65, 125, 95
     list_of_all_machines = [machine_A, machine_B, machine_C]
     # Generate WIP (work in process) inventories
     # each WIP inventory is associated with one machine (and each machine with one inventory)
@@ -55,7 +55,7 @@ elif global_settings.shop_type == "job_shop":
     bottleneck_machine = machine_C
 
 elif global_settings.shop_type == "job_shop_1_machine":
-    machine_A = class_Machine.Machine("Machine A", 30, 130, 106.1999115)
+    machine_A = class_Machine.Machine("Machine A", 30, 130, 106.1999115)  # 106.1999115 gives roughly 90% utilization
     list_of_all_machines = [machine_A]
     # Generate WIP (work in process) inventories
     # each WIP inventory is associated with one machine (and each machine with one inventory)
@@ -104,7 +104,6 @@ def set_next_order_arrival_time():
         if random_exponential_number == 0:
             random_exponential_number = 1
         global_settings.time_of_next_order_arrival = global_settings.current_time + random_exponential_number
-        # print("time to next order:" + str(random_exponential_number))
     else:
         raise ValueError("global_settings.demand_distribution invalid value assigned. "
                          "Must be 'exponential' or 'uniform'")
@@ -141,10 +140,10 @@ def get_order_amounts_by_product_type(product_type):
     if product_type not in [1, 2, 3, 4, 5, 6]:
         raise ValueError("Wrong product type in environment.py -> get_order_amounts_by_product_type")
 
-    ### Calculate amount of orders inside the order pool
+    # Calculate amount of orders inside the order pool
     amount_in_order_pool = get_order_pool_levels_by_due_date(product_type)
 
-    ### Calculate amount of orders inside the work centers
+    # Calculate amount of orders inside the work centers
     amount_in_work_center_1 = 0
     for order_element in wip_A:
         if order_element.product_type == product_type:
@@ -170,20 +169,19 @@ def get_order_amounts_by_product_type(product_type):
             if order_element.product_type == product_type:
                 amount_in_work_center_3 += 1
     # As a workaround, we return 0 for the states of the nonexistent machines
-    if global_settings.shop_type == "job_shop_1_machine":
+    elif global_settings.shop_type == "job_shop_1_machine":
         amount_in_work_center_2 = 0
         amount_in_work_center_3 = 0
-    # elif global_settings.shop_type != "job_shop_1_machine" or "job_shop":
-    #     raise RuntimeError("global_settings.shop_type is wrong. Flow shop currently not supported")
-    # Todo: make proper sanity check
+    else:
+        raise ValueError("Flow shop currently not supported")
 
-    ### Calculate amount of orders inside the FGI
+    # Calculate amount of orders inside the FGI
     amount_in_fgi = get_fgi_levels_by_earliness(product_type)
 
-    ### Calculate the amount of orders that were shipped in this period
+    # Calculate the amount of orders that were shipped in this period
     amount_in_shipped_goods = get_shipped_levels_by_lateness(product_type)
 
-    ### Aggregate all amounts to one list
+    # Aggregate all amounts to one list
     order_amounts = []
     for i in amount_in_order_pool:
         order_amounts.append(i)
@@ -198,6 +196,9 @@ def get_order_amounts_by_product_type(product_type):
 
 
 def reset_machines():
+    """
+    Reset all machines by deleting all elements from the respective lists
+    """
     for machine in list_of_all_machines:
         machine.orders_inside_the_machine.clear()
     set_next_order_arrival_time()
@@ -205,6 +206,9 @@ def reset_machines():
 
 
 def reset_inventories():
+    """
+    Reset all inventories by deleting all elements from the respective lists
+    """
     for inventory_element in list_of_inventories:
         inventory_element.clear()
 
@@ -232,25 +236,40 @@ def get_order_pool_levels_by_due_date(product_type):
     for order_element in order_pool:
         if order_element.product_type == product_type:
             due_in = (order_element.due_date - global_settings.current_time) / global_settings.duration_of_one_period
-            if due_in <= 1: due_in_1_period += 1
-            if 1 < due_in <= 2: due_in_2_periods += 1
-            if 2 < due_in <= 3: due_in_3_periods += 1
-            if 3 < due_in <= 4: due_in_4_periods += 1
-            if 4 < due_in <= 5: due_in_5_periods += 1
-            if 5 < due_in <= 6: due_in_6_periods += 1
-            if 6 < due_in <= 7: due_in_7_periods += 1
-            if 7 < due_in <= 8: due_in_8_periods += 1
-            if 8 < due_in <= 9: due_in_9_periods += 1
-            if due_in > 9: due_in_10_periods += 1
+            if due_in <= 1:
+                due_in_1_period += 1
+            if 1 < due_in <= 2:
+                due_in_2_periods += 1
+            if 2 < due_in <= 3:
+                due_in_3_periods += 1
+            if 3 < due_in <= 4:
+                due_in_4_periods += 1
+            if 4 < due_in <= 5:
+                due_in_5_periods += 1
+            if 5 < due_in <= 6:
+                due_in_6_periods += 1
+            if 6 < due_in <= 7:
+                due_in_7_periods += 1
+            if 7 < due_in <= 8:
+                due_in_8_periods += 1
+            if 8 < due_in <= 9:
+                due_in_9_periods += 1
+            if due_in > 9:
+                due_in_10_periods += 1
 
     order_pool_levels_by_due_date.extend((due_in_1_period, due_in_2_periods,
                                           due_in_3_periods, due_in_4_periods, due_in_5_periods, due_in_6_periods,
                                           due_in_7_periods, due_in_8_periods, due_in_9_periods, due_in_10_periods))
-    #print("ptype ",product_type,": order pool by due date: ",order_pool_levels_by_due_date)
     return order_pool_levels_by_due_date
 
 
 def get_fgi_levels_by_earliness(product_type):
+    """
+    Get amount of orders in FGI separated by earliness.
+    :param product_type: attribute product_type of class Order object, must be in interval [1,6]
+    :return: a list containing four elements, each indicating the
+    amount of orders which are early by 1, 2, 3 and 4 or more periods
+    """
     early_by_1_period = 0
     early_by_2_periods = 0
     early_by_3_periods = 0
@@ -263,11 +282,14 @@ def get_fgi_levels_by_earliness(product_type):
                        global_settings.duration_of_one_period
             if early_by <= 1:
                 early_by_1_period += 1
-                if early_by < 0:
-                    raise ValueError("Step",global_settings.current_time,"an order is due but still in FGI")
-            if early_by > 1 and early_by <= 2: early_by_2_periods += 1
-            if early_by > 2 and early_by <= 3: early_by_3_periods += 1
-            if early_by > 3: early_by_4_or_more_periods += 1
+                if early_by < 0:  # sanity check, early_by should never be below 0
+                    raise ValueError("Step", global_settings.current_time, "an order is due but still in FGI")
+            if 1 < early_by <= 2:
+                early_by_2_periods += 1
+            if 2 < early_by <= 3:
+                early_by_3_periods += 1
+            if early_by > 3:
+                early_by_4_or_more_periods += 1
 
     fgi_levels_by_earliness.extend((early_by_1_period, early_by_2_periods,
                                     early_by_3_periods, early_by_4_or_more_periods))
@@ -276,8 +298,11 @@ def get_fgi_levels_by_earliness(product_type):
 
 
 def get_shipped_levels_by_lateness(product_type):
+    """
+    Get amount of orders in shipped orders separated by lateness.
+    :param product_type: attribute product_type of class Order object, must be in interval [1,6]
+    :return: a list containing five elements, each indicating the
+    amount of orders which are either punctual or late by 1, 2, 3 and 4 or more periods
+    """
     shipped_levels_by_lateness = global_settings.shipped_orders_by_prodtype_and_lateness[int(product_type) - 1]
-
-    # print("ptype ",product_type,": shipped lateness: ",shipped_levels_by_lateness)
-
     return shipped_levels_by_lateness
