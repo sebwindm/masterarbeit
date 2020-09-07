@@ -37,9 +37,9 @@ class DQNAverageRewardAdjusted(DQN):
                  n_episodes_rollout: int = -1,
                  optimize_memory_usage: bool = False,
                  target_update_interval: int = 10000,
-                 exploration_fraction: float = 0.15,  # Default for 3 machines: 0.40 edited todo
+                 exploration_fraction: float = 0.1,
                  exploration_initial_eps: float = 1.0,
-                 exploration_final_eps: float = 0.01,  # edited todo
+                 exploration_final_eps: float = 0.05,
                  max_grad_norm: float = 10,
                  tensorboard_log: Optional[str] = None,
                  create_eval_env: bool = False,
@@ -111,7 +111,6 @@ class DQNAverageRewardAdjusted(DQN):
             with th.no_grad():
                 # Compute the target Q values
                 target_q = self.q_net_target(replay_data.next_observations)
-                # print("replay_data.next_observations",replay_data.next_observations)
 
                 # Follow greedy policy: use the one with the highest value
                 target_q, _ = target_q.max(dim=1)
@@ -390,8 +389,8 @@ class DQNAverageRewardAdjusted(DQN):
         Get the decayed alpha value.
         """
         return exponential_decay(self.alpha_min, self.alpha_decay_rate, self.alpha_decay_steps,
-                                      self.period_counter,
-                                      self.alpha)
+                                 self.period_counter,
+                                 self.alpha)
 
     def predict(self, observation: np.ndarray,
                 state: Optional[np.ndarray] = None,
@@ -416,13 +415,9 @@ class DQNAverageRewardAdjusted(DQN):
             vectorized_env = is_vectorized_observation(observation, self.policy.observation_space)
             if not vectorized_env:
                 action = action[0]
-            # print("is random action",action)
         else:
             action, state = self.policy.predict(observation, state, mask, deterministic)
             is_random_action = 0
-            # print("is nonrandom action", action, observation.shape[0])
-        # if type(action) is not np.array:
-        #     action = np.array([action])
         return action, state, is_random_action
 
     def get_q_values_for_current_observation(self):
