@@ -1,3 +1,5 @@
+### **Smart capacity planning: A machine learning approach**
+
 **Project overview**\
 There are two components:
 1. A custom environment for http://gym.openai.com/ containing the simulation of a job shop production system. 
