@@ -15,10 +15,11 @@ demand_distribution = "exponential"  # must be "exponential" or "uniform". Used 
 processing_time_distribution = "exponential"  # must be "exponential" or "uniform"
 # It is recommended to use exponential distribution, as some values have been optimized for that.
 # Uniform distribution might lead to worse results
-shop_type = "job_shop"  # Must be either "flow_shop", "job_shop" or "job_shop_1_machine"
+shop_type = "job_shop"  # Must be either "job_shop" or "job_shop_1_machine".
+# flow_shop is currently not supported
 
 # Variables used during the simulation runtime
-order_release_policy = "bil"  # must be "periodic", "bil" or "lums"
+order_release_policy = "bil"  # must be "periodic" or "bil"
 scheduling_policy = "first_come_first_serve"
 time_of_next_order_arrival = 0  # gets overwritten for every new order
 due_date_multiplier = 9  # how many periods the due date of new orders is in the future (due date slack).
@@ -32,11 +33,17 @@ planned_release_date_multiplier = 1  # used for the BIL order release policy.
 processing_times_multiplier = 1  # Each step, the affected machines (bottleneck machines) subtract
 # 1 * processing_times_multiplier from their
 # current order's remaining processing time. Thus a processing_times_multiplier > 1 means that machines subtract MORE
-# than the default amount of remaining processing time from the order, which means that the capacity of the machine
-# is increased. If the processing_times_multiplier were below 1, this would mean that the capacity of the machines are
-# lower than the default value and thus the machines subtract less remaining processing time and take longer to
-# process orders. As this is not a desired behaviour, we only consider processing_times_multiplier > 1.
-# A processing_times_multiplier of 1 is the default value (subtract 1 each step).
+# than the default amount of remaining processing time from the order, which means that the production capacity of
+# the machine is increased. If the processing_times_multiplier were below 1, this would mean that the
+# capacity of the machines is lower than the default value and thus the machines subtract less remaining processing
+# time and take longer to process orders. As this is not a desired behaviour, we only consider
+# processing_times_multiplier > 1.
+# A processing_times_multiplier of 1 is the default value (subtract 1 each step), indicated by overtime_multiplier_1
+# The other two variables overtime_multiplier_2 and overtime_multiplier_3 indicate overtime
+# The variables below are used in main.adjust_processing_times()
+overtime_multiplier_1 = 1.0  # default 1.0
+overtime_multiplier_2 = 1.125  # default 1.125
+overtime_multiplier_3 = 1.25  # default 1.25
 
 # ONLY USED FOR UNIFORM DEMAND
 next_order_arrival_lower_bound = 78  # lower limit for when the next order can arrive.
@@ -64,7 +71,6 @@ temp_wip_cost = 0
 temp_lateness_cost = 0
 temp_fgi_cost = 0
 temp_amount_of_shipped_orders = 0
-
 bottleneck_utilization_per_step = 0  # Integer, which gets increased by up to 1 per step inside
 # performance_measurement -> measure_bottleneck_utilization()
 past_rewards = []

@@ -65,7 +65,7 @@ def get_current_environment_state():
 
 def adjust_processing_times(action):
     """
-    The input parameter action can have three values as seen in the table below. Depending on the
+    The input parameter action can have one of three values as seen in the table below. Depending on the
     value of action, we either decrease the processing times of bottleneck machines in the system or keep the default
     settings.
     Note that...
@@ -78,14 +78,16 @@ def adjust_processing_times(action):
         0   |   Keep capacity (= keep processing times)
         1   |   Increase capacity by 25% (= decrease processing times by 25%)
         2   |   Increase capacity by 50% (= decrease processing times by 50%)
+        (the percentage numbers above are just examples, real numbers are inside
+        global_settings.overtime_multiplier_1, overtime_multiplier_2 and overtime_multiplier_3)
     :return: nothing gets returned
     """
-    if action == 0:  # run on default capacity (equal to 16 working hours or three shifts)
-        global_settings.processing_times_multiplier = 1.0
-    elif action == 1:  # run on higher capacity (TBD)
-        global_settings.processing_times_multiplier = 1.125
-    elif action == 2:  # run on maximum capacity (extra working shift, operates 24/7)
-        global_settings.processing_times_multiplier = 1.25
+    if action == 0:  # run on default capacity (equal to 16 working hours per day or three shifts)
+        global_settings.processing_times_multiplier = global_settings.overtime_multiplier_1
+    elif action == 1:  # run on higher capacity
+        global_settings.processing_times_multiplier = global_settings.overtime_multiplier_2
+    elif action == 2:  # run on maximum capacity
+        global_settings.processing_times_multiplier = global_settings.overtime_multiplier_3
     return
 
 
@@ -134,8 +136,14 @@ def step_one_period_ahead():
     # Get results
     reward, cost_rundown = get_results_from_this_period()
     environment_state = get_current_environment_state()
+    # Check if current episode is done (default: episodes are done after 8000 periods)
+    if global_settings.current_time >= (global_settings.number_of_periods * global_settings.duration_of_one_period):
+        done = True
+        print(bottleneck(reward))
+    else:
+        done = False
 
-    return reward, environment_state, cost_rundown
+    return reward, environment_state, cost_rundown, done
 
 
 def get_results_from_this_period():
@@ -158,19 +166,6 @@ def get_results_from_this_period():
     return cost * -1, cost_rundown
 
 
-def is_episode_done():
-    """
-    Check if current episode is done (default: episodes are done after 8000 periods)
-    :return: boolean
-    """
-    if global_settings.current_time >= (global_settings.number_of_periods * global_settings.duration_of_one_period):
-        done = True
-        print(bottleneck())
-    else:
-        done = False
-    return done
-
-
 def get_info():
     return (
             "Iteration " + str(global_settings.random_seed) + " finished. Orders shipped: " + str(len(
@@ -186,13 +181,32 @@ def get_info():
     )
 
 
-def bottleneck():  # used for debugging. todo: delete for final release
-    return ("Bottleneck utilization: ",global_settings.current_time,global_settings.bottleneck_utilization_per_step,
-            global_settings.bottleneck_utilization_per_step / global_settings.maximum_simulation_duration)
+def bottleneck(reward):  # used for debugging. todo: delete for final release
+    return ("Bottleneck utilization: ", round(
+            global_settings.bottleneck_utilization_per_step / global_settings.maximum_simulation_duration,2),
+            "| Overtime:",global_settings.processing_times_multiplier,
+            )
 
 
 def get_current_time():  # used for debugging. todo: delete for final release
     return global_settings.current_time, global_settings.current_time / global_settings.duration_of_one_period
+
+
+def get_shop_type():
+    return global_settings.shop_type
+
+
+def set_shop_type(shop_type, number_of_machines):
+    if shop_type == "job_shop":
+        if number_of_machines == 3:
+            global_settings.shop_type = "job_shop"
+        if number_of_machines == 1:
+            global_settings.shop_type = "job_shop_1_machine"
+        else:
+            raise ValueError("Wrong number_of_machines. Supported amounts: 1 or 3")
+    else:
+        raise ValueError("Wrong shop_type. Supported shop_types: job_shop")
+    return global_settings.shop_type
 
 
 if __name__ == '__main__':
@@ -235,13 +249,6 @@ if __name__ == '__main__':
         print("Bottleneck utilization: " +
               str(global_settings.bottleneck_utilization_per_step /
                   (global_settings.duration_of_one_period * global_settings.number_of_periods)))
-
-
-        # TODO: delete everything related to create_orders_csv
-        # Measure order flow times. This currently supports only 1 iteration,
-        # file output may behave unexpectedly for more iterations
-        # if global_settings.create_orders_csv == True:
-        #     performance_measurement.measure_order_flow_times()
 
         global_settings.random_seed += 1
         iterations_remaining -= 1

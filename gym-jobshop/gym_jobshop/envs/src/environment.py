@@ -41,7 +41,7 @@ if global_settings.shop_type == "flow_shop":
 elif global_settings.shop_type == "job_shop":
     machine_A = class_Machine.Machine("Machine A", 30, 130, 80)
     machine_B = class_Machine.Machine("Machine B", 30, 130, 77.5)
-    machine_C = class_Machine.Machine("Machine C", 65, 125, 106.1999115)  # default 65, 125, 95
+    machine_C = class_Machine.Machine("Machine C", 65, 125, 95)  # default 65, 125, 95
     list_of_all_machines = [machine_A, machine_B, machine_C]
     # Generate WIP (work in process) inventories
     # each WIP inventory is associated with one machine (and each machine with one inventory)
