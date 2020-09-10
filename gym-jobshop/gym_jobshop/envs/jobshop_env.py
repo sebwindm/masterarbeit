@@ -108,14 +108,24 @@ class JobShopEnv(gym.Env):
         Episodes end after 8000 periods, there are no other termination conditions.
     """
 
-    def __init__(self):
+    def __init__(self,
+                 shop_type: str = "job_shop",
+                 number_of_machines: int = 3,
+                 ):
         self.viewer = None
         main.initialize_random_numbers()
+        main.set_shop_type(shop_type, number_of_machines)
         self.episode_counter = -1
         self.period_counter = 0
         self.state = self.reset()
         self.cost_rundown = [0, 0, 0, 0]
-
+        self.number_of_machines = number_of_machines
+        print("Created a job shop environment using", number_of_machines, "machine(s)")
+        # Sanity check for shop types:
+        if shop_type == "job_shop" and number_of_machines == "3" and main.get_shop_type() != "job_shop":
+            raise ValueError
+        if shop_type == "job_shop" and number_of_machines == "1" and main.get_shop_type() != "job_shop_1_machine":
+            raise ValueError
         self.action_space = gym.spaces.Discrete(3)  # discrete action space with three possible actions
         # Below is the lower boundary of the observation space. It is an array of 132 elements, all are 0.
         # Due to the state logic of the production system, there cannot be any state below 0.
@@ -181,15 +191,12 @@ class JobShopEnv(gym.Env):
         # Adjust processing times of bottleneck machines (capacity) depending on action
         main.adjust_processing_times(action)
         # Step one period ( = 960 steps) ahead
-        reward, environment_state1, self.cost_rundown = main.step_one_period_ahead()
+        reward, environment_state1, self.cost_rundown, done = main.step_one_period_ahead()
         self.period_counter += 1
         # Retrieve new state from the environment
         self.state = get_environment_state()
         observation = self.state
-        done = main.is_episode_done()  # Episode ends when 8000 periods are reached
         info = {}  # Not used
-
-        # obs, time1, time2 = debug_observation()
         if self.period_counter % 5000 == 0:
             print("Period " + str(self.period_counter) + " done")
         return observation, reward, done, info
