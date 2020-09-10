@@ -88,6 +88,7 @@ class DQNAverageRewardAdjusted(DQN):
         self.period_counter = 0
         self.current_observation = None
         self.current_unnormalized_reward = None
+        self.last_used_action = None  # can be deleted todo
 
         # Create CSV file to store Q-Values for a fixed observation (for debugging purposes):
         with open('../' + 'q_values_learned_results.csv', mode='w') as results_CSV:
@@ -248,13 +249,14 @@ class DQNAverageRewardAdjusted(DQN):
                 # neural network to handle the values. Single values of Reward and observation
                 # should be (roughly) between -1 and +1
                 new_obs, reward, done, infos = env.step(action)
+                self.last_used_action = action  # can be deleted todo
                 self.current_unnormalized_reward = reward
                 new_obs = normalize_observation(new_obs)  # custom normalization of observation
                 reward = normalize_reward(reward)  # custom normalization of reward
                 self.period_counter += 1
                 if self.period_counter % 5000 == 0:
                     decayed_alpha = self.exp_decay_alpha()
-                    print("decayed_alpha: ", decayed_alpha, " | Exploration rate: ", self.exploration_rate)
+                    print("decayed_alpha: ", round(decayed_alpha,6), " | Exploration rate: ", round(self.exploration_rate,2))
                 self.current_observation = new_obs
 
                 # Only stop training if return value is False, not when it is None.
