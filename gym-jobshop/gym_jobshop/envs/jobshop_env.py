@@ -109,23 +109,16 @@ class JobShopEnv(gym.Env):
     """
 
     def __init__(self,
-                 shop_type: str = "job_shop",
-                 number_of_machines: int = 3,
+                 # add external parameters for initialization here
                  ):
         self.viewer = None
         main.initialize_random_numbers()
-        main.set_shop_type(shop_type, number_of_machines)
         self.episode_counter = -1
         self.period_counter = 0
         self.state = self.reset()
         self.cost_rundown = [0, 0, 0, 0]
-        self.number_of_machines = number_of_machines
-        print("Created a job shop environment using", number_of_machines, "machine(s)")
-        # Sanity check for shop types:
-        if shop_type == "job_shop" and number_of_machines == "3" and main.get_shop_type() != "job_shop":
-            raise ValueError
-        if shop_type == "job_shop" and number_of_machines == "1" and main.get_shop_type() != "job_shop_1_machine":
-            raise ValueError
+        self.number_of_machines = main.get_number_of_machines()
+        print("Created an environment with",self.number_of_machines,"machines using shop type", main.get_shop_type())
         self.action_space = gym.spaces.Discrete(3)  # discrete action space with three possible actions
         # Below is the lower boundary of the observation space. It is an array of 132 elements, all are 0.
         # Due to the state logic of the production system, there cannot be any state below 0.
@@ -202,6 +195,9 @@ class JobShopEnv(gym.Env):
         return observation, reward, done, info
 
     def reset(self):
+        """
+        Reset the environment to the default values
+        """
         main.reset()
         self.state = get_environment_state()
         self.episode_counter += 1
@@ -210,10 +206,11 @@ class JobShopEnv(gym.Env):
     def get_cost_rundown(self):
         """
         Return a list of which costs occured where. Useful for debugging.
+        Currently used inside the agent's custom callback.
         """
         return self.cost_rundown
 
-    def debug_observation(self):
+    def debug_observation(self): # todo: used for debugging, may be removed in final release
         """
         Return the observation state with descriptive text for easier debugging
         Example for what gets returned:
@@ -249,5 +246,3 @@ class JobShopEnv(gym.Env):
     def get_observation(self):
         return get_environment_state()
 
-    def post_results(self):  # used for debugging. todo: consider whether to keep this for final release
-        print(main.get_info())

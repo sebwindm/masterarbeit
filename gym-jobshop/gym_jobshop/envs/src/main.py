@@ -7,6 +7,9 @@ import time, random
 
 
 def initialize_random_numbers():
+    """
+    Initialize random number stream
+    """
     global_settings.random_seed = -1
     return
 
@@ -92,6 +95,9 @@ def adjust_processing_times(action):
 
 
 def step_one_step_ahead():
+    """
+    Steps the simulation forward by one virtual minute
+    """
     debugging.verify_all()
     # If end of warmup period is reached, reset all costs
     if global_settings.current_time == global_settings.warmup_duration * global_settings.duration_of_one_period:
@@ -167,6 +173,9 @@ def get_results_from_this_period():
 
 
 def get_info():
+    """
+    Return some useful information from the simulation results.
+    """
     return (
             "Iteration " + str(global_settings.random_seed) + " finished. Orders shipped: " + str(len(
                 environment.shipped_orders)) + " | WIP cost: " + str(
@@ -188,25 +197,30 @@ def bottleneck(reward):  # used for debugging. todo: delete for final release
             )
 
 
-def get_current_time():  # used for debugging. todo: delete for final release
+def get_current_time():
+    """
+    Used for debugging in env.debug_observation(). While useful, it is not necessary to run the simulation.
+    """
     return global_settings.current_time, global_settings.current_time / global_settings.duration_of_one_period
 
 
 def get_shop_type():
+    """
+    Return the shop type used in the simulation.
+    Must be either "job_shop" or "job_shop_1_machine"
+    """
     return global_settings.shop_type
 
 
-def set_shop_type(shop_type, number_of_machines):
-    if shop_type == "job_shop":
-        if number_of_machines == 3:
-            global_settings.shop_type = "job_shop"
-        if number_of_machines == 1:
-            global_settings.shop_type = "job_shop_1_machine"
-        else:
-            raise ValueError("Wrong number_of_machines. Supported amounts: 1 or 3")
-    else:
-        raise ValueError("Wrong shop_type. Supported shop_types: job_shop")
-    return global_settings.shop_type
+def get_number_of_machines():
+    """
+    Return the number of machines used in the simulation
+    """
+    if global_settings.shop_type == "job_shop":
+        number = 3
+    if global_settings.shop_type == "job_shop_1_machine":
+        number = 1
+    return number
 
 
 if __name__ == '__main__':
