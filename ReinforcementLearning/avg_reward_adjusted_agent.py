@@ -11,17 +11,15 @@ Some linters might find errors in this file, feel free to ignore them.
 """
 import gym, gym_jobshop, time, random
 from Algorithm.average_reward_adjusted_algorithm import DQNAverageRewardAdjusted  # ignore the error message in PyCharm
-from stable_baselines3.common.evaluation import evaluate_policy
+# from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.callbacks import BaseCallback
 from statistics import mean
 
-
-number_of_machines = 1  # default: 3 machines. Other options: 1 machine
 number_of_evaluation_episodes = 5  # default = 30
-number_of_training_timesteps = 300000  # default for 1 machine: 300000, for 3 machines 1000000
+number_of_training_timesteps = 1000000  # default for 1 machine: 300000, for 3 machines 1000000
 
 # Create environment
-env = gym.make('jobshop-v0', number_of_machines=number_of_machines)
+env = gym.make('jobshop-v0')
 
 
 class CustomCallback(BaseCallback):
