@@ -15,7 +15,7 @@ demand_distribution = "exponential"  # must be "exponential" or "uniform". Used 
 processing_time_distribution = "exponential"  # must be "exponential" or "uniform"
 # It is recommended to use exponential distribution, as some values have been optimized for that.
 # Uniform distribution might lead to worse results
-shop_type = "job_shop"  # Must be either "job_shop" or "job_shop_1_machine".
+shop_type = None  # Must be either "job_shop" or "job_shop_1_machine".
 # flow_shop is currently not supported
 
 # Variables used during the simulation runtime

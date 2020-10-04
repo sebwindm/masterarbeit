@@ -14,59 +14,76 @@ shipped_orders = []
 # From this order pool, we send the orders to the first stage of production (e.g. to WIP_A and so on)
 order_pool = []
 
-# instantiate machine objects with name and processing times
-if global_settings.shop_type == "flow_shop":
-    machine_A = class_Machine.Machine("Machine A", 30, 130, 80)
-    machine_B = class_Machine.Machine("Machine B", 80, 240, 160)
-    machine_C = class_Machine.Machine("Machine C", 50, 260, 155)
-    machine_D = class_Machine.Machine("Machine D", 50, 370, 210)
-    machine_E = class_Machine.Machine("Machine E", 200, 370, 285)
-    machine_F = class_Machine.Machine("Machine F", 110, 320, 215)
-    list_of_all_machines = [machine_A, machine_B, machine_C, machine_D, machine_E, machine_F]
-    # Generate WIP (work in process) inventories
-    # each WIP inventory is associated with one machine (and each machine with one inventory)
-    # when an order arrives at a machine, the order first gets placed inside the WIP inventory
-    # if the machine is not processing an order, it pulls one order from the WIP according to certain rules
-    wip_A = []
-    wip_B = []
-    wip_C = []
-    wip_D = []
-    wip_E = []
-    wip_F = []
-    list_of_all_wip_elements = [wip_A, wip_B, wip_C, wip_D, wip_E, wip_F]
-    list_of_inventories = [wip_A, wip_B, wip_C, wip_D, wip_E, wip_F, finished_goods_inventory, shipped_orders,
-                           order_pool]
-    bottleneck_machine = machine_E
+# # instantiate machine objects with name and processing times
+# if global_settings.shop_type == "flow_shop":
+#     """
+#     THIS SHOP TYPE IS NOT SUPPORTED!
+#     It comes from a time where the simulation was not wrapped inside a Gym environment.
+#     Thus it might still work if you run it outside of the gym environment (by using main.py).
+#     It remains here to allow for further extensions of the simulation,
+#     e.g. if you want to support a flow shop inside the Gym environment.
+#     """
+#     machine_A = class_Machine.Machine("Machine A", 30, 130, 80)
+#     machine_B = class_Machine.Machine("Machine B", 80, 240, 160)
+#     machine_C = class_Machine.Machine("Machine C", 50, 260, 155)
+#     machine_D = class_Machine.Machine("Machine D", 50, 370, 210)
+#     machine_E = class_Machine.Machine("Machine E", 200, 370, 285)
+#     machine_F = class_Machine.Machine("Machine F", 110, 320, 215)
+#     list_of_all_machines = [machine_A, machine_B, machine_C, machine_D, machine_E, machine_F]
+#     # Generate WIP (work in process) inventories
+#     # each WIP inventory is associated with one machine (and each machine with one inventory)
+#     # when an order arrives at a machine, the order first gets placed inside the WIP inventory
+#     # if the machine is not processing an order, it pulls one order from the WIP according to certain rules
+#     wip_A = []
+#     wip_B = []
+#     wip_C = []
+#     wip_D = []
+#     wip_E = []
+#     wip_F = []
+#     list_of_all_wip_elements = [wip_A, wip_B, wip_C, wip_D, wip_E, wip_F]
+#     list_of_inventories = [wip_A, wip_B, wip_C, wip_D, wip_E, wip_F, finished_goods_inventory, shipped_orders,
+#                            order_pool]
+#     bottleneck_machine = machine_E
+machine_A = None
+machine_B = None
+machine_C = None
+wip_A = None
+wip_B = None
+wip_C = None
+list_of_all_wip_elements = None
+list_of_inventories = None
+bottleneck_machine = None
+list_of_all_machines = None
 
-elif global_settings.shop_type == "job_shop":
-    machine_A = class_Machine.Machine("Machine A", 30, 130, 80)
-    machine_B = class_Machine.Machine("Machine B", 30, 130, 77.5)
-    machine_C = class_Machine.Machine("Machine C", 65, 125, 95)  # default 65, 125, 95
-    list_of_all_machines = [machine_A, machine_B, machine_C]
-    # Generate WIP (work in process) inventories
-    # each WIP inventory is associated with one machine (and each machine with one inventory)
-    # when an order arrives at a machine, the order first gets placed inside the WIP inventory
-    # if the machine is not processing an order, it pulls one order from the WIP according to certain rules
-    wip_A = []
-    wip_B = []
-    wip_C = []
-    list_of_all_wip_elements = [wip_A, wip_B, wip_C]
-    list_of_inventories = [wip_A, wip_B, wip_C, finished_goods_inventory, shipped_orders, order_pool]
-    bottleneck_machine = machine_C
-
-elif global_settings.shop_type == "job_shop_1_machine":
-    machine_A = class_Machine.Machine("Machine A", 30, 130, 106.1999115)  # 106.1999115 gives roughly 90% utilization
-    list_of_all_machines = [machine_A]
-    # Generate WIP (work in process) inventories
-    # each WIP inventory is associated with one machine (and each machine with one inventory)
-    # when an order arrives at a machine, the order first gets placed inside the WIP inventory
-    # if the machine is not processing an order, it pulls one order from the WIP according to certain rules
-    wip_A = []
-    list_of_all_wip_elements = [wip_A]
-    list_of_inventories = [wip_A, finished_goods_inventory, shipped_orders, order_pool]
-    bottleneck_machine = machine_A
-else:
-    raise ValueError("Wrong shop_type")
+# if global_settings.shop_type == "job_shop":
+#     machine_A = class_Machine.Machine("Machine A", 30, 130, 80)
+#     machine_B = class_Machine.Machine("Machine B", 30, 130, 77.5)
+#     machine_C = class_Machine.Machine("Machine C", 65, 125, 95)  # default 65, 125, 95
+#     list_of_all_machines = [machine_A, machine_B, machine_C]
+#     # Generate WIP (work in process) inventories
+#     # each WIP inventory is associated with one machine (and each machine with one inventory)
+#     # when an order arrives at a machine, the order first gets placed inside the WIP inventory
+#     # if the machine is not processing an order, it pulls one order from the WIP according to certain rules
+#     wip_A = []
+#     wip_B = []
+#     wip_C = []
+#     list_of_all_wip_elements = [wip_A, wip_B, wip_C]
+#     list_of_inventories = [wip_A, wip_B, wip_C, finished_goods_inventory, shipped_orders, order_pool]
+#     bottleneck_machine = machine_C
+#
+# elif global_settings.shop_type == "job_shop_1_machine":
+#     machine_A = class_Machine.Machine("Machine A", 30, 130, 106.1999115)  # 106.1999115 gives roughly 90% utilization
+#     list_of_all_machines = [machine_A]
+#     # Generate WIP (work in process) inventories
+#     # each WIP inventory is associated with one machine (and each machine with one inventory)
+#     # when an order arrives at a machine, the order first gets placed inside the WIP inventory
+#     # if the machine is not processing an order, it pulls one order from the WIP according to certain rules
+#     wip_A = []
+#     list_of_all_wip_elements = [wip_A]
+#     list_of_inventories = [wip_A, finished_goods_inventory, shipped_orders, order_pool]
+#     bottleneck_machine = machine_A
+# else:
+#     raise ValueError("Wrong shop_type",global_settings.shop_type)
 
 
 def get_random_exponential_number(rate_parameter_lambda):

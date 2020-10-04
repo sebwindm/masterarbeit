@@ -1,9 +1,10 @@
+# Python stdlib imports
+import csv
 # External module imports
 import numpy as np
 import gym
-
 # Custom module imports
-from gym_jobshop.envs.src import main
+from gym_jobshop.envs.src import global_settings, main
 
 
 def get_environment_state():
@@ -11,6 +12,14 @@ def get_environment_state():
     Retrieve observation state from inside the main simulation
     """
     return np.array(main.get_current_environment_state()).flatten()
+
+
+def evaluate_episode():
+    """
+    Return various performance metrics from inside the simulation.
+    Description can be found at src/performance_measurement.py -> evaluate_episode()
+    """
+    return main.get_episode_results()
 
 
 class JobShopEnv(gym.Env):
@@ -109,16 +118,27 @@ class JobShopEnv(gym.Env):
     """
 
     def __init__(self,
-                 # add external parameters for initialization here
+                 results_csv: bool = False,  # Create a CSV file containing metrics like costs, lateness, etc
+                 number_of_machines: int = 3,  # Amount of machines used in the simulation. Must be 1 or 3
                  ):
         self.viewer = None
         main.initialize_random_numbers()
-        self.episode_counter = -1
+        self.episode_counter = 1
         self.period_counter = 0
-        self.state = self.reset()
         self.cost_rundown = [0, 0, 0, 0]
-        self.number_of_machines = main.get_number_of_machines()
-        print("Created an environment with",self.number_of_machines,"machines using shop type", main.get_shop_type())
+        self.results_csv = results_csv
+        self.number_of_machines = number_of_machines
+        # Set shop type depending on number of machines given at
+        # initialization of JobShopEnv object
+        if number_of_machines == 3:
+            main.setup_environment(number_of_machines)
+            global_settings.shop_type = "job_shop"
+        elif number_of_machines == 1:
+            main.setup_environment(number_of_machines)
+            global_settings.shop_type = "job_shop_1_machine"
+        else:
+            raise ValueError("Please set JobShopEnv.number_of_machines to 1 or 3, e.g. with gym.make('jobshop-v0', number_of_machines=3)")
+        print("Created an environment with", self.number_of_machines, "machines using shop type", global_settings.shop_type)
         self.action_space = gym.spaces.Discrete(3)  # discrete action space with three possible actions
         # Below is the lower boundary of the observation space. It is an array of 132 elements, all are 0.
         # Due to the state logic of the production system, there cannot be any state below 0.
@@ -167,8 +187,18 @@ class JobShopEnv(gym.Env):
 
         self.observation_space = gym.spaces.flatten_space(
             gym.spaces.Box(low=self.low, high=self.high, dtype=np.float32))
+        self.state = self.reset()
+        # Create CSV file for writing results after each episode
+        if self.results_csv is True:
+            with open('../' + 'jobshop_env_results.csv', mode='w') as results_CSV:
+                results_writer = csv.writer(results_CSV, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                results_writer.writerow(['Episode', 'total_cost', 'wip_cost', 'fgi_cost',
+                                         'lateness_cost', 'overtime_cost', 'amount_of_shipped_orders',
+                                         'bottleneck_utilization', 'late_orders', 'tardy_orders',
+                                         'sum_of_lateness', 'sum_of_tardiness', 'average_flow_time'])
+                results_CSV.close()
 
-    def step(self, action, debug=True):
+    def step(self, action):
         """
         Step one period (= 960 simulation steps) ahead.
         :param action: Integer number, must be either 0, 1 or 2. Used to adjust the processing times of
@@ -176,7 +206,9 @@ class JobShopEnv(gym.Env):
         :return:
         * observation: array of arrays, contains production system metrics. See class JobShopEnv docstrings
         * reward: floating-point number, indicates the cost that accumulated during the period
-        * done: boolean value, tells whether to terminate the episode (resets the simulation to defaults)
+        * done: boolean value, tells whether to terminate the episode
+            -> Note that your algorithm should call env.reset() when done is returned as True.
+            -> The environment doesn't reset itself, even if done is returned as True.
         * info: not used, but some algorithms expect at least empty curly brackets
         """
         # Verify if action is valid
@@ -190,8 +222,12 @@ class JobShopEnv(gym.Env):
         self.state = get_environment_state()
         observation = self.state
         info = {}  # Not used
-        if self.period_counter % 5000 == 0:
+        if self.period_counter % 8000 == 0:
             print("Period " + str(self.period_counter) + " done")
+        if done is True:
+            self.episode_counter += 1
+            if self.results_csv is True:
+                self.write_results_to_CSV()
         return observation, reward, done, info
 
     def reset(self):
@@ -200,7 +236,6 @@ class JobShopEnv(gym.Env):
         """
         main.reset()
         self.state = get_environment_state()
-        self.episode_counter += 1
         return self.state
 
     def get_cost_rundown(self):
@@ -210,7 +245,7 @@ class JobShopEnv(gym.Env):
         """
         return self.cost_rundown
 
-    def debug_observation(self): # todo: used for debugging, may be removed in final release
+    def debug_observation(self):  # todo: used for debugging, may be removed in final release
         """
         Return the observation state with descriptive text for easier debugging
         Example for what gets returned:
@@ -246,3 +281,19 @@ class JobShopEnv(gym.Env):
     def get_observation(self):
         return get_environment_state()
 
+    def write_results_to_CSV(self):
+        """
+        Write episode results as a row to the CSV
+        """
+        results = evaluate_episode()
+        total_cost, wip_cost, fgi_cost, lateness_cost, overtime_cost, amount_of_shipped_orders, \
+        bottleneck_utilization, late_orders, tardy_orders, sum_of_lateness, sum_of_tardiness, \
+        average_flow_time = [results[i] for i in range(len(results))]
+        with open('../' + 'jobshop_env_results.csv', mode='a') as results_CSV:
+            results_writer = csv.writer(results_CSV, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            results_writer.writerow([self.episode_counter,total_cost, wip_cost, fgi_cost,
+                                     lateness_cost, overtime_cost, amount_of_shipped_orders,
+                                     bottleneck_utilization, late_orders, tardy_orders, sum_of_lateness,
+                                     sum_of_tardiness,average_flow_time])
+            results_CSV.close()
+        return

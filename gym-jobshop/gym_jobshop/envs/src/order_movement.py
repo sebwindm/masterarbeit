@@ -171,6 +171,8 @@ def move_orders_job_shop():
             if order.processing_time_remaining <= 0:
                 destination = \
                     list_of_destinations[list_of_product_types.index(order.product_type)][order.current_production_step]
+                if destination == environment.finished_goods_inventory:
+                    order.finished_production_date = global_settings.current_time
                 destination.append(machine_element.orders_inside_the_machine.pop(0))
                 order.current_production_step += 1
 
@@ -224,10 +226,10 @@ def move_orders_job_shop_1_machine():
 
 
 def move_orders():
-    if global_settings.shop_type == "flow_shop":
-        move_orders_flow_shop()
-    elif global_settings.shop_type == "job_shop":
+    if global_settings.shop_type == "job_shop":
         move_orders_job_shop()
     elif global_settings.shop_type == "job_shop_1_machine":
         move_orders_job_shop_1_machine()
+    else:
+        raise ValueError("wrong main.global_settings.shop_type")
     return

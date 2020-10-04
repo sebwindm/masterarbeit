@@ -1,6 +1,6 @@
 # Own module imports
-from gym_jobshop.envs.src import environment, order_generation, debugging, order_processing, \
-    global_settings, order_release, order_movement, performance_measurement
+from gym_jobshop.envs.src import global_settings, environment, order_generation, debugging, order_processing, \
+    order_release, order_movement, performance_measurement, class_Machine
 
 # Python native module (stdlib) imports
 import time, random
@@ -14,10 +14,53 @@ def initialize_random_numbers():
     return
 
 
+def setup_environment(number_of_machines):
+    """
+    Call this function after switching shop types
+    """
+    if number_of_machines == 3:
+        environment.machine_A = class_Machine.Machine("Machine A", 30, 130, 80)
+        environment.machine_B = class_Machine.Machine("Machine B", 30, 130, 77.5)
+        environment.machine_C = class_Machine.Machine("Machine C", 65, 125, 95)  # default 65, 125, 95
+        environment.list_of_all_machines = [environment.machine_A, environment.machine_B, environment.machine_C]
+        # Generate WIP (work in process) inventories
+        # each WIP inventory is associated with one machine (and each machine with one inventory)
+        # when an order arrives at a machine, the order first gets placed inside the WIP inventory
+        # if the machine is not processing an order, it pulls one order from the WIP according to certain rules
+        environment.wip_A = []
+        environment.wip_B = []
+        environment.wip_C = []
+        environment.list_of_all_wip_elements = [environment.wip_A, environment.wip_B, environment.wip_C]
+        environment.list_of_inventories = [environment.wip_A, environment.wip_B, environment.wip_C,
+                                           environment.finished_goods_inventory, environment.shipped_orders,
+                                           environment.order_pool]
+        environment.bottleneck_machine = environment.machine_C
+
+    elif number_of_machines == 1:
+        environment.machine_A = class_Machine.Machine("Machine A", 30, 130, 106.1999115)  # 106.1999115 gives roughly 90% utilization
+        environment.list_of_all_machines = [environment.machine_A]
+        # Generate WIP (work in process) inventories
+        # each WIP inventory is associated with one machine (and each machine with one inventory)
+        # when an order arrives at a machine, the order first gets placed inside the WIP inventory
+        # if the machine is not processing an order, it pulls one order from the WIP according to certain rules
+        environment.wip_A = []
+        environment.list_of_all_wip_elements = [environment.wip_A]
+        environment.list_of_inventories = [environment.wip_A, environment.finished_goods_inventory,
+                                           environment.shipped_orders, environment.order_pool]
+        environment.bottleneck_machine = environment.machine_A
+
+    else:
+        raise ValueError("Wrong shop_type",global_settings.shop_type)
+
+    return
+
+
 def reset():
-    # these are used at the beginning of the production main loop
-    # this function is not to be confused with reset() of the actual Gym environment in jobshop_env.py
-    # INITIAL SETUP & RESET
+    """
+    Reset the simulation parameters inside the environment to the default values.
+    This clears all inventories, lists and machines and resets all metrics like costs etc.
+    main.reset() is not to be confused with JobShopEnv.reset() of the actual Gym environment in jobshop_env.py
+    """
     global_settings.random_seed += 1
     random.seed(global_settings.random_seed)
     global_settings.reset_global_settings()
@@ -26,10 +69,7 @@ def reset():
     environment.reset_inventories()
     global_settings.bottleneck_utilization_per_step = 0
     debugging.verify_reset()
-    if global_settings.shop_type != "flow_shop":
-        return get_current_environment_state()
-    else:
-        raise ValueError("States have not been implemented for global_settings.shop_type == flow_shop")
+    return get_current_environment_state()
 
 
 def get_current_environment_state():
@@ -122,9 +162,13 @@ def step_one_period_ahead():
     """
     Run the simulation for 960 steps (=1 period) and return the results on the end of the period.
     :return:
-    * reward:
-    * environment_state:
-    * cost_rundown:
+    * reward -> Integer: total cost from the period
+    * environment_state -> Array: state of the environment
+    * cost_rundown -> Array: a list indicating which costs occured where
+    * done -> Boolean: indicates whether the period has ended (False if it has not yet ended)
+
+    Note that your algorithm should call env.reset() when done is returned as True.
+    The environment doesn't reset itself, even if done is returned as True.
     """
     # Reset temporary lists for shipped orders
     global_settings.shipped_orders_by_prodtype_and_lateness = [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0],
@@ -144,8 +188,9 @@ def step_one_period_ahead():
     environment_state = get_current_environment_state()
     # Check if current episode is done (default: episodes are done after 8000 periods)
     if global_settings.current_time >= (global_settings.number_of_periods * global_settings.duration_of_one_period):
-        done = True
-        print(bottleneck(reward))
+        done = True  # Note that your algorithm should call env.reset() when done is returned as True
+        print(bottleneck())
+        performance_measurement.evaluate_episode()
     else:
         done = False
 
@@ -190,7 +235,7 @@ def get_info():
     )
 
 
-def bottleneck(reward):  # used for debugging. todo: delete for final release
+def bottleneck():  # used for debugging. todo: delete for final release
     return ("Bottleneck utilization: ", round(
             global_settings.bottleneck_utilization_per_step / global_settings.maximum_simulation_duration,2),
             "| Overtime:",global_settings.processing_times_multiplier,
@@ -204,23 +249,8 @@ def get_current_time():
     return global_settings.current_time, global_settings.current_time / global_settings.duration_of_one_period
 
 
-def get_shop_type():
-    """
-    Return the shop type used in the simulation.
-    Must be either "job_shop" or "job_shop_1_machine"
-    """
-    return global_settings.shop_type
-
-
-def get_number_of_machines():
-    """
-    Return the number of machines used in the simulation
-    """
-    if global_settings.shop_type == "job_shop":
-        number = 3
-    if global_settings.shop_type == "job_shop_1_machine":
-        number = 1
-    return number
+def get_episode_results():
+    return performance_measurement.evaluate_episode()
 
 
 if __name__ == '__main__':
