@@ -86,7 +86,58 @@ def measure_bottleneck_utilization():
     """
     For each step that there is an order inside the bottleneck machine,
     increase bottleneck_utilization_per_step by 1.
+    Later on, this value can be divided by the total number of steps from the episode
+    to compute the average utilization.
     """
     if len(environment.bottleneck_machine.orders_inside_the_machine) > 0:
         global_settings.bottleneck_utilization_per_step += 1
     return
+
+
+def get_order_statistics():
+    """
+    Return some statistics on flow time, lateness and tardiness
+    """
+    late_orders = 0
+    tardy_orders = 0
+    sum_of_lateness = 0
+    sum_of_tardiness = 0
+    sum_of_flow_times = 0
+    # Get total number of late/tardy orders
+    # Get average lateness/tardiness of orders
+    for order in environment.shipped_orders:
+        sum_of_flow_times += order.flow_time
+        if order.lateness > 0 and order.earliness > 0:
+            raise ValueError("An order was late and early at the same time")
+        if order.lateness > 1:
+            late_orders += 1
+            sum_of_lateness += order.lateness
+        elif order.earliness > 1:
+            tardy_orders += 1
+            sum_of_tardiness += order.earliness
+
+    return late_orders, tardy_orders, sum_of_lateness, sum_of_tardiness, sum_of_flow_times
+
+
+def evaluate_episode():
+    """
+    Return performance metrics to evaluate one simulation episode (that is 8000 periods).
+    Metrics: total cost, wip/shopfloor cost, fgi cost, lateness cost, overtime cost,
+    bottleneck machine utilization, total amount of shipped orders, flow times
+    """
+    total_cost = global_settings.total_cost
+    wip_cost = global_settings.sum_shopfloor_cost
+    fgi_cost = global_settings.sum_fgi_cost
+    lateness_cost = global_settings.sum_lateness_cost
+    overtime_cost = global_settings.sum_overtime_cost
+    amount_of_shipped_orders = len(environment.shipped_orders)
+    bottleneck_utilization = round(
+            global_settings.bottleneck_utilization_per_step / global_settings.maximum_simulation_duration,2)
+
+    late_orders, tardy_orders, sum_of_lateness, sum_of_tardiness, sum_of_flow_times = get_order_statistics()
+    average_flow_time = round(sum_of_flow_times / len(environment.shipped_orders),2)
+
+    results = [total_cost, wip_cost, fgi_cost, lateness_cost, overtime_cost, amount_of_shipped_orders,
+               bottleneck_utilization, late_orders, tardy_orders, sum_of_lateness, sum_of_tardiness,
+               average_flow_time]
+    return results
