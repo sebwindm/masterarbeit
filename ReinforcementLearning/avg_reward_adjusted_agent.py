@@ -11,15 +11,15 @@ Some linters might find errors in this file, feel free to ignore them.
 """
 import gym, gym_jobshop, time, random
 from Algorithm.average_reward_adjusted_algorithm import DQNAverageRewardAdjusted  # ignore the error message in PyCharm
-# from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.callbacks import BaseCallback
 from statistics import mean
 
 number_of_evaluation_episodes = 5  # default = 30
 number_of_training_timesteps = 1000000  # default for 1 machine: 300000, for 3 machines 1000000
+default_action = 0  # The action that the default agent always uses
 
 # Create environment
-env = gym.make('jobshop-v0')
+env = gym.make('jobshop-v0', results_csv=True, number_of_machines=3)
 
 
 class CustomCallback(BaseCallback):
@@ -166,7 +166,7 @@ def train_DQN():
     print(f"Took {total_time:.2f}s")
     # Save the agent
     print("Saving model")
-    model.save("dqn_avg_reward_adjusted_" + str(number_of_machines) + "_machine")
+    model.save("dqn_avg_reward_adjusted_" + str(env.number_of_machines) + "_machine")
     return
 
 
@@ -177,7 +177,7 @@ def evaluate_with_DQN():
     print("Evaluating with DQN prediction")
     env.reset()
     simulation_start_time = time.time()
-    model = DQNAverageRewardAdjusted.load("dqn_avg_reward_adjusted_" + str(number_of_machines) + "_machine", env=env)
+    model = DQNAverageRewardAdjusted.load("dqn_avg_reward_adjusted_" + str(env.number_of_machines) + "_machine", env=env)
 
     scores = []  # list of final scores after each episode
     episodes = number_of_evaluation_episodes
@@ -201,7 +201,7 @@ def evaluate_with_DQN():
     return scores
 
 
-def delete_tensorboard_logs():
+def delete_tensorboard_logs(): # todo: delete for final release
     """
       # not documented yet
     """
@@ -211,11 +211,12 @@ def delete_tensorboard_logs():
     return
 
 
-def evaluate_with_default_action():
+def evaluate_with_default_action(action):
     """
-      # not documented yet
+    This is an agent that uses always the same action in each period.
+    The function takes the desired default action as an argument.
+    Change default_action on top of this file for easy switching.
     """
-    action = 0
     print("Evaluating with default action", action)
     env.reset()
     simulation_start_time = time.time()
@@ -329,7 +330,7 @@ if __name__ == "__main__":
                    '"a" or "Enter" ... train the model (creates model file)\n'
                    '"b" ... delete Tensorboard logs\n'
                    '"c" ... evaluate with trained agent\n'
-                   '"d" ... evaluate with default action only\n'
+                   '"d" ... evaluate with default action '+str(default_action)+'\n'
                    '"e" ... evaluate with random action \n'
                    )
     if answer == "a" or answer == "":
@@ -339,7 +340,7 @@ if __name__ == "__main__":
     if answer == "c":
         evaluate_with_DQN()
     if answer == "d":
-        evaluate_with_default_action()
+        evaluate_with_default_action(default_action)
     if answer == "e":
         evaluate_with_random_action()
     if answer == "ppo":  # not documented yet
