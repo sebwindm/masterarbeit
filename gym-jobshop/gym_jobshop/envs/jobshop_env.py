@@ -187,7 +187,7 @@ class JobShopEnv(gym.Env):
         self.observation_space = gym.spaces.flatten_space(
             gym.spaces.Box(low=self.low, high=self.high, dtype=np.float32))
         self.state = self.reset()
-        self.csv_file_name = '../Evaluation/' + 'results_'+ str(self.number_of_machines) + 'm.csv'
+        self.csv_file_name = '../Evaluation/' + 'results.csv'
         # Create CSV file for writing results after each episode
         if self.results_csv is True:
             with open(self.csv_file_name, mode='w') as results_CSV:
