@@ -14,10 +14,11 @@ from Algorithm.average_reward_adjusted_algorithm import DQNAverageRewardAdjusted
 from stable_baselines3.common.callbacks import BaseCallback
 from statistics import mean
 
-number_of_evaluation_episodes = 5  # default = 30
+
+# Change the values below to adjust some training and evaluation parameters
+number_of_evaluation_episodes = 30  # default = 30
 number_of_training_timesteps = 1000000  # default for 1 machine: 300000, for 3 machines 1000000
 default_action = 0  # The action that the default agent always uses
-
 # Create environment
 env = gym.make('jobshop-v0', results_csv=True, number_of_machines=3)
 
@@ -128,32 +129,34 @@ def train_DQN():
                                          verbose=1,
                                          # tensorboard_log="./gym_jobshop_tensorboard_logs/",
                                          learning_starts=100,
-                                         buffer_size=1000000, # 1 machine: 1000000, 3 machines 25000
-                                         tau=1.0, # 1 machine: 1.0, 3 machines: 1e-5
-                                         gamma=0.99, # 1 machine: 0.99, 3 machines: 1.0
-                                         exploration_fraction=0.15,  # 1 machine: 0.15, 3 machines = 0.4
-                                         exploration_final_eps=0.05, # 1 machine: 0.05, 3 machines: 0.01
-                                         alpha=0.01,
-                                         alpha_min=1e-5,  # 1 machine: 1e-5, 3 machines: 1e-6
-                                         alpha_decay_rate=0.55, # 1 machine: 0.55, 3 machines: 0.15
-                                         alpha_decay_steps=15000 # 1 machine 15000, 3 machines 50000
+                                         buffer_size=1000000, # default 1000000
+                                         tau=1.0, # default 1.0
+                                         gamma=0.99, # default 0.99
+                                         exploration_fraction=0.15,  # default  0.15
+                                         exploration_final_eps=0.05, # default  0.05
+                                         alpha=0.01, # default  0.01
+                                         alpha_min=1e-5,  # default  1e-5
+                                         alpha_decay_rate=0.55, # default  0.55
+                                         alpha_decay_steps=15000 # default 15000
                                          # decay steps 15000 for 100k learning steps
+                                         # decay steps must increase with training duration
                                          )
     elif env.number_of_machines == 3:
         model = DQNAverageRewardAdjusted('MlpAverageRewardAdjustedPolicy', env,
                                          verbose=1,
                                          # tensorboard_log="./gym_jobshop_tensorboard_logs/",
                                          learning_starts=100,
-                                         buffer_size=25000, # 1 machine: 1000000, 3 machines 25000
-                                         tau=1e-5, # 1 machine: 1.0, 3 machines: 1e-5
-                                         gamma=1.0, # 1 machine: 0.99, 3 machines: 1.0
-                                         exploration_fraction=0.4,  # 1 machine: 0.1 - 0.15, 3 machines = 0.4
-                                         exploration_final_eps=0.01, # 1 machine: 0.05, 3 machines: 0.01
-                                         alpha=0.01,
-                                         alpha_min=1e-6,  # 1 machine: 1e-5, 3 machines: 1e-6
-                                         alpha_decay_rate=0.15, # 1 machine: 0.55, 3 machines: 0.15
-                                         alpha_decay_steps=50000 # 1 machine 15000, 3 machines 50000
+                                         buffer_size=100000, # default 100000
+                                         tau=1.0, # default 1.0
+                                         gamma=0.99, # default 0.990
+                                         exploration_fraction=0.4,  # default = 0.4
+                                         exploration_final_eps=0.01, # default 0.01
+                                         alpha=0.01,  # default 0.01
+                                         alpha_min=1e-6,  # default 1e-6
+                                         alpha_decay_rate=0.55, # default 0.55
+                                         alpha_decay_steps=50000 # default 50000
                                          # decay steps 15000 for 100k learning steps
+                                         # decay steps must increase with training duration
                                          )
     # Train the agent
     start_time = time.time()
@@ -165,7 +168,7 @@ def train_DQN():
     total_time = time.time() - start_time
     print(f"Took {total_time:.2f}s")
     # Save the agent
-    print("Saving model")
+    print("Saving ARA-DQN model")
     model.save("dqn_avg_reward_adjusted_" + str(env.number_of_machines) + "_machine")
     return
 
@@ -174,7 +177,7 @@ def evaluate_with_DQN():
     """
     Not documented yet
     """
-    print("Evaluating with DQN prediction")
+    print("Evaluating with ARA-DQN prediction")
     env.reset()
     simulation_start_time = time.time()
     model = DQNAverageRewardAdjusted.load("dqn_avg_reward_adjusted_" + str(env.number_of_machines) + "_machine", env=env)
@@ -196,19 +199,9 @@ def evaluate_with_DQN():
 
         print("Episode: {}/{}, score: {}".format(episode + 1, episodes, score))
 
-    print("Prediction finished after " + str(round(time.time() - simulation_start_time, 4)) + " seconds")
+    print("ARA-DQN evaluation finished after " + str(round(time.time() - simulation_start_time, 4)) + " seconds")
     print("Final average score over " + str(episodes) + " episodes: " + str(mean(scores)))
     return scores
-
-
-def delete_tensorboard_logs(): # todo: delete for final release
-    """
-      # not documented yet
-    """
-    import shutil
-    shutil.rmtree('./gym_jobshop_tensorboard_logs')
-    print("Deleted all Tensorboard logs")
-    return
 
 
 def evaluate_with_default_action(action):
@@ -234,7 +227,7 @@ def evaluate_with_default_action(action):
 
         print("Episode: {}/{}, score: {}".format(episode + 1, episodes, score))
 
-    print("Evaluation finished after " + str(round(time.time() - simulation_start_time, 4)) + " seconds")
+    print("Default action evaluation finished after " + str(round(time.time() - simulation_start_time, 4)) + " seconds")
     print("Final average score over " + str(episodes) + " episodes: " + str(mean(scores)))
     return scores
 
@@ -246,7 +239,6 @@ def evaluate_with_random_action():
     print("Evaluating with random action")
     env.reset()
     simulation_start_time = time.time()
-    model = DQNAverageRewardAdjusted.load("dqn_avg_reward_adjusted_3_machines", env=env)
 
     scores = []  # list of final scores after each episode
     episodes = number_of_evaluation_episodes
@@ -263,7 +255,7 @@ def evaluate_with_random_action():
 
         print("Episode: {}/{}, score: {}".format(episode + 1, episodes, score))
 
-    print("Evaluation finished after " + str(round(time.time() - simulation_start_time, 4)) + " seconds")
+    print("Random action evaluation finished after " + str(round(time.time() - simulation_start_time, 4)) + " seconds")
     print("Final average score over " + str(episodes) + " episodes: " + str(mean(scores)))
     return scores
 
@@ -278,6 +270,7 @@ def train_a2c():
     model = A2C(MlpPolicy, env, verbose=1)
     model.learn(total_timesteps=number_of_training_timesteps)
     model.save("a2c")
+    print("Finished A2C training")
     return
 
 
@@ -291,6 +284,7 @@ def train_ppo():
     model = PPO(MlpPolicy, env, verbose=1)
     model.learn(total_timesteps=number_of_training_timesteps)
     model.save("ppo")
+    print("Finished PPO training")
     return
 
 
@@ -321,29 +315,33 @@ def evaluate_other_algos(algorithm):
         scores.append(score)
 
         print("Episode: {}/{}, score: {}".format(episode + 1, episodes, score))
+    print("Finished evaluating", algorithm)
     print("Final average score over " + str(episodes) + " episodes: " + str(mean(scores)))
     return scores
 
 
 if __name__ == "__main__":
     answer = input('Type...to... \n'
-                   '"a" or "Enter" ... train the model (creates model file)\n'
-                   '"b" ... delete Tensorboard logs\n'
-                   '"c" ... evaluate with trained agent\n'
-                   '"d" ... evaluate with default action '+str(default_action)+'\n'
+                   'TRAINING: ' + str(number_of_training_timesteps) + ' steps\n'
+                   '"a" or "Enter" ... train the ARA-DQN agent \n'
+                   '"b" ... train the PPO agent \n'
+                   'EVALUATION: '+ str(number_of_evaluation_episodes) + ' episodes\n'
+                   '"c" ... evaluate with ARA-DQN agent \n'
+                   '"d" ... evaluate with default action ' + str(default_action) + '\n'
                    '"e" ... evaluate with random action \n'
+                   '"f" ... evaluate with PPO agent \n'
                    )
     if answer == "a" or answer == "":
         train_DQN()
-    if answer == "b":
-        delete_tensorboard_logs()
+    # if answer == "b":
+    #     delete_tensorboard_logs()
     if answer == "c":
         evaluate_with_DQN()
     if answer == "d":
         evaluate_with_default_action(default_action)
     if answer == "e":
         evaluate_with_random_action()
-    if answer == "ppo":  # not documented yet
+    if answer == "ppo" or answer == "b":  # not documented yet
         train_ppo()
     if answer == "a2c":  # not documented yet
         train_a2c()

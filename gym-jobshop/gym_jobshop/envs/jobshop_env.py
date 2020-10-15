@@ -92,7 +92,7 @@ class JobShopEnv(gym.Env):
         17      No. of orders shipped in time                           0           15
         18      No. of orders shipped late by 1 period                  0           15
         19      No. of orders shipped late by 2 periods                 0           15
-        20      No. of orders shipped late by 2 periods                 0           15
+        20      No. of orders shipped late by 3 periods                 0           15
         21      No. of orders shipped late by 4 or more periods         0           15
         ... AND SO ON for the other product types. The 22 observations above are just for product type 1.
         All other product types have the exact same structure, so this goes up to 22*6 = 132 observations
@@ -121,9 +121,8 @@ class JobShopEnv(gym.Env):
                  results_csv: bool = False,  # Create a CSV file containing metrics like costs, lateness, etc
                  number_of_machines: int = 3,  # Amount of machines used in the simulation. Must be 1 or 3
                  ):
-        self.viewer = None
         main.initialize_random_numbers()
-        self.episode_counter = 1
+        self.episode_counter = 0
         self.period_counter = 0
         self.cost_rundown = [0, 0, 0, 0]
         self.results_csv = results_csv
@@ -188,9 +187,10 @@ class JobShopEnv(gym.Env):
         self.observation_space = gym.spaces.flatten_space(
             gym.spaces.Box(low=self.low, high=self.high, dtype=np.float32))
         self.state = self.reset()
+        self.csv_file_name = '../Evaluation/' + 'results_'+ str(self.number_of_machines) + 'm.csv'
         # Create CSV file for writing results after each episode
         if self.results_csv is True:
-            with open('../' + 'jobshop_env_results.csv', mode='w') as results_CSV:
+            with open(self.csv_file_name, mode='w') as results_CSV:
                 results_writer = csv.writer(results_CSV, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 results_writer.writerow(['Episode', 'total_cost', 'wip_cost', 'fgi_cost',
                                          'lateness_cost', 'overtime_cost', 'amount_of_shipped_orders',
@@ -278,8 +278,10 @@ class JobShopEnv(gym.Env):
         time1, time2 = main.get_current_time()
         return observation, time1, time2
 
+
     def get_observation(self):
         return get_environment_state()
+
 
     def write_results_to_CSV(self):
         """
@@ -289,7 +291,7 @@ class JobShopEnv(gym.Env):
         total_cost, wip_cost, fgi_cost, lateness_cost, overtime_cost, amount_of_shipped_orders, \
         bottleneck_utilization, late_orders, tardy_orders, sum_of_lateness, sum_of_tardiness, \
         average_flow_time = [results[i] for i in range(len(results))]
-        with open('../' + 'jobshop_env_results.csv', mode='a') as results_CSV:
+        with open(self.csv_file_name, mode='a') as results_CSV:
             results_writer = csv.writer(results_CSV, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             results_writer.writerow([self.episode_counter,total_cost, wip_cost, fgi_cost,
                                      lateness_cost, overtime_cost, amount_of_shipped_orders,

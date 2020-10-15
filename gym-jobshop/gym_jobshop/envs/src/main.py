@@ -19,9 +19,12 @@ def setup_environment(number_of_machines):
     Call this function after switching shop types
     """
     if number_of_machines == 3:
-        environment.machine_A = class_Machine.Machine("Machine A", 30, 130, 80)
-        environment.machine_B = class_Machine.Machine("Machine B", 30, 130, 77.5)
-        environment.machine_C = class_Machine.Machine("Machine C", 65, 125, 95)  # default 65, 125, 95
+        environment.machine_A = class_Machine.Machine(
+            "Machine A", 30, 130, global_settings.processingtime_machine_A_job_shop)  # default 80
+        environment.machine_B = class_Machine.Machine(
+            "Machine B", 30, 130, global_settings.processingtime_machine_B_job_shop) # default 77.5
+        environment.machine_C = class_Machine.Machine(
+            "Machine C", 65, 125, global_settings.processingtime_machine_C_job_shop)  # default 95
         environment.list_of_all_machines = [environment.machine_A, environment.machine_B, environment.machine_C]
         # Generate WIP (work in process) inventories
         # each WIP inventory is associated with one machine (and each machine with one inventory)
@@ -37,7 +40,8 @@ def setup_environment(number_of_machines):
         environment.bottleneck_machine = environment.machine_C
 
     elif number_of_machines == 1:
-        environment.machine_A = class_Machine.Machine("Machine A", 30, 130, 106.1999115)  # 106.1999115 gives roughly 90% utilization
+        environment.machine_A = class_Machine.Machine(
+            "Machine A", 30, 130, global_settings.processingtime_machine_A_job_shop_1_machine)  # 106.1999115 gives roughly 90% utilization
         environment.list_of_all_machines = [environment.machine_A]
         # Generate WIP (work in process) inventories
         # each WIP inventory is associated with one machine (and each machine with one inventory)

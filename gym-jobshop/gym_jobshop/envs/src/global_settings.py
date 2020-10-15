@@ -16,7 +16,16 @@ processing_time_distribution = "exponential"  # must be "exponential" or "unifor
 # It is recommended to use exponential distribution, as some values have been optimized for that.
 # Uniform distribution might lead to worse results
 shop_type = None  # Must be either "job_shop" or "job_shop_1_machine".
+# Shop type is automatically set depending on number_of_machines in class JobShopEnv().__init__
 # flow_shop is currently not supported
+
+# Machine processing times. Each number refers to an exponential distribution, e.g. Exp(95)
+# This is the expected processing time for the single machine inside the 1 machine scenario:
+processingtime_machine_A_job_shop_1_machine = 106.1999115  # default 106.1999115
+# Expected processing time in job shop scenario with three machines:
+processingtime_machine_A_job_shop = 80  # default 80
+processingtime_machine_B_job_shop = 77.5  # default 77.5
+processingtime_machine_C_job_shop = 110    # default 95
 
 # Variables used during the simulation runtime
 order_release_policy = "bil"  # must be "periodic" or "bil"
@@ -55,7 +64,7 @@ next_order_arrival_exponential_rate_parameter = 118  # this is the λ (lambda) o
 
 # Variables that are used as result metrics
 count_of_generated_orders = 0
-cost_per_item_in_shopfloor = 1  # Cost per period for every order which is either inside a machine or wip. Default: 1
+cost_per_item_in_shopfloor = 0  # Cost per period for every order which is either inside a machine or wip. Default: 1
 cost_per_item_in_fgi = 4  # Cost per period for storing one order in finished goods inventory. Default: 4
 cost_per_late_item = 48  # Cost per period for exceeding an order's due date. Default: 16
 cost_per_overtime_period = 24  # Cost per period for running overtime on a bottleneck machine. Default: 32

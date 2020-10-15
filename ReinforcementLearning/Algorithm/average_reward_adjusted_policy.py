@@ -10,7 +10,8 @@ from stable_baselines3.common.torch_layers import BaseFeaturesExtractor, Flatten
 class QNetworkAverageRewardAdjusted(QNetwork):
     """
     QNetworkAverageRewardAdjusted is based on stable_baselines3.dqn.policies.QNetwork.
-    This class overwrites some methods from QNetwork
+    This class overwrites some methods from QNetwork.
+    Documentation at https://stable-baselines3.readthedocs.io/en/master/modules/dqn.html
     """
     def __init__(self, observation_space: gym.spaces.Space,
                  action_space: gym.spaces.Space,

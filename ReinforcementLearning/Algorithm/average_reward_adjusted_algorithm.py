@@ -21,7 +21,8 @@ from .util import *
 class DQNAverageRewardAdjusted(DQN):
     """
     DQNAverageRewardAdjusted is based on stable_baselines3.dqn
-    This class overwrites some methods from DQN
+    Documentation at https://stable-baselines3.readthedocs.io/en/master/modules/dqn.html
+    This class overwrites some methods from stable_baselines3.dqn
     """
 
     def __init__(self, policy: Union[str, Type[DQNPolicyAverageRewardAdjusted]],
