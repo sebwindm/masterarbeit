@@ -127,8 +127,11 @@ class JobShopEnv(gym.Env):
         self.cost_rundown = [0, 0, 0, 0]
         self.results_csv = results_csv
         self.number_of_machines = number_of_machines
+        self.random_seed = 0 # this random seed is currently only used for the agent,
+        # not inside the job shop simulation
+        ########
         # Set shop type depending on number of machines given at
-        # initialization of JobShopEnv object
+        # initialization of JobShopEnv object:
         if number_of_machines == 3:
             main.setup_environment(number_of_machines)
             global_settings.shop_type = "job_shop"
@@ -235,6 +238,7 @@ class JobShopEnv(gym.Env):
         Reset the environment to the default values
         """
         main.reset()
+        self.random_seed += 1
         self.state = get_environment_state()
         return self.state
 

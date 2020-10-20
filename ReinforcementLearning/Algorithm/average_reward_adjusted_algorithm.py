@@ -172,7 +172,7 @@ class DQNAverageRewardAdjusted(DQN):
             # Note: when using continuous actions,
             # we assume that the policy uses tanh to scale the action
             # We use non-deterministic action in the case of SAC, for TD3, it does not matter
-            unscaled_action, _, is_random_action = self.predict(self._last_obs, deterministic=False)
+            unscaled_action, _, is_random_action = self.predict(self._last_obs, deterministic=True)
 
         # Rescale the action from [low, high] to [-1, 1]
         if isinstance(self.action_space, gym.spaces.Box):
@@ -398,7 +398,8 @@ class DQNAverageRewardAdjusted(DQN):
     def predict(self, observation: np.ndarray,
                 state: Optional[np.ndarray] = None,
                 mask: Optional[np.ndarray] = None,
-                deterministic: bool = False) -> Tuple[np.ndarray, Optional[np.ndarray]]:
+                deterministic: bool = True) -> Tuple[np.ndarray, Optional[np.ndarray]]:
+        ###### BY SEBASTIAN: deterministic was changed to True
         """
         Overrides the base_class predict function to include epsilon-greedy exploration.
 
