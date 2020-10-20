@@ -42,9 +42,9 @@ go to https://gym.openai.com/docs/
 **Troubleshooting**
 
 Known issues:
-* Stable Baselines 3 caused a `TypeError` in version 0.9 when training ARA-DiRL. 
-This seems to be fixed as of 10/2020 and version 0.9 was used successfully.
-Expect some breaking changes in SB3 release 1.0 that will break parts of ARA-DiRL.
+* Stable Baselines 3 causes a `TypeError` in version 0.9 when training ARA-DiRL. 
+Circumvent this issue by using SB3 0.8.0 by installing it with 
+`pip install stable-baselines3==0.8.0`
 * PyTorch should be installed from https://pytorch.org/get-started/locally/
 e.g. with the following command:\
 `pip install torch==1.6.0+cpu torchvision==0.7.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
