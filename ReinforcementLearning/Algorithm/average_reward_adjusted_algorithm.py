@@ -25,62 +25,66 @@ class DQNAverageRewardAdjusted(DQN):
     This class overwrites some methods from stable_baselines3.dqn
     """
 
-    def __init__(self, policy: Union[str, Type[DQNPolicyAverageRewardAdjusted]],
-                 env: Union[GymEnv, str],
-                 learning_rate: Union[float, Callable] = 1e-4,
-                 buffer_size: int = 1000000,
-                 learning_starts: int = 50000,
-                 batch_size: Optional[int] = 32,
-                 tau: float = 1.0,
-                 gamma: float = 0.99,
-                 train_freq: int = 4,
-                 gradient_steps: int = 1,
-                 n_episodes_rollout: int = -1,
-                 optimize_memory_usage: bool = False,
-                 target_update_interval: int = 10000,
-                 exploration_fraction: float = 0.1,
-                 exploration_initial_eps: float = 1.0,
-                 exploration_final_eps: float = 0.05,
-                 max_grad_norm: float = 10,
-                 tensorboard_log: Optional[str] = None,
-                 create_eval_env: bool = False,
-                 policy_kwargs: Optional[Dict[str, Any]] = None,
-                 verbose: int = 0,
-                 seed: Optional[int] = None,
-                 device: Union[th.device, str] = 'auto',
-                 _init_setup_model: bool = True,
+    def __init__(
+            self,
+            policy: Union[str, Type[DQNPolicyAverageRewardAdjusted]],
+            env: Union[GymEnv, str],
+            learning_rate: Union[float, Callable] = 1e-4,
+            buffer_size: int = 1000000,
+            learning_starts: int = 50000,
+            batch_size: Optional[int] = 32,
+            tau: float = 1.0,
+            gamma: float = 0.99,
+            train_freq: int = 4,
+            gradient_steps: int = 1,
+            n_episodes_rollout: int = -1,
+            optimize_memory_usage: bool = False,
+            target_update_interval: int = 10000,
+            exploration_fraction: float = 0.1,
+            exploration_initial_eps: float = 1.0,
+            exploration_final_eps: float = 0.05,
+            max_grad_norm: float = 10,
+            tensorboard_log: Optional[str] = None,
+            create_eval_env: bool = False,
+            policy_kwargs: Optional[Dict[str, Any]] = None,
+            verbose: int = 0,
+            seed: Optional[int] = None,
+            device: Union[th.device, str] = 'auto',
+            _init_setup_model: bool = True,
 
-                 # Parameters for util.py: todo
-                 alpha: float = 0.01,
-                 alpha_min: float = 1e-5,
-                 alpha_decay_rate: float = 0.55,
-                 alpha_decay_steps: int = 50000  # default for 3 machines: 50000, for 1 machine 15000
-                 ):
+            # Parameters for util.py: todo
+            alpha: float = 0.01,
+            alpha_min: float = 1e-5,
+            alpha_decay_rate: float = 0.55,
+            alpha_decay_steps: int = 50000  # default for 3 machines: 50000, for 1 machine 15000
+    ):
 
-        super(DQNAverageRewardAdjusted, self).__init__(policy,
-                                                       env,
-                                                       learning_rate,
-                                                       buffer_size,
-                                                       learning_starts,
-                                                       batch_size,
-                                                       tau,
-                                                       gamma,
-                                                       train_freq,
-                                                       gradient_steps,
-                                                       n_episodes_rollout,
-                                                       optimize_memory_usage,
-                                                       target_update_interval,
-                                                       exploration_fraction,
-                                                       exploration_initial_eps,
-                                                       exploration_final_eps,
-                                                       max_grad_norm,
-                                                       tensorboard_log,
-                                                       create_eval_env,
-                                                       policy_kwargs,
-                                                       verbose,
-                                                       seed,
-                                                       device,
-                                                       _init_setup_model)
+        super(DQNAverageRewardAdjusted, self).__init__(
+            policy,
+            env,
+            learning_rate,
+            buffer_size,
+            learning_starts,
+            batch_size,
+            tau,
+            gamma,
+            train_freq,
+            gradient_steps,
+            n_episodes_rollout,
+            optimize_memory_usage,
+            target_update_interval,
+            exploration_fraction,
+            exploration_initial_eps,
+            exploration_final_eps,
+            max_grad_norm,
+            tensorboard_log,
+            create_eval_env,
+            policy_kwargs,
+            verbose,
+            seed,
+            device,
+            _init_setup_model,
+        )
         self.rho = 0
         self.alpha = alpha
         self.alpha_min = alpha_min
@@ -91,13 +95,14 @@ class DQNAverageRewardAdjusted(DQN):
         self.current_unnormalized_reward = None
         self.last_used_action = None  # can be deleted todo
 
+        self.csv_path = '../Evaluation/aradirl_'
         # Create CSV file to store Q-Values for a fixed observation (for debugging purposes):
-        with open('../' + 'q_values_learned_results.csv', mode='w') as results_CSV:
+        with open(self.csv_path + 'q_values_learned_results.csv', mode='w') as results_CSV:
             results_writer = csv.writer(results_CSV, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             results_writer.writerow(['Period', 'Action_0', 'Action_1', 'Action_2'])
 
         # Create CSV file to store rewards after each period
-        with open('../' + 'rewards_per_period.csv', mode='w') as rewards_per_period_CSV:
+        with open(self.csv_path + 'rewards_per_period.csv', mode='w') as rewards_per_period_CSV:
             results_writer = csv.writer(rewards_per_period_CSV, delimiter='\t', quotechar='"',
                                         quoting=csv.QUOTE_MINIMAL)
             results_writer.writerow(['Period', 'Reward', 'Rho'])
@@ -257,7 +262,8 @@ class DQNAverageRewardAdjusted(DQN):
                 self.period_counter += 1
                 if self.period_counter % 5000 == 0:
                     decayed_alpha = self.exp_decay_alpha()
-                    print("decayed_alpha: ", round(decayed_alpha,6), " | Exploration rate: ", round(self.exploration_rate,2))
+                    print("decayed_alpha: ", round(decayed_alpha, 6), " | Exploration rate: ",
+                          round(self.exploration_rate, 2))
                 self.current_observation = new_obs
 
                 # Only stop training if return value is False, not when it is None.
@@ -356,14 +362,14 @@ class DQNAverageRewardAdjusted(DQN):
                                    ]])
                 obs2 = normalize_observation(obs2)
                 fix_observation = self.q_net._predict(obs2)[1][0]
-                with open('../' + 'q_values_learned_results.csv', mode='a') as results_CSV:
+                with open(self.csv_path + 'q_values_learned_results.csv', mode='a') as results_CSV:
                     results_writer = csv.writer(results_CSV, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                     results_writer.writerow(
                         [self.period_counter, float(fix_observation[0]), float(fix_observation[1]),
                          float(fix_observation[2])])
 
                 # Write reward to CSV file after each period
-                with open('../' + 'rewards_per_period.csv', mode='a') as rewards_per_period_CSV:
+                with open(self.csv_path + 'rewards_per_period.csv', mode='a') as rewards_per_period_CSV:
                     results_writer = csv.writer(rewards_per_period_CSV, delimiter='\t', quotechar='"',
                                                 quoting=csv.QUOTE_MINIMAL)
                     results_writer.writerow([self.period_counter, float(reward_), float(self.rho)])

@@ -21,7 +21,7 @@ number_of_evaluation_episodes = 30  # default = 30
 number_of_training_timesteps = 1000000  # default for 1 machine: 300000, for 3 machines 1000000
 default_action = 0  # The action that the default agent always uses
 # Create environment
-env = gym.make('jobshop-v0', results_csv=True, number_of_machines=number_of_machines)
+env = gym.make('jobshop-v0', results_csv=True, training_csv=True, number_of_machines=number_of_machines)
 
 
 class CustomCallback(BaseCallback):
