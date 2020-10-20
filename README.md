@@ -23,9 +23,9 @@ Requirements:
 * Preferably a Linux-based system (otherwise you can't use the
 visualisation plots and some stuff might not work)
 
-1. Download the Python package from a terminal:\
+1. Download the project folders from a terminal:\
 `git clone https://github.com/sebwindm/masterarbeit.git` \
-To install the Python package, go to the gym-jobshop 
+To install the gym-jobshop Python package, go to the gym-jobshop (**NOT** gym_jobshop) 
 folder and run in a terminal:\
 `pip install -e .`
 
@@ -42,9 +42,9 @@ go to https://gym.openai.com/docs/
 **Troubleshooting**
 
 Known issues:
-* Stable Baselines 3 (Pytorch version) must be on version 0.8.0.
-As of 09/2020 the current SB3 version on pip is 0.8.0, which is the correct one.
-Version 0.9 (bleeding edge installation) will cause a `TypeError` when training.
+* Stable Baselines 3 caused a `TypeError` in version 0.9 when training ARA-DiRL. 
+This seems to be fixed as of 10/2020 and version 0.9 was used successfully.
+Expect some breaking changes in SB3 release 1.0 that will break parts of ARA-DiRL.
 * PyTorch should be installed from https://pytorch.org/get-started/locally/
 e.g. with the following command:\
 `pip install torch==1.6.0+cpu torchvision==0.7.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
