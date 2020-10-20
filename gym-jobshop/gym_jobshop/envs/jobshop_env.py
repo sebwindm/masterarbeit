@@ -119,6 +119,7 @@ class JobShopEnv(gym.Env):
 
     def __init__(self,
                  results_csv: bool = False,  # Create a CSV file containing metrics like costs, lateness, etc
+                 training_csv: bool = False,  # Create a CSV file with metrics for algorithm training (period, reward)
                  number_of_machines: int = 3,  # Amount of machines used in the simulation. Must be 1 or 3
                  ):
         main.initialize_random_numbers()
@@ -126,6 +127,7 @@ class JobShopEnv(gym.Env):
         self.period_counter = 0
         self.cost_rundown = [0, 0, 0, 0]
         self.results_csv = results_csv
+        self.training_csv = training_csv
         self.number_of_machines = number_of_machines
         self.random_seed = 0 # this random seed is currently only used for the agent,
         # not inside the job shop simulation
@@ -190,16 +192,25 @@ class JobShopEnv(gym.Env):
         self.observation_space = gym.spaces.flatten_space(
             gym.spaces.Box(low=self.low, high=self.high, dtype=np.float32))
         self.state = self.reset()
-        self.csv_file_name = '../Evaluation/' + 'results.csv'
+        self.csv_results_file_name = '../Evaluation/' + 'results.csv'
         # Create CSV file for writing results after each episode
         if self.results_csv is True:
-            with open(self.csv_file_name, mode='w') as results_CSV:
+            with open(self.csv_results_file_name, mode='w') as results_CSV:
                 results_writer = csv.writer(results_CSV, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 results_writer.writerow(['Episode', 'total_cost', 'wip_cost', 'fgi_cost',
                                          'lateness_cost', 'overtime_cost', 'amount_of_shipped_orders',
                                          'bottleneck_utilization', 'late_orders', 'tardy_orders',
                                          'sum_of_lateness', 'sum_of_tardiness', 'average_flow_time'])
                 results_CSV.close()
+
+        # Create CSV file for writing training metrics after each period
+        # Not to be confused with rewards_per_period.csv from the ARA-DiRL algorithm
+        self.env_rewards_file_name = '../Evaluation/' + 'env_rewards_per_period.csv'
+        if self.training_csv is True:
+            with open(self.env_rewards_file_name, mode='w') as training_CSV:
+                results_writer = csv.writer(training_CSV, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                results_writer.writerow(['Period', 'Reward'])
+                training_CSV.close()
 
     def step(self, action):
         """
@@ -221,10 +232,11 @@ class JobShopEnv(gym.Env):
         # Step one period ( = 960 steps) ahead
         reward, environment_state1, self.cost_rundown, done = main.step_one_period_ahead()
         self.period_counter += 1
+        self.write_rewards_per_period(reward/300)
         # Retrieve new state from the environment
         self.state = get_environment_state()
         observation = self.state
-        info = {}  # Not used
+        info = {}  # Not used, but is expected to exist by some algorithms
         if self.period_counter % 8000 == 0:
             print("Period " + str(self.period_counter) + " done")
         if done is True:
@@ -282,10 +294,8 @@ class JobShopEnv(gym.Env):
         time1, time2 = main.get_current_time()
         return observation, time1, time2
 
-
     def get_observation(self):
         return get_environment_state()
-
 
     def write_results_to_CSV(self):
         """
@@ -295,11 +305,18 @@ class JobShopEnv(gym.Env):
         total_cost, wip_cost, fgi_cost, lateness_cost, overtime_cost, amount_of_shipped_orders, \
         bottleneck_utilization, late_orders, tardy_orders, sum_of_lateness, sum_of_tardiness, \
         average_flow_time = [results[i] for i in range(len(results))]
-        with open(self.csv_file_name, mode='a') as results_CSV:
+        with open(self.csv_results_file_name, mode='a') as results_CSV:
             results_writer = csv.writer(results_CSV, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             results_writer.writerow([self.episode_counter,total_cost, wip_cost, fgi_cost,
                                      lateness_cost, overtime_cost, amount_of_shipped_orders,
                                      bottleneck_utilization, late_orders, tardy_orders, sum_of_lateness,
                                      sum_of_tardiness,average_flow_time])
             results_CSV.close()
+        return
+
+    def write_rewards_per_period(self, reward):
+        with open(self.env_rewards_file_name, mode='a') as training_CSV:
+            results_writer = csv.writer(training_CSV, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            results_writer.writerow([self.episode_counter, reward])
+            training_CSV.close()
         return
