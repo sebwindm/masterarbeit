@@ -19,9 +19,12 @@ def get_cost_from_current_period():
             temp_wip_cost += len(machine.orders_inside_the_machine) * \
                              global_settings.cost_per_item_in_shopfloor
         # Measure overtime cost on bottleneck machine
-        if global_settings.processing_times_multiplier > 1:  # only if overtime is active in this period
+        if global_settings.processing_times_multiplier == global_settings.overtime_multiplier_2:  # only if overtime is active in this period
             if machine.name == environment.bottleneck_machine.name:
-                temp_overtime_cost += global_settings.cost_per_overtime_period * global_settings.processing_times_multiplier
+                temp_overtime_cost += global_settings.cost_for_action_1
+        if global_settings.processing_times_multiplier == global_settings.overtime_multiplier_3:
+            if machine.name == environment.bottleneck_machine.name:
+                temp_overtime_cost += global_settings.cost_for_action_2
 
     # Measure cost for finished goods inventory:
     temp_fgi_cost = len(environment.finished_goods_inventory) * global_settings.cost_per_item_in_fgi

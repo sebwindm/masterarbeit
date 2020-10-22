@@ -59,7 +59,7 @@ class JobShopEnv(gym.Env):
     -> row 1-6 = product type
     -> x = amount of orders in the respective production stage
     -> more than one x per production stage = order amounts are separated and sorted by
-        earliness/lateness/duedates in periods
+        earliness/lateness/due dates in periods
 
     Example with real numbers after flattening. This is how the observation state looks when
     it gets passed to the agent:
@@ -118,18 +118,23 @@ class JobShopEnv(gym.Env):
     """
 
     def __init__(self,
-                 results_csv: bool = False,  # Create a CSV file containing metrics like costs, lateness, etc
-                 training_csv: bool = False,  # Create a CSV file with metrics for algorithm training (period, reward)
+                 csv_metrics_per_episode: bool = False,
+                 # Creates a CSV file containing metrics like costs, lateness, etc
+                 csv_rewards_per_period: bool = False,
+                 # Creates a CSV file with metrics for algorithm training (period, reward)
+                 #####
                  number_of_machines: int = 3,  # Amount of machines used in the simulation. Must be 1 or 3
+                 global_prefix: str = ""  # Prefix for all file outputs from this environment
                  ):
         main.initialize_random_numbers()
         self.episode_counter = 0
         self.period_counter = 0
         self.cost_rundown = [0, 0, 0, 0]
-        self.results_csv = results_csv
-        self.training_csv = training_csv
+        self.csv_metrics_per_episode = csv_metrics_per_episode
+        self.csv_rewards_per_period = csv_rewards_per_period
         self.number_of_machines = number_of_machines
-        self.random_seed = 0 # this random seed is currently only used for the agent,
+        self.global_prefix = global_prefix
+        self.random_seed = 0  # this random seed is currently only used for the agent,
         # not inside the job shop simulation
         ########
         # Set shop type depending on number of machines given at
@@ -141,8 +146,10 @@ class JobShopEnv(gym.Env):
             main.setup_environment(number_of_machines)
             global_settings.shop_type = "job_shop_1_machine"
         else:
-            raise ValueError("Please set JobShopEnv.number_of_machines to 1 or 3, e.g. with gym.make('jobshop-v0', number_of_machines=3)")
-        print("Created an environment with", self.number_of_machines, "machines using shop type", global_settings.shop_type)
+            raise ValueError(
+                "Please set JobShopEnv.number_of_machines to 1 or 3, e.g. with gym.make('jobshop-v0', number_of_machines=3)")
+        print("Created an environment with", self.number_of_machines, "machines using shop type",
+              global_settings.shop_type)
         self.action_space = gym.spaces.Discrete(3)  # discrete action space with three possible actions
         # Below is the lower boundary of the observation space. It is an array of 132 elements, all are 0.
         # Due to the state logic of the production system, there cannot be any state below 0.
@@ -155,7 +162,7 @@ class JobShopEnv(gym.Env):
         # As the neural network uses the upper boundary of the observation space as a denominator/bottom
         # in fractions, a higher number as upper boundary would add unnecessary noise, whereas a lower
         # number reduces noise. Thus it's advisable to keep the upper boundary numbers as close to the highest
-        # occuring real numbers as possible.
+        # occurring real numbers as possible.
         self.high = np.array([
             # prod type 1
             15, 15, 15, 15, 15, 15, 15, 15, 15, 15,  # order pool
@@ -192,9 +199,10 @@ class JobShopEnv(gym.Env):
         self.observation_space = gym.spaces.flatten_space(
             gym.spaces.Box(low=self.low, high=self.high, dtype=np.float32))
         self.state = self.reset()
-        self.csv_results_file_name = '../Evaluation/' + 'results.csv'
+        self.csv_results_file_name = '../Evaluation/' + self.global_prefix + "_" + \
+                                     str(self.number_of_machines) + '_env_metrics_per_episode.csv'
         # Create CSV file for writing results after each episode
-        if self.results_csv is True:
+        if self.csv_metrics_per_episode is True:
             with open(self.csv_results_file_name, mode='w') as results_CSV:
                 results_writer = csv.writer(results_CSV, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 results_writer.writerow(['Episode', 'total_cost', 'wip_cost', 'fgi_cost',
@@ -205,12 +213,13 @@ class JobShopEnv(gym.Env):
 
         # Create CSV file for writing training metrics after each period
         # Not to be confused with rewards_per_period.csv from the ARA-DiRL algorithm
-        self.env_rewards_file_name = '../Evaluation/' + 'env_rewards_per_period.csv'
-        if self.training_csv is True:
-            with open(self.env_rewards_file_name, mode='w') as training_CSV:
-                results_writer = csv.writer(training_CSV, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        self.env_rewards_file_name = '../Evaluation/' + self.global_prefix + "_" + \
+                                     str(self.number_of_machines) + '_env_rewards_per_period.csv'
+        if self.csv_rewards_per_period is True:
+            with open(self.env_rewards_file_name, mode='w') as rewards_csv:
+                results_writer = csv.writer(rewards_csv, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 results_writer.writerow(['Period', 'Reward'])
-                training_CSV.close()
+                rewards_csv.close()
 
     def step(self, action):
         """
@@ -232,7 +241,7 @@ class JobShopEnv(gym.Env):
         # Step one period ( = 960 steps) ahead
         reward, environment_state1, self.cost_rundown, done = main.step_one_period_ahead()
         self.period_counter += 1
-        self.write_rewards_per_period(reward/300)
+        self.write_csv_rewards_per_period(reward / 300)
         # Retrieve new state from the environment
         self.state = get_environment_state()
         observation = self.state
@@ -241,8 +250,8 @@ class JobShopEnv(gym.Env):
             print("Period " + str(self.period_counter) + " done")
         if done is True:
             self.episode_counter += 1
-            if self.results_csv is True:
-                self.write_results_to_CSV()
+            if self.csv_metrics_per_episode is True:
+                self.write_csv_metrics_per_episode()
         return observation, reward, done, info
 
     def reset(self):
@@ -256,7 +265,7 @@ class JobShopEnv(gym.Env):
 
     def get_cost_rundown(self):
         """
-        Return a list of which costs occured where. Useful for debugging.
+        Return a list of which costs occurred where. Useful for debugging.
         Currently used inside the agent's custom callback.
         """
         return self.cost_rundown
@@ -297,7 +306,7 @@ class JobShopEnv(gym.Env):
     def get_observation(self):
         return get_environment_state()
 
-    def write_results_to_CSV(self):
+    def write_csv_metrics_per_episode(self):
         """
         Write episode results as a row to the CSV
         """
@@ -307,16 +316,16 @@ class JobShopEnv(gym.Env):
         average_flow_time = [results[i] for i in range(len(results))]
         with open(self.csv_results_file_name, mode='a') as results_CSV:
             results_writer = csv.writer(results_CSV, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            results_writer.writerow([self.episode_counter,total_cost, wip_cost, fgi_cost,
+            results_writer.writerow([self.episode_counter, total_cost, wip_cost, fgi_cost,
                                      lateness_cost, overtime_cost, amount_of_shipped_orders,
                                      bottleneck_utilization, late_orders, tardy_orders, sum_of_lateness,
-                                     sum_of_tardiness,average_flow_time])
+                                     sum_of_tardiness, average_flow_time])
             results_CSV.close()
         return
 
-    def write_rewards_per_period(self, reward):
-        with open(self.env_rewards_file_name, mode='a') as training_CSV:
-            results_writer = csv.writer(training_CSV, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            results_writer.writerow([self.episode_counter, reward])
-            training_CSV.close()
+    def write_csv_rewards_per_period(self, reward):
+        with open(self.env_rewards_file_name, mode='a') as rewards_csv:
+            results_writer = csv.writer(rewards_csv, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            results_writer.writerow([self.period_counter, reward])
+            rewards_csv.close()
         return
