@@ -18,14 +18,12 @@ def get_cost_from_current_period():
         if len(machine.orders_inside_the_machine) > 0:
             temp_wip_cost += len(machine.orders_inside_the_machine) * \
                              global_settings.cost_per_item_in_shopfloor
-        # Measure overtime cost on bottleneck machine
-        if global_settings.processing_times_multiplier == global_settings.overtime_multiplier_2:  # only if overtime is active in this period
-            if machine.name == environment.bottleneck_machine.name:
-                temp_overtime_cost += global_settings.cost_for_action_1
-        if global_settings.processing_times_multiplier == global_settings.overtime_multiplier_3:
-            if machine.name == environment.bottleneck_machine.name:
-                temp_overtime_cost += global_settings.cost_for_action_2
-
+    # Measure overtime cost on bottleneck machine
+    # only if overtime is active in this period
+    if global_settings.processing_times_multiplier == global_settings.overtime_multiplier_2:
+        temp_overtime_cost += global_settings.cost_for_action_1
+    if global_settings.processing_times_multiplier == global_settings.overtime_multiplier_3:
+        temp_overtime_cost += global_settings.cost_for_action_2
     # Measure cost for finished goods inventory:
     temp_fgi_cost = len(environment.finished_goods_inventory) * global_settings.cost_per_item_in_fgi
     # Measure cost for late goods (= backorder cost):
@@ -99,15 +97,15 @@ def measure_bottleneck_utilization():
 
 def get_order_statistics():
     """
-    Return some statistics on flow time, lateness and tardiness
+    Return some statistics on flow time, lateness and earlyness
     """
     late_orders = 0
-    tardy_orders = 0
+    early_orders = 0
     sum_of_lateness = 0
-    sum_of_tardiness = 0
+    sum_of_earliness = 0
     sum_of_flow_times = 0
-    # Get total number of late/tardy orders
-    # Get average lateness/tardiness of orders
+    # Get total number of late/early orders
+    # Get average lateness/earlyness of orders
     for order in environment.shipped_orders:
         sum_of_flow_times += order.flow_time
         if order.lateness > 0 and order.earliness > 0:
@@ -116,10 +114,10 @@ def get_order_statistics():
             late_orders += 1
             sum_of_lateness += order.lateness
         elif order.earliness > 1:
-            tardy_orders += 1
-            sum_of_tardiness += order.earliness
+            early_orders += 1
+            sum_of_earliness += order.earliness
 
-    return late_orders, tardy_orders, sum_of_lateness, sum_of_tardiness, sum_of_flow_times
+    return late_orders, early_orders, sum_of_lateness, sum_of_earliness, sum_of_flow_times
 
 
 def evaluate_episode():
@@ -137,10 +135,10 @@ def evaluate_episode():
     bottleneck_utilization = round(
             global_settings.bottleneck_utilization_per_step / global_settings.maximum_simulation_duration,2)
 
-    late_orders, tardy_orders, sum_of_lateness, sum_of_tardiness, sum_of_flow_times = get_order_statistics()
+    late_orders, early_orders, sum_of_lateness, sum_of_earlyness, sum_of_flow_times = get_order_statistics()
     average_flow_time = round(sum_of_flow_times / len(environment.shipped_orders),2)
 
     results = [total_cost, wip_cost, fgi_cost, lateness_cost, overtime_cost, amount_of_shipped_orders,
-               bottleneck_utilization, late_orders, tardy_orders, sum_of_lateness, sum_of_tardiness,
+               bottleneck_utilization, late_orders, early_orders, sum_of_lateness, sum_of_earlyness,
                average_flow_time]
     return results
