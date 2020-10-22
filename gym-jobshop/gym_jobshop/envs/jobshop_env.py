@@ -207,7 +207,7 @@ class JobShopEnv(gym.Env):
                 results_writer = csv.writer(results_CSV, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 results_writer.writerow(['Episode', 'total_cost', 'wip_cost', 'fgi_cost',
                                          'lateness_cost', 'overtime_cost', 'amount_of_shipped_orders',
-                                         'bottleneck_utilization', 'late_orders', 'tardy_orders',
+                                         'bottleneck_utilization', 'late_orders', 'early_orders',
                                          'sum_of_lateness', 'sum_of_tardiness', 'average_flow_time'])
                 results_CSV.close()
 
@@ -312,13 +312,13 @@ class JobShopEnv(gym.Env):
         """
         results = evaluate_episode()
         total_cost, wip_cost, fgi_cost, lateness_cost, overtime_cost, amount_of_shipped_orders, \
-        bottleneck_utilization, late_orders, tardy_orders, sum_of_lateness, sum_of_tardiness, \
+        bottleneck_utilization, late_orders, early_orders, sum_of_lateness, sum_of_tardiness, \
         average_flow_time = [results[i] for i in range(len(results))]
         with open(self.csv_results_file_name, mode='a') as results_CSV:
             results_writer = csv.writer(results_CSV, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             results_writer.writerow([self.episode_counter, total_cost, wip_cost, fgi_cost,
                                      lateness_cost, overtime_cost, amount_of_shipped_orders,
-                                     bottleneck_utilization, late_orders, tardy_orders, sum_of_lateness,
+                                     bottleneck_utilization, late_orders, early_orders, sum_of_lateness,
                                      sum_of_tardiness, average_flow_time])
             results_CSV.close()
         return
