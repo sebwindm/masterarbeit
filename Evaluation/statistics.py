@@ -1,4 +1,4 @@
-from scipy.stats import wilcoxon, ttest_ind, mannwhitneyu
+from scipy.stats import wilcoxon, ttest_rel
 import pandas as pd
 import numpy as np
 from scipy import stats
@@ -16,9 +16,9 @@ results_dqn = pd.read_csv(folder + csv_prefix + "dqn_eval.csv")
 results_ppo = pd.read_csv(folder + csv_prefix + "ppo_eval.csv")
 results_rnd = pd.read_csv(folder + csv_prefix + "rnd_action.csv")
 
-
+# total_cost, late_orders
 base_sample = results_default_0.total_cost
-sample_to_test = results_ppo.total_cost
+sample_to_test = results_dqn.total_cost
 
 
 # Value to test p values against (Signifikanzniveau)
@@ -43,7 +43,7 @@ else:
 # Run wilcoxon signed rank test ->for paired samples
 stat_wil, p_value_wil = wilcoxon(base_sample, sample_to_test)
 # Run t test
-stat_ttest, p_value_ttest = ttest_ind(base_sample, sample_to_test)
+stat_ttest, p_value_ttest = ttest_rel(base_sample, sample_to_test)
 
 if p_value_wil > alpha:
     print("wilcoxon: Same distribution, fail to reject H0, no significant difference, "
