@@ -25,7 +25,7 @@ processingtime_machine_A_job_shop_1_machine = 106.1999115  # default 106.1999115
 # Expected processing time in job shop scenario with three machines:
 processingtime_machine_A_job_shop = 80  # default 80
 processingtime_machine_B_job_shop = 77.5  # default 77.5
-processingtime_machine_C_job_shop = 95    # default 95
+processingtime_machine_C_job_shop = 110    # default 95
 
 # Variables used during the simulation runtime
 order_release_policy = "bil"  # must be "periodic" or "bil"
@@ -35,7 +35,7 @@ due_date_multiplier = 9  # how many periods the due date of new orders is in the
 # Default: 10 periods. Note that the due_date_multiplier must be 1 lower than the intended due date slack.
 # Example: if you want a due date slack of 10 periods, the due_date_multiplier must be set to 9.
 
-planned_release_date_multiplier = 3  # used for the BIL order release policy.
+planned_release_date_multiplier = 2  # used for the BIL order release policy.
 # Planned release date is always planned_release_date_multiplier * duration_of_one_period + current_time
 # See more at order_release.py --> release_using_bil()
 
@@ -50,9 +50,10 @@ processing_times_multiplier = 1  # Each step, the affected machines (bottleneck 
 # A processing_times_multiplier of 1 is the default value (subtract 1 each step), indicated by overtime_multiplier_1
 # The other two variables overtime_multiplier_2 and overtime_multiplier_3 indicate overtime
 # The variables below are used in main.adjust_processing_times()
+# When you change the overtime multiplier, make sure to also adjust overtime_base_cost
 overtime_multiplier_1 = 1.0  # default 1.0
-overtime_multiplier_2 = 1.125  # default 1.125
-overtime_multiplier_3 = 1.25  # default 1.25
+overtime_multiplier_2 = 1.25  # default 1.25
+overtime_multiplier_3 = 1.5  # default 1.5
 
 # ONLY USED FOR UNIFORM DEMAND
 next_order_arrival_lower_bound = 78  # lower limit for when the next order can arrive.
@@ -68,8 +69,8 @@ cost_per_item_in_shopfloor = 1  # Cost per period for every order which is eithe
 cost_per_item_in_fgi = 4  # Cost per period for storing one order in finished goods inventory. Default: 4
 cost_per_late_item = 16  # Cost per period for exceeding an order's due date. Default: 16
 overtime_base_cost = 8  # Gets multiplied depending on chosen overtime
-cost_for_action_1 = overtime_base_cost * 2
-cost_for_action_2 = overtime_base_cost * 4
+cost_for_action_1 = overtime_base_cost * 4  # default: 2
+cost_for_action_2 = overtime_base_cost * 8  # default: 4
 
 total_cost = 0
 sum_shopfloor_cost = 0
