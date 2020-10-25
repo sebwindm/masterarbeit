@@ -8,6 +8,11 @@ an agent that runs only random actions [evaluate_with_random_action()]
 or to an agent that runs always the default action 0 [evaluate_with_default_action()]
 
 Some linters might find errors in this file, feel free to ignore them.
+
+A note on the csv exports from the job shop environment:
+The total cost of metrics per episode and the reward per period are different due to the cost reset
+after the warmup period.
+Total cost of metrics per episode takes into account the cost reset, rewards per episode does not.
 """
 import gym, gym_jobshop, time, random, os
 from stable_baselines3.common.callbacks import BaseCallback
@@ -17,7 +22,7 @@ from statistics import mean
 number_of_machines = 3
 number_of_evaluation_episodes = 30  # default = 30
 number_of_training_timesteps = 1000000  # default for 1 machine: 300000, for 3 machines 1000000
-default_action = 2  # The action that the default agent always uses
+default_action = 0  # The action that the default agent always uses
 csv_metrics_per_episode = True
 csv_rewards_per_period = True
 
@@ -134,8 +139,8 @@ def train_DQN(number_of_machines, csv_metrics_per_episode, csv_rewards_per_perio
     Todo: further documentation
     """
     from Algorithm.average_reward_adjusted_algorithm import DQNAverageRewardAdjusted  # ignore the error message in PyCharm
-    env = initialize_environment(number_of_machines=number_of_machines, csv_metrics_per_episode=csv_metrics_per_episode,
-                                 csv_rewards_per_period=csv_rewards_per_period, global_prefix="ARA_DIRL_train")
+    env = initialize_environment(number_of_machines=number_of_machines, csv_metrics_per_episode=False,
+                                 csv_rewards_per_period=False, global_prefix="ARA_DIRL_train")
     # Instantiate the agent with a modified DQN that is average reward adjusted
     # DQNAverageRewardAdjusted is based on stable_baselines3.dqn.DQN
     # MlpAverageRewardAdjustedPolicy is based on stable_baselines3.dqn.policies.DQNPolicy
@@ -294,8 +299,8 @@ def train_a2c(number_of_machines, csv_metrics_per_episode, csv_rewards_per_perio
     from stable_baselines3 import A2C
     from stable_baselines3.a2c import MlpPolicy
     print("Training with A2C algorithm")
-    env = initialize_environment(number_of_machines=number_of_machines, csv_metrics_per_episode=csv_metrics_per_episode,
-                                 csv_rewards_per_period=csv_rewards_per_period, global_prefix="a2c_train")
+    env = initialize_environment(number_of_machines=number_of_machines, csv_metrics_per_episode=False,
+                                 csv_rewards_per_period=False, global_prefix="a2c_train")
     model = A2C(MlpPolicy, env, verbose=1, seed=1)
     model.learn(total_timesteps=number_of_training_timesteps)
     model.save("a2c_" + str(number_of_machines))
@@ -310,8 +315,8 @@ def train_ppo(number_of_machines, csv_metrics_per_episode, csv_rewards_per_perio
     from stable_baselines3 import PPO
     from stable_baselines3.ppo import MlpPolicy
     print("Training with PPO algorithm")
-    env = initialize_environment(number_of_machines=number_of_machines, csv_metrics_per_episode=csv_metrics_per_episode,
-                                 csv_rewards_per_period=csv_rewards_per_period, global_prefix="ppo_train")
+    env = initialize_environment(number_of_machines=number_of_machines, csv_metrics_per_episode=False,
+                                 csv_rewards_per_period=False, global_prefix="ppo_train")
     model = PPO(MlpPolicy, env, verbose=1, seed=1)
     model.learn(total_timesteps=number_of_training_timesteps)
     model.save("ppo_" + str(number_of_machines))
@@ -369,19 +374,19 @@ if __name__ == "__main__":
                                                                                                          '"f" ... evaluate with PPO agent \n'
                    )
     if answer == "a" or answer == "":
-        train_DQN(number_of_machines, csv_metrics_per_episode, csv_rewards_per_period)
+        train_DQN()
     if answer == "f":
         evaluate_other_algos("ppo", number_of_machines, csv_metrics_per_episode, csv_rewards_per_period)
     if answer == "c":
-        evaluate_with_DQN(number_of_machines, csv_metrics_per_episode, csv_rewards_per_period)
+        evaluate_with_DQN()
     if answer == "d":
-        evaluate_with_default_action(default_action, number_of_machines, csv_metrics_per_episode, csv_rewards_per_period)
+        evaluate_with_default_action()
     if answer == "e":
-        evaluate_with_random_action(number_of_machines, csv_metrics_per_episode, csv_rewards_per_period)
+        evaluate_with_random_action()
     if answer == "ppo" or answer == "b":  # not documented yet
-        train_ppo(number_of_machines, csv_metrics_per_episode, csv_rewards_per_period)
+        train_ppo()
     if answer == "a2c":  # not documented yet
-        train_a2c(number_of_machines, csv_metrics_per_episode, csv_rewards_per_period)
+        train_a2c()
     if answer == "ppo_eval":  # not documented yet
         evaluate_other_algos("ppo", number_of_machines, csv_metrics_per_episode, csv_rewards_per_period)
     if answer == "a2c_eval":  # not documented yet
