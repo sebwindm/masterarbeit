@@ -241,7 +241,7 @@ class JobShopEnv(gym.Env):
         # Step one period ( = 960 steps) ahead
         reward, environment_state1, self.cost_rundown, done = main.step_one_period_ahead()
         self.period_counter += 1
-        self.write_csv_rewards_per_period(reward / 300)
+        self.write_csv_rewards_per_period(reward)
         # Retrieve new state from the environment
         self.state = get_environment_state()
         observation = self.state
@@ -309,6 +309,7 @@ class JobShopEnv(gym.Env):
     def write_csv_metrics_per_episode(self):
         """
         Write episode results as a row to the CSV
+        The total_cost takes into account the cost reset after the warmup period.
         """
         results = evaluate_episode()
         total_cost, wip_cost, fgi_cost, lateness_cost, overtime_cost, amount_of_shipped_orders, \
@@ -324,6 +325,11 @@ class JobShopEnv(gym.Env):
         return
 
     def write_csv_rewards_per_period(self, reward):
+        """
+        The reward per period does not take into account the cost reset after the warmup period.
+        Thus the reward written in this function is different from the
+        reward/total_cost from write_csv_metrics_per_episode()
+        """
         with open(self.env_rewards_file_name, mode='a') as rewards_csv:
             results_writer = csv.writer(rewards_csv, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             results_writer.writerow([self.period_counter, reward])
