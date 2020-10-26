@@ -320,6 +320,7 @@ def train_vanilla_dqn(number_of_machines):
     Vanilla DQN refers to the basic implementation of a DQN by Stable Baselines 3
     It is not to be confused with ARA-DiRL that is an extended version of this vanilla_dqn
     See https://stable-baselines3.readthedocs.io/en/master/modules/dqn.html for documentation
+    Evaluating vanilla DQN is currently broken
     """
     from stable_baselines3 import DQN
     from stable_baselines3.dqn import MlpPolicy
@@ -335,17 +336,16 @@ def train_vanilla_dqn(number_of_machines):
 
 def evaluate_other_algos(algorithm, number_of_machines, csv_metrics_per_episode, csv_rewards_per_period):
     """
-      # not documented yet
     """
     env = initialize_environment(number_of_machines=number_of_machines, csv_metrics_per_episode=csv_metrics_per_episode,
                                  csv_rewards_per_period=csv_rewards_per_period, global_prefix=str(algorithm) + "_eval")
     if algorithm == "a2c":
         from stable_baselines3 import A2C
         model = A2C.load("a2c_" + str(number_of_machines))
-    if algorithm == "ppo":
+    elif algorithm == "ppo":
         from stable_baselines3 import PPO
         model = PPO.load("ppo_" + str(number_of_machines))
-    if algorithm == "vanilla_dqn":
+    elif algorithm == "vanilla_dqn":
         from stable_baselines3 import DQN
         model = DQN.load("vanilla_dqn_" + str(number_of_machines))
     else:
@@ -361,8 +361,6 @@ def evaluate_other_algos(algorithm, number_of_machines, csv_metrics_per_episode,
 
         for period in range(8000):  # predict for x periods
             action, _states = model.predict(next_state)
-            # action, _states = model.predict(next_state)
-            # print("action: ",action)
             next_state, reward, done, info = env.step(action)
             score += reward
         scores.append(score)
@@ -387,23 +385,21 @@ if __name__ == "__main__":
                    )
     if answer == "a" or answer == "":
         train_ARA_DiRL(number_of_machines=number_of_machines)
-    if answer == "f":
-        evaluate_other_algos("ppo", number_of_machines=number_of_machines, csv_metrics_per_episode=csv_metrics_per_episode, csv_rewards_per_period=csv_rewards_per_period)
+    if answer == "f" or answer == "ppo_eval":
+        evaluate_other_algos(algorithm="ppo", number_of_machines=number_of_machines, csv_metrics_per_episode=csv_metrics_per_episode, csv_rewards_per_period=csv_rewards_per_period)
     if answer == "c":
-        evaluate_with_ARA_DiRL(number_of_machines=number_of_machines)
+        evaluate_with_ARA_DiRL(number_of_machines=number_of_machines, csv_metrics_per_episode=csv_metrics_per_episode, csv_rewards_per_period=csv_rewards_per_period)
     if answer == "d":
-        evaluate_with_default_action(number_of_machines=number_of_machines)
+        evaluate_with_default_action(action=default_action, number_of_machines=number_of_machines, csv_metrics_per_episode=csv_metrics_per_episode, csv_rewards_per_period=csv_rewards_per_period)
     if answer == "e":
-        evaluate_with_random_action(number_of_machines=number_of_machines)
+        evaluate_with_random_action(number_of_machines=number_of_machines, csv_metrics_per_episode=csv_metrics_per_episode, csv_rewards_per_period=csv_rewards_per_period)
     if answer == "ppo" or answer == "b":
         train_ppo(number_of_machines=number_of_machines)
     if answer == "a2c":
         train_a2c(number_of_machines=number_of_machines)
     if answer == "vanilla_dqn":
         train_vanilla_dqn(number_of_machines=number_of_machines)
-    if answer == "ppo_eval":
-        evaluate_other_algos("ppo", number_of_machines=number_of_machines, csv_metrics_per_episode=False, csv_rewards_per_period=False)
     if answer == "a2c_eval":
-        evaluate_other_algos("a2c", number_of_machines, csv_metrics_per_episode, csv_rewards_per_period)
+        evaluate_other_algos(algorithm="a2c", number_of_machines=number_of_machines, csv_metrics_per_episode=csv_metrics_per_episode, csv_rewards_per_period=csv_rewards_per_period)
     if answer == "vanilla_dqn_eval":
-        evaluate_other_algos("vanilla_dqn", number_of_machines, csv_metrics_per_episode, csv_rewards_per_period)
+        evaluate_other_algos(algorithm="vanilla_dqn", number_of_machines=number_of_machines, csv_metrics_per_episode=csv_metrics_per_episode, csv_rewards_per_period=csv_rewards_per_period)

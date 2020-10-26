@@ -3,12 +3,11 @@ import pandas as pd
 import numpy as np
 from scipy import stats
 import matplotlib.pyplot as plt
-import statsmodels.api as sm
-from statsmodels.graphics.gofplots import qqplot_2samples
+
 import csv
 
 # https://www.socscistatistics.com/tests/signedranks/default2.aspx
-machine_prefix = "_3"  # change this to "1_" to evaluate files for 1 machine
+machine_prefix = "_3"  # change this to "_1" to evaluate files for 1 machine
 file_suffix = machine_prefix + "_env_metrics_per_episode.csv"
 folder = "bil2_ot_32_64_baz110/"  # change this to the desired folder (subfolder of /Evaluation/)
 
@@ -17,17 +16,22 @@ def get_metrics_per_episode():
     results_default_0 = pd.read_csv(folder + "default0" + file_suffix)
     results_default_2 = pd.read_csv(folder + "default2" + file_suffix)
     results_dqn = pd.read_csv(folder + "ARA_DIRL_eval" + file_suffix)
-    # results_ppo = pd.read_csv(folder +  + file_suffix)
-    results_ppo = None
+    results_ppo = pd.read_csv(folder + "ppo_eval" + file_suffix)
     results_rnd = pd.read_csv(folder + "random" + file_suffix)
     return results_default_0, results_default_2, results_dqn, results_ppo, results_rnd
 
 
 def get_statistical_test_results():
+    """
+    Run multiple statistical tests to check for significant differences between the samples.
+    Change the sample variables according to the agents that you want to evaluate.
+    Each sample variable has two parts, one is the sample name (results_default_0) and the other
+    is the column which should be analyzed (total_cost)
+    """
     results_default_0, results_default_2, results_dqn, results_ppo, results_rnd = get_metrics_per_episode()
 
-    # Potential values to inspect: total_cost, late_orders
-    base_sample = results_rnd.total_cost
+    # Potential values to inspect: total_cost, late_orders, etc.
+    base_sample = results_default_0.total_cost
     sample_to_test = results_dqn.total_cost
 
     # Value to test p values against (Signifikanzniveau)
@@ -67,8 +71,11 @@ def get_statistical_test_results():
 
 
 def get_average_metrics_per_episode():
+    """
+    Change the sample variable according to the agent that you want to evaluate
+    """
     results_default_0, results_default_2, results_dqn, results_ppo, results_rnd = get_metrics_per_episode()
-    sample = results_rnd
+    sample = results_ppo
 
     # Service level = percentage of orders delivered on time
     service_level = 1 - (sample.late_orders / sample.amount_of_shipped_orders)
@@ -80,6 +87,8 @@ def get_average_metrics_per_episode():
 
 
 def plot_rewards_per_period():
+    import statsmodels.api as sm
+    from statsmodels.graphics.gofplots import qqplot_2samples
     # data_to_plot = [sample_default0, sample_aradqn, sampe_rnd]
     #
 
@@ -109,7 +118,6 @@ def plot_rewards_per_period():
     return
 
 
-
 def plot_scatter_training(base_folder):
     # folder = "overtime64_3m/"
     folder = base_folder + "Training/"
@@ -137,7 +145,7 @@ def plot_scatter_training(base_folder):
 if __name__ == "__main__":
     answer = input('Type...to... \n'
                    '"a" ... run statistical tests \n'
-                   '"b" ... create scatter plot of rewards per period \n'
+                   '"b" ... create scatter plot of rewards per period (not working yet) \n'
                    '"c" ... print average metrics per episode \n'
                    )
     if answer == "a":
