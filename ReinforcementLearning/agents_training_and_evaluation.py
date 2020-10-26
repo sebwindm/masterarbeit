@@ -2,8 +2,8 @@
 How to: 
 Run this script to train or evaluate an agent. 
 
-train_DQN() will train a model using the average reward adjusted algorithm.
-This model can then be evaluated with evaluate_with_DQN() and compared to
+train_ARA_DiRL() will train a model using the average reward adjusted algorithm.
+This model can then be evaluated with evaluate_with_ARA_DiRL() and compared to
 an agent that runs only random actions [evaluate_with_random_action()]
 or to an agent that runs always the default action 0 [evaluate_with_default_action()]
 
