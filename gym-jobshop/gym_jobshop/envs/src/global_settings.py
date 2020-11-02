@@ -68,9 +68,9 @@ count_of_generated_orders = 0
 cost_per_item_in_shopfloor = 1  # Cost per period for every order which is either inside a machine or wip. Default: 0
 cost_per_item_in_fgi = 4  # Cost per period for storing one order in finished goods inventory. Default: 4
 cost_per_late_item = 16  # Cost per period for exceeding an order's due date. Default: 16
-overtime_base_cost = 8  # Gets multiplied depending on chosen overtime
-cost_for_action_1 = overtime_base_cost * 4  # default: 2
-cost_for_action_2 = overtime_base_cost * 8  # default: 4
+overtime_base_cost = 8  # Overtime cost per hour. Gets multiplied depending on chosen overtime
+cost_for_action_1 = overtime_base_cost * 4  # default: 4 hours
+cost_for_action_2 = overtime_base_cost * 8  # default: 8 hours
 
 total_cost = 0
 sum_shopfloor_cost = 0
