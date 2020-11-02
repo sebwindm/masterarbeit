@@ -4,7 +4,6 @@ import numpy as np
 from scipy import stats
 import matplotlib.pyplot as plt
 
-import csv
 
 # https://www.socscistatistics.com/tests/signedranks/default2.aspx
 machine_prefix = "_3"  # change this to "_1" to evaluate files for 1 machine
@@ -14,11 +13,12 @@ folder = "bil2_ot_32_64_baz110/"  # change this to the desired folder (subfolder
 
 def get_metrics_per_episode():
     results_default_0 = pd.read_csv(folder + "default0" + file_suffix)
+    results_default_1 = pd.read_csv(folder + "default1" + file_suffix)
     results_default_2 = pd.read_csv(folder + "default2" + file_suffix)
     results_dqn = pd.read_csv(folder + "ARA_DIRL_eval" + file_suffix)
     results_ppo = pd.read_csv(folder + "ppo_eval" + file_suffix)
     results_rnd = pd.read_csv(folder + "random" + file_suffix)
-    return results_default_0, results_default_2, results_dqn, results_ppo, results_rnd
+    return results_default_0, results_default_1, results_default_2, results_dqn, results_ppo, results_rnd
 
 
 def get_statistical_test_results():
@@ -28,10 +28,11 @@ def get_statistical_test_results():
     Each sample variable has two parts, one is the sample name (results_default_0) and the other
     is the column which should be analyzed (total_cost)
     """
-    results_default_0, results_default_2, results_dqn, results_ppo, results_rnd = get_metrics_per_episode()
+    results_default_0, results_default_1, results_default_2, results_dqn, \
+        results_ppo, results_rnd = get_metrics_per_episode()
 
     # Potential values to inspect: total_cost, late_orders, etc.
-    base_sample = results_default_0.total_cost
+    base_sample = results_default_1.total_cost
     sample_to_test = results_dqn.total_cost
 
     # Value to test p values against (Signifikanzniveau)
@@ -74,15 +75,15 @@ def get_average_metrics_per_episode():
     """
     Change the sample variable according to the agent that you want to evaluate
     """
-    results_default_0, results_default_2, results_dqn, results_ppo, results_rnd = get_metrics_per_episode()
-    sample = results_ppo
+    results_default_0, results_default_1, results_default_2, results_dqn, results_ppo, results_rnd = get_metrics_per_episode()
+    sample = results_default_2
 
     # Service level = percentage of orders delivered on time
     service_level = 1 - (sample.late_orders / sample.amount_of_shipped_orders)
-    print("Service level:", round(service_level.mean(),2))
+    print("Service level:", round(service_level.mean(), 2))
 
-    results = round(sample.mean(),2)[1:]
-    print(results.to_string(index=False))
+    results = round(sample.mean(), 2)[1:]  # [1:] to ignore first data point (average episode)
+    print(results.to_string(index=True))  # set index=True to show the column titles
     return
 
 
@@ -100,7 +101,6 @@ def plot_rewards_per_period():
     # qqplot_2samples(pp_x, pp_y)
     # plt.show()
 
-
     # # Create a figure instance
     # fig = plt.figure(figsize =(10, 7))
     # #Create the boxplot
@@ -109,7 +109,6 @@ def plot_rewards_per_period():
     # plt.show()
     # #Save the figure
     # fig.savefig('boxplot.png', bbox_inches='tight')
-
 
     # stats.probplot(sample_default0, dist="norm", plot=plt)
     # plt.title("Default vs ara dqn")
