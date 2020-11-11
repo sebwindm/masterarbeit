@@ -18,7 +18,8 @@ def get_metrics_per_episode():
     results_dqn = pd.read_csv(folder + "ARA_DIRL_eval" + file_suffix)
     results_ppo = pd.read_csv(folder + "ppo_eval" + file_suffix)
     results_rnd = pd.read_csv(folder + "random" + file_suffix)
-    return results_default_0, results_default_1, results_default_2, results_dqn, results_ppo, results_rnd
+    results_custom = pd.read_csv(folder + "custom" + file_suffix)
+    return results_default_0, results_default_1, results_default_2, results_dqn, results_ppo, results_rnd, results_custom
 
 
 def get_statistical_test_results():
@@ -29,14 +30,16 @@ def get_statistical_test_results():
     is the column which should be analyzed (total_cost)
     """
     results_default_0, results_default_1, results_default_2, results_dqn, \
-        results_ppo, results_rnd = get_metrics_per_episode()
+        results_ppo, results_rnd, results_custom = get_metrics_per_episode()
 
-    # Potential values to inspect: total_cost, late_orders, etc.
-    base_sample = results_default_1.total_cost
-    sample_to_test = results_dqn.total_cost
+    # Potential values to inspect:
+    # total_cost, wip_cost, fgi_cost, lateness_cost, amount_of_shipped_orders, bottleneck_utilization, \
+    # late_orders, early_orders, sum_of_lateness, sum_of_tardiness, average_flow_time
+    base_sample = results_ppo.total_cost
+    sample_to_test = results_custom.total_cost
 
     # Value to test p values against (Signifikanzniveau)
-    alpha = 0.01
+    alpha = 0.05
     # Set up dataframe
     df = pd.DataFrame(list(zip(base_sample, sample_to_test)), columns=['Default', 'Testsample'])
 
@@ -75,8 +78,9 @@ def get_average_metrics_per_episode():
     """
     Change the sample variable according to the agent that you want to evaluate
     """
-    results_default_0, results_default_1, results_default_2, results_dqn, results_ppo, results_rnd = get_metrics_per_episode()
-    sample = results_default_2
+    results_default_0, results_default_1, results_default_2, results_dqn, results_ppo, results_rnd, results_custom\
+        = get_metrics_per_episode()
+    sample = results_custom
 
     # Service level = percentage of orders delivered on time
     service_level = 1 - (sample.late_orders / sample.amount_of_shipped_orders)
