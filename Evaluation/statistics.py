@@ -1,6 +1,7 @@
 from scipy.stats import wilcoxon, ttest_rel
 import pandas as pd
 import numpy as np
+import csv
 from scipy import stats
 import matplotlib.pyplot as plt
 
@@ -8,7 +9,7 @@ import matplotlib.pyplot as plt
 # https://www.socscistatistics.com/tests/signedranks/default2.aspx
 machine_prefix = "_3"  # change this to "_1" to evaluate files for 1 machine
 file_suffix = machine_prefix + "_env_metrics_per_episode.csv"
-folder = "bil2_ot_32_64_baz110/"  # change this to the desired folder (subfolder of /Evaluation/)
+folder = "bil3_ot_16_32/"  # change this to the desired folder (subfolder of /Evaluation/), e.g. "bil2_ot_32_64/"
 
 
 def get_metrics_per_episode():
@@ -18,8 +19,8 @@ def get_metrics_per_episode():
     results_dqn = pd.read_csv(folder + "ARA_DIRL_eval" + file_suffix)
     results_ppo = pd.read_csv(folder + "ppo_eval" + file_suffix)
     results_rnd = pd.read_csv(folder + "random" + file_suffix)
-    results_custom = pd.read_csv(folder + "custom" + file_suffix)
-    return results_default_0, results_default_1, results_default_2, results_dqn, results_ppo, results_rnd, results_custom
+    #results_custom = pd.read_csv(folder + "custom" + file_suffix)
+    return results_default_0, results_default_1, results_default_2, results_dqn, results_ppo, results_rnd
 
 
 def get_statistical_test_results():
@@ -78,16 +79,41 @@ def get_average_metrics_per_episode():
     """
     Change the sample variable according to the agent that you want to evaluate
     """
-    results_default_0, results_default_1, results_default_2, results_dqn, results_ppo, results_rnd, results_custom\
+    with open(str(folder) + "metrics.csv", mode='w') as metrics_CSV:
+        results_writer = csv.writer(metrics_CSV, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        results_writer.writerow(['Sample', 'total_cost', 'wip_cost', 'fgi_cost',
+                                         'lateness_cost', 'overtime_cost', 'amount_of_shipped_orders',
+                                         'bottleneck_utilization', 'late_orders', 'early_orders',
+                                         'sum_of_lateness', 'sum_of_tardiness', 'average_flow_time', 'service_level'])
+        metrics_CSV.close()
+
+    results_default_0, results_default_1, results_default_2, results_dqn, results_ppo, results_rnd \
         = get_metrics_per_episode()
-    sample = results_custom
+    list_of_samples = [results_default_0, results_default_1, results_default_2, results_dqn, results_ppo, results_rnd]
+    sample_names = ["d0","d1","d2","dqn","ppo","rnd"]
 
-    # Service level = percentage of orders delivered on time
-    service_level = 1 - (sample.late_orders / sample.amount_of_shipped_orders)
-    print("Service level:", round(service_level.mean(), 2))
-
-    results = round(sample.mean(), 2)[1:]  # [1:] to ignore first data point (average episode)
-    print(results.to_string(index=True))  # set index=True to show the column titles
+    for index, sample in enumerate(list_of_samples):
+        # Service level = percentage of orders delivered on time
+        service_level = 1 - (sample.late_orders / sample.amount_of_shipped_orders)
+        service_level = round(service_level.mean(), 2)
+        # Write values to CSV
+        with open(str(folder) + "metrics.csv", mode='a') as metrics_CSV:
+            results_writer = csv.writer(metrics_CSV, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            results_writer.writerow([sample_names[index],
+                                     round(sample.mean(), 0)[1],
+                                     round(sample.mean(), 0)[2],
+                                     round(sample.mean(), 0)[3],
+                                     round(sample.mean(), 0)[4],
+                                     round(sample.mean(), 0)[5],
+                                     round(sample.mean(), 0)[6],
+                                     round(sample.mean(), 2)[7],
+                                     round(sample.mean(), 0)[8],
+                                     round(sample.mean(), 0)[9],
+                                     round(sample.mean(), 0)[10],
+                                     round(sample.mean(), 0)[11],
+                                     round(sample.mean(), 0)[12],
+                                     service_level])
+            metrics_CSV.close()
     return
 
 
