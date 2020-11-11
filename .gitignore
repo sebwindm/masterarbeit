@@ -9,7 +9,5 @@ gym_jobshop_tensorboard_logs
 ma2venv
 ReinforcementLearning/*.zip
 Evaluation/*.csv
-Evaluation/bil2_ot_16_32/
-Evaluation/bil2_ot_16_32_baz110/
-Evaluation/bil3_ot_16_32/
+
 
