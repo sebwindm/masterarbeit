@@ -371,6 +371,61 @@ def evaluate_other_algos(algorithm, number_of_machines, csv_metrics_per_episode,
     return scores
 
 
+def evaluate_with_custom_heuristic():
+    """
+    Custom heuristic
+    Indices of state:
+    12
+    34
+    56
+    78
+    100
+    122
+    """
+    def get_orders_in_work_center_3(state):
+        list_of_wc3_indices = [12,34,56,78,100,122]
+        orders_in_wc3 = 0
+        for i in list_of_wc3_indices:
+            orders_in_wc3 += state[i]
+        return orders_in_wc3
+
+    def get_action(wc3orders):
+        # 3+7 = 430k
+        # 3 + 8 = 433k
+        # 4 + 8 = 427k
+        action1_cutoff = 4
+        action2_cutoff = 8
+        if wc3orders < action1_cutoff:
+            action = 0
+        elif action1_cutoff <= wc3orders < action2_cutoff:
+            action = 1
+        elif wc3orders >= action2_cutoff:
+            action = 2
+        return action
+
+    print("Evaluating with custom heuristic")
+    env = initialize_environment(number_of_machines=number_of_machines, csv_metrics_per_episode=csv_metrics_per_episode,
+                                 csv_rewards_per_period=csv_rewards_per_period, global_prefix="custom")
+    simulation_start_time = time.time()
+    scores = []  # list of final scores after each episode
+    episodes = 5
+    max_periods = 8000  # 8000
+    for episode in range(episodes):
+        # Reset the game-state, done and score before every episode
+        next_state = env.reset()
+        score = 0
+        for period in range(max_periods):  # predict for x periods
+            action = get_action(get_orders_in_work_center_3(next_state))
+            next_state, reward, done, info = env.step(action)
+            score += reward
+
+        scores.append(score)
+        print("Episode: {}/{}, score: {}".format(episode + 1, episodes, score))
+
+    print("Custom heuristic evaluation finished after " + str(round(time.time() - simulation_start_time, 4)) + " seconds")
+    print("Final average score over " + str(episodes) + " episodes: " + str(mean(scores)))
+    return
+
 if __name__ == "__main__":
     answer = input('Type...to... \n'
                    'TRAINING: ' + str(number_of_training_timesteps) + ' steps\n'
@@ -403,3 +458,5 @@ if __name__ == "__main__":
         evaluate_other_algos(algorithm="a2c", number_of_machines=number_of_machines, csv_metrics_per_episode=csv_metrics_per_episode, csv_rewards_per_period=csv_rewards_per_period)
     if answer == "vanilla_dqn_eval":
         evaluate_other_algos(algorithm="vanilla_dqn", number_of_machines=number_of_machines, csv_metrics_per_episode=csv_metrics_per_episode, csv_rewards_per_period=csv_rewards_per_period)
+    if answer == "custom":
+        evaluate_with_custom_heuristic()
