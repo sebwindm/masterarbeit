@@ -1,6 +1,5 @@
 from scipy.stats import wilcoxon, ttest_rel
 import pandas as pd
-import numpy as np
 import csv
 from scipy import stats
 import matplotlib.pyplot as plt
@@ -9,7 +8,7 @@ import matplotlib.pyplot as plt
 # https://www.socscistatistics.com/tests/signedranks/default2.aspx
 machine_prefix = "_3"  # change this to "_1" to evaluate files for 1 machine
 file_suffix = machine_prefix + "_env_metrics_per_episode.csv"
-folder = "bil3_ot_16_32/"  # change this to the desired folder (subfolder of /Evaluation/), e.g. "bil2_ot_32_64/"
+folder = "bil2-A/"  # change this to the desired folder (subfolder of /Evaluation/), e.g. "bil3-B/"
 
 
 def get_metrics_per_episode():
@@ -19,8 +18,8 @@ def get_metrics_per_episode():
     results_dqn = pd.read_csv(folder + "ARA_DIRL_eval" + file_suffix)
     results_ppo = pd.read_csv(folder + "ppo_eval" + file_suffix)
     results_rnd = pd.read_csv(folder + "random" + file_suffix)
-    #results_custom = pd.read_csv(folder + "custom" + file_suffix)
-    return results_default_0, results_default_1, results_default_2, results_dqn, results_ppo, results_rnd
+    results_custom = pd.read_csv(folder + "custom" + file_suffix)
+    return results_default_0, results_default_1, results_default_2, results_dqn, results_ppo, results_rnd, results_custom
 
 
 def get_statistical_test_results():
@@ -31,7 +30,7 @@ def get_statistical_test_results():
     is the column which should be analyzed (total_cost)
     """
     results_default_0, results_default_1, results_default_2, results_dqn, \
-        results_ppo, results_rnd, results_custom = get_metrics_per_episode()
+        results_ppo, results_rnd, results_custom, results_custom = get_metrics_per_episode()
 
     # Potential values to inspect:
     # total_cost, wip_cost, fgi_cost, lateness_cost, amount_of_shipped_orders, bottleneck_utilization, \
@@ -87,15 +86,15 @@ def get_average_metrics_per_episode():
                                          'sum_of_lateness', 'sum_of_tardiness', 'average_flow_time', 'service_level'])
         metrics_CSV.close()
 
-    results_default_0, results_default_1, results_default_2, results_dqn, results_ppo, results_rnd \
+    results_default_0, results_default_1, results_default_2, results_dqn, results_ppo, results_rnd, results_custom \
         = get_metrics_per_episode()
-    list_of_samples = [results_default_0, results_default_1, results_default_2, results_dqn, results_ppo, results_rnd]
-    sample_names = ["d0","d1","d2","dqn","ppo","rnd"]
+    list_of_samples = [results_default_0, results_default_1, results_default_2, results_rnd, results_dqn,
+                       results_ppo, results_custom]
+    sample_names = ["d0","d1","d2","rnd","dqn","ppo","custom"]
 
     for index, sample in enumerate(list_of_samples):
         # Service level = percentage of orders delivered on time
         service_level = 1 - (sample.late_orders / sample.amount_of_shipped_orders)
-        service_level = round(service_level.mean(), 2)
         # Write values to CSV
         with open(str(folder) + "metrics.csv", mode='a') as metrics_CSV:
             results_writer = csv.writer(metrics_CSV, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
@@ -112,7 +111,7 @@ def get_average_metrics_per_episode():
                                      round(sample.mean(), 0)[10],
                                      round(sample.mean(), 0)[11],
                                      round(sample.mean(), 0)[12],
-                                     service_level])
+                                     round(service_level.mean(), 2)])
             metrics_CSV.close()
     return
 
@@ -175,7 +174,9 @@ if __name__ == "__main__":
     answer = input('Type...to... \n'
                    '"a" ... run statistical tests \n'
                    '"b" ... create scatter plot of rewards per period (not working yet) \n'
-                   '"c" ... print average metrics per episode \n'
+                   '"c" ... Write average metrics per episode to CSV\n'
+                   'Note that there need to be csv files for all agents, \n'
+                   'else there will be an error. To fix it remove the unused agents. \n'
                    )
     if answer == "a":
         get_statistical_test_results()
