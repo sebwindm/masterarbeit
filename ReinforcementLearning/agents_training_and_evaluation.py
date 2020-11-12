@@ -374,7 +374,10 @@ def evaluate_other_algos(algorithm, number_of_machines, csv_metrics_per_episode,
 def evaluate_with_custom_heuristic():
     """
     Custom heuristic
-    Indices of state:
+    The custom heuristic takes an observation (the environment's state)
+    and uses the number of orders inside work center 3 to calculate an action
+    It uses six values, each stands for the amount of orders inside work center 3
+    for a certain product type (1-6). The indices are:
     12
     34
     56
@@ -408,7 +411,7 @@ def evaluate_with_custom_heuristic():
                                  csv_rewards_per_period=csv_rewards_per_period, global_prefix="custom")
     simulation_start_time = time.time()
     scores = []  # list of final scores after each episode
-    episodes = 5
+    episodes = number_of_evaluation_episodes
     max_periods = 8000  # 8000
     for episode in range(episodes):
         # Reset the game-state, done and score before every episode
@@ -435,8 +438,9 @@ if __name__ == "__main__":
         number_of_evaluation_episodes) + ' episodes\n'
                                          '"c" ... evaluate with ARA-DQN agent \n'
                                          '"d" ... evaluate with default action ' + str(default_action) + '\n'
-                                                                                                         '"e" ... evaluate with random action \n'
-                                                                                                         '"f" ... evaluate with PPO agent \n'
+                                        '"e" ... evaluate with random action \n'
+                                        '"f" ... evaluate with PPO agent \n'
+                   '"custom" ... evaluate with custom heuristic \n'
                    )
     if answer == "a" or answer == "":
         train_ARA_DiRL(number_of_machines=number_of_machines)
