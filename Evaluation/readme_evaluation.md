@@ -10,5 +10,8 @@ In version 1.0 of this project, all used environments and algorithms have a fixe
 random number stream, so you can use the wilcoxon signed rank test.
 * Use a scatter plot to visualize the training success (either from `statistics.py` or `plot.sh`)
 * To run `plot.sh` on your Linux system, open a terminal in the same folder and type `sh plot.sh `
-
+* The job shop environment writes its results to the /Evaluation/ folder. 
+You need to create subfolders if you want to store multiple experimental designs (e.g. BIL2-A and BIL3-B)
+* Statistics.py requires that output/results files exist for all possible agents. 
+If you do not wish to test all agents, comment out the ones you don't need from statistics.py
 
