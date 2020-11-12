@@ -50,3 +50,7 @@ e.g. with the following command:\
 `pip install torch==1.6.0+cpu torchvision==0.7.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
 `. Any CUDA version will not work.
 * Stable Baselines 2 (TensorFlow version) requires Python 3.7 or lower and Tensorflow 1.15.0 or lower
+
+**Documentation**
+Documentation is next to the code and inside the master thesis. 
+`readme_gym_jobshop.md` has a small introduction on how to change the most important settings.
