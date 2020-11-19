@@ -33,3 +33,8 @@ uniform distributions, change `demand_distribution` and `processing_time_distrib
 * Both the RL agents and the job shop environment have a fixed random number stream
 * Change cost settings at `cost_per_item_in_shopfloor`, `cost_per_item_in_fgi`,
 `cost_per_late_item`, `overtime_base_cost`
+* By default, the simulation has three work centers/machines. Initialize the
+Gym environment with `gym.make('jobshop-v0',number_of_machines=1)` to switch to one machine.
+By using only one machine it will generally be easier for unoptimized RL algorithms to learn. 
+* Initialize the environment with `gym.make('jobshop-v0', csv_metrics_per_episode=True, csv_rewards_per_period=True, global_prefix="TEST)`
+to have the environment generate CSV files with some results and metrics and the file prefix _TEST_. Change the prefix to your liking.
