@@ -114,10 +114,11 @@ class CustomCallback(BaseCallback):
                 return True
 
 
-def initialize_environment(number_of_machines=3, csv_metrics_per_episode=False, csv_rewards_per_period=False, global_prefix=""):
+def initialize_environment(number_of_machines=3, csv_metrics_per_episode=False, csv_rewards_per_period=False,
+                           global_prefix="", simple_observation_space=False):
     # Create environment
     env = gym.make('jobshop-v0', csv_metrics_per_episode=csv_metrics_per_episode, csv_rewards_per_period=csv_rewards_per_period,
-                   number_of_machines=number_of_machines, global_prefix=global_prefix)
+                   number_of_machines=number_of_machines, global_prefix=global_prefix, simple_observation_space=simple_observation_space)
     return env
 
 
@@ -408,7 +409,8 @@ def evaluate_with_custom_heuristic():
 
     print("Evaluating with custom heuristic")
     env = initialize_environment(number_of_machines=number_of_machines, csv_metrics_per_episode=csv_metrics_per_episode,
-                                 csv_rewards_per_period=csv_rewards_per_period, global_prefix="custom")
+                                 csv_rewards_per_period=csv_rewards_per_period, global_prefix="custom",
+                                 simple_observation_space=False)
     simulation_start_time = time.time()
     scores = []  # list of final scores after each episode
     episodes = number_of_evaluation_episodes
@@ -420,6 +422,7 @@ def evaluate_with_custom_heuristic():
         for period in range(max_periods):  # predict for x periods
             action = get_action(get_orders_in_work_center_3(next_state))
             next_state, reward, done, info = env.step(action)
+            print(next_state)
             score += reward
 
         scores.append(score)
