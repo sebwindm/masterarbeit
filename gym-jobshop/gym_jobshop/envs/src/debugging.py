@@ -27,26 +27,10 @@ def verify_machines():
     return
 
 
-def verify_policies():
-    # Raise error if order release policy has been entered incorrectly
-    if global_settings.order_release_policy not in ("periodic", "bil", "lums"):
-        raise ValueError("There was a problem with the selected order release policy. "
-                         "Please review order_release_policy at global_settings.py ")
-    # Raise error if scheduling policy has been entered incorrectly
-    if global_settings.scheduling_policy != "first_come_first_serve":
-        raise ValueError("There was a problem with the selected scheduling policy. "
-                         "Please review scheduling_policy at global_settings.py ")
-    return
-
-
 def verify_all():
     # The following checks are performed every 50 steps of the simulation
     if global_settings.current_time % 50 == 0:
         verify_machines()
-    # verify_wips() --> we don't need to verify wips, as a wrong product type would be noticed in verify_machines
-    # The following checks are only performed in the first step of the simulation
-    if global_settings.current_time == 0:
-        verify_policies()
 
 
 def verify_reset():

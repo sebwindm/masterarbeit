@@ -1,4 +1,5 @@
 from gym_jobshop.envs.src import environment, global_settings
+from operator import attrgetter
 
 
 def ship_orders():
@@ -51,11 +52,16 @@ def ship_orders():
 
 def move_orders_flow_shop():
     """
+    WARNING: FLOW SHOP IS CURRENTLY NOT SUPPORTED
+    You can however build on this function, it has worked many code changes ago
+
+
     Move orders for shop_type == flow_shop
     Move orders from WIPs to machines, from machines to WIPs and finally to finished/shipped goods inventories.
     The routing for each order depends on the order's product type.
     :return: this function returns nothing
     """
+    raise ValueError("flow_shop currently not supported")
     # All orders from order_pool to WIP_A
     # All orders from WIP_A to M_A
     # if product_type 1,2,3 then to WIP_B
@@ -186,15 +192,25 @@ def move_orders_job_shop():
     list_of_origins = environment.list_of_all_wip_elements
     wip_names = ["wip_A", "wip_B", "wip_C", "wip_D", "wip_E", "wip_F"]
 
-    for machine in list_of_destinations:
-        if global_settings.scheduling_policy == "first_come_first_serve" and \
-                len(machine.orders_inside_the_machine) == 0 and \
-                len(list_of_origins[list_of_destinations.index(machine)]) > 0:
+    if global_settings.scheduling_policy == "first_come_first_serve":
+        for machine in list_of_destinations:
+            if len(machine.orders_inside_the_machine) == 0 and \
+                    len(list_of_origins[list_of_destinations.index(machine)]) > 0:
+                machine.orders_inside_the_machine.append(list_of_origins[list_of_destinations.index(machine)].pop(0))
+                environment.set_new_random_processing_time(machine)  # set a new random processing time for the next order
+                machine.orders_inside_the_machine[0].processing_time_remaining = machine.processing_time
+                machine.orders_inside_the_machine[0].arrival_times_m1m2m3.append(global_settings.current_time)
 
-            machine.orders_inside_the_machine.append(list_of_origins[list_of_destinations.index(machine)].pop(0))
-            environment.set_new_random_processing_time(machine)  # set a new random processing time for the next order
-            machine.orders_inside_the_machine[0].processing_time_remaining = machine.processing_time
-            machine.orders_inside_the_machine[0].arrival_times_m1m2m3.append(global_settings.current_time)
+    elif global_settings.scheduling_policy == "earliest_due_date":
+        for machine in list_of_destinations:
+            if len(machine.orders_inside_the_machine) == 0 and \
+                    len(list_of_origins[list_of_destinations.index(machine)]) > 0:
+                inventory = list_of_origins[list_of_destinations.index(machine)]
+                earliest_due_order = get_edd_order(list_of_origins[list_of_destinations.index(machine)])
+                machine.orders_inside_the_machine.append(inventory.pop(inventory.index(earliest_due_order)))
+                environment.set_new_random_processing_time(machine)  # set a new random processing time for the next order
+                machine.orders_inside_the_machine[0].processing_time_remaining = machine.processing_time
+                machine.orders_inside_the_machine[0].arrival_times_m1m2m3.append(global_settings.current_time)
     return
 
 
@@ -206,7 +222,8 @@ def move_orders_job_shop_1_machine():
     # Step 1: empty the machines that have finished production in the previous step
     # The routing here doesn't contain the first production step, since the routing to that step
     # takes place in the order release process
-
+    if global_settings.scheduling_policy != "first_come_first_serve":
+        raise ValueError("Job shop for 1 machine only supports the scheduling policy first_come_first_serve")
     # Move order from machine to fgi, if processing_time_remaining of order is 0
     if len(environment.machine_A.orders_inside_the_machine) == 1:
         order = environment.machine_A.orders_inside_the_machine[0]
@@ -233,3 +250,12 @@ def move_orders():
     else:
         raise ValueError("wrong main.global_settings.shop_type")
     return
+
+
+def get_edd_order(inventory):
+    """
+    For a given inventory (e.g. WIP in front of a machine)
+    return the order/job with the earliest due date
+    """
+    earliest_due_order = min(inventory, key=attrgetter('due_date'))
+    return earliest_due_order
