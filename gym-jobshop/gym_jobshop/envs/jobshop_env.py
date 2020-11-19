@@ -124,7 +124,10 @@ class JobShopEnv(gym.Env):
                  # Creates a CSV file with metrics for algorithm training (period, reward)
                  #####
                  number_of_machines: int = 3,  # Amount of machines used in the simulation. Must be 1 or 3
-                 global_prefix: str = ""  # Prefix for all file outputs from this environment
+                 global_prefix: str = "",  # Prefix for all file outputs from this environment
+                 simple_observation_space: bool = False  # Set to true to activate a "simple" observation space
+                 # which only contains one value: the amount of orders inside work center 3
+                 # it is still a vector with 132 values, but all other values are 0
                  ):
         main.initialize_random_numbers()
         self.episode_counter = 0
@@ -136,6 +139,7 @@ class JobShopEnv(gym.Env):
         self.global_prefix = global_prefix
         self.random_seed = 0  # this random seed is currently only used for the agent,
         # not inside the job shop simulation
+        self.is_simple_observation_space_active = simple_observation_space
         ########
         # Set shop type depending on number of machines given at
         # initialization of JobShopEnv object:
@@ -242,9 +246,31 @@ class JobShopEnv(gym.Env):
         reward, environment_state1, self.cost_rundown, done = main.step_one_period_ahead()
         self.period_counter += 1
         self.write_csv_rewards_per_period(reward)
+
+        def get_orders_in_work_center_3(state):
+            list_of_wc3_indices = [12,34,56,78,100,122]
+            orders_in_wc3 = 0
+            for i in list_of_wc3_indices:
+                orders_in_wc3 += state[i]
+            return orders_in_wc3
+
         # Retrieve new state from the environment
-        self.state = get_environment_state()
+        # With the parameter is_simple_observation_space_active = True
+        # you can return a very simple observation that follows the design of the normal observation space
+        # in that it is a list with 132 values, but of these values only the first value is relevant
+        # The first value of that observation is the amount of orders inside work center 3 (inventory + machine)
+        # This allows the development of heuristics/training of RL agents with just that limited information
+        if self.is_simple_observation_space_active == False:
+            self.state = get_environment_state()  # return normal observation
+        else:
+            complex_state = get_environment_state()
+            empty_state = np.empty(132, dtype=np.float32)
+            empty_state.fill(0)
+            simple_state = empty_state
+            simple_state[0] = get_orders_in_work_center_3(complex_state)
+            self.state = simple_state
         observation = self.state
+
         info = {}  # Not used, but is expected to exist by some algorithms
         if self.period_counter % 8000 == 0:
             print("Period " + str(self.period_counter) + " done")
