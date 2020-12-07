@@ -51,12 +51,21 @@ processingtime_machine_C_job_shop = 110  # default 110
 # The uniform processing times are located at main.py -> setup_environment()
 
 
-order_release_policy = "bil"  # must be "periodic" or "bil"
+order_release_policy = "bil"  # must be "periodic" (=immediate release) or "bil" (= backward infinite loading)
+# When using BIL, don't forget to set planned_release_date_multiplier
 scheduling_policy = "earliest_due_date"  # must be "first_come_first_serve" or "earliest_due_date"
 
-due_date_multiplier = 9  # how many periods the due date of new orders is in the future (due date slack).
-# Default: 10 periods. Note that the due_date_multiplier must be 1 lower than the intended due date slack.
-# Example: if you want a due date slack of 10 periods, the due_date_multiplier must be set to 9.
+due_date_slack_mode = "variable"  # must be "variable" or "fixed"
+
+# For due_date_slack_mode == fixed:
+fixed_due_date_slack = 9  # how many periods the due date of new orders is in the future (due date slack).
+# Default: 10 periods. Note that the fixed_due_date_slack must be 1 lower than the intended due date slack.
+# Example: if you want a due date slack of 10 periods, the fixed_due_date_slack must be set to 9.
+
+# For due_date_slack_mode == variable:
+# Upper and lower boundaries for the uniform distribution
+variable_due_date_upper_bound = 4
+variable_due_date_lower_bound = 1
 
 planned_release_date_multiplier = 2  # used for the BIL order release policy.
 # Planned release date is always planned_release_date_multiplier * duration_of_one_period + current_time
