@@ -1,0 +1,7 @@
+Results of the Wilcoxon signed rank test:
+
+PPO regular vs PPO simple
+- confidence level of 0.01: 
+- confidence level of 0.05: 
+
+
