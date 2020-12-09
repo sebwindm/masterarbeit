@@ -3,6 +3,7 @@ Simulation:
 Job Shop
 Order release BIL2
 Scheduling: EDD
+Due date slack: 10 periods
  
 
 ALGO:
