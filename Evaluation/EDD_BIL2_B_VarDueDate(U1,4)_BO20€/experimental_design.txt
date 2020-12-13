@@ -1,0 +1,17 @@
+Simulation:
+
+Job Shop
+Order release BIL2
+Scheduling: EDD
+Due date slack: variable U(1,4)
+Backorder cost 20€ statt 16€
+ 
+
+ALGO:
+
+Action space: 4h, 8h OT
+PPO,
+PPO_Custom (nur Input wie Custom-Heruristik)
+Custom,
+Always,
+Never

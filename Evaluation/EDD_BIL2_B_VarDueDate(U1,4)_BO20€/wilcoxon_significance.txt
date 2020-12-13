@@ -1,0 +1,10 @@
+Results of the Wilcoxon signed rank test:
+
+custom heuristic vs PPO regular
+- confidence level of 0.01: significant difference
+- confidence level of 0.05: significant difference
+
+PPO simple vs PPO regular
+- confidence level of 0.01: no significant difference
+- confidence level of 0.05: no significant difference
+
