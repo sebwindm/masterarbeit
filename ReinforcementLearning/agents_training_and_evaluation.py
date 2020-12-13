@@ -7,7 +7,7 @@ This model can then be evaluated with evaluate_with_ARA_DiRL() and compared to
 an agent that runs only random actions [evaluate_with_random_action()]
 or to an agent that runs always the default action 0 [evaluate_with_default_action()]
 
-Some linters might find errors in this file, feel free to ignore them.
+Some linters might find errors in this file, feel free to ignore them.wh do
 
 A note on the csv exports from the job shop environment:
 The total cost of metrics per episode and the reward per period are different due to the cost reset
@@ -422,7 +422,6 @@ def evaluate_with_custom_heuristic():
         for period in range(max_periods):  # predict for x periods
             action = get_action(get_orders_in_work_center_3(next_state))
             next_state, reward, done, info = env.step(action)
-            print(next_state)
             score += reward
 
         scores.append(score)
